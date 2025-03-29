@@ -1,0 +1,72 @@
+import { RenderConfigurator } from '../render-configurator';
+import { Brick } from './bricks/brick';
+
+export interface RenderStyle {
+  x?: number;
+  y?: number;
+  fillStyle?: string;
+  strokeStyle?: string;
+  lineWidth?: number;
+  shadowColor?: string;
+  shadowBlur?: number;
+  shadowOffsetX?: number;
+  shadowOffsetY?: number;
+}
+
+export abstract class Renderable<D = any, S extends RenderStyle = any> {
+  private bricks: Map<string, Brick> = new Map();
+  protected updater?: (data: D) => void;
+  constructor(
+    private data?: D,
+    protected configuator?: RenderConfigurator<D, S>
+  ) {
+    this.data = data;
+    this.configuator = configuator;
+    if (configuator) {
+      this.updater = configuator.createUpdater();
+      if (this.data) {
+        this.updater(this.data);
+      }
+    }
+  }
+
+  protected addBrick(key: string, child: Brick) {
+    this.bricks.set(key, child);
+  }
+
+  protected getBrick(key: string) {
+    if (!this.bricks.has(key)) {
+      console.error(`Brick with key ${key} not found`);
+      return null;
+    }
+    return this.bricks.get(key);
+  }
+
+  abstract render(ctx: OffscreenCanvasRenderingContext2D): void;
+
+  getData() {
+    return this.data;
+  }
+
+  abstract extractData(data: any): D;
+
+  setData(data: D) {
+    this.data = data;
+    this.updater && this.updater(data);
+  }
+
+  // 检查是否与选框相交
+  intersects(selection: {
+    x: number;
+    y: number;
+    w: number;
+    h: number;
+  }): boolean {
+    return false;
+    // const { x, y } = this.configuator.getStyle();
+    // if (x === undefined || y === undefined) {
+    // return false;
+    // }
+    // return !(x > selection.x + selection.w || y > selection.y + selection.h);
+  }
+}
