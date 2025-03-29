@@ -1,7 +1,7 @@
 {
-  "name": "canvas-pro",
+  "name": "ngx-canvas-pro",
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "libs/canvas-pro/src",
+  "sourceRoot": "libs/ngx-canvas-pro/src",
   "prefix": "lib",
   "projectType": "library",
   "release": {
@@ -19,14 +19,14 @@
       "executor": "@nx/angular:package",
       "outputs": ["{workspaceRoot}/dist/{projectRoot}"],
       "options": {
-        "project": "libs/canvas-pro/ng-package.json"
+        "project": "libs/ngx-canvas-pro/ng-package.json"
       },
       "configurations": {
         "production": {
-          "tsConfig": "libs/canvas-pro/tsconfig.lib.prod.json"
+          "tsConfig": "libs/ngx-canvas-pro/tsconfig.lib.prod.json"
         },
         "development": {
-          "tsConfig": "libs/canvas-pro/tsconfig.lib.json"
+          "tsConfig": "libs/ngx-canvas-pro/tsconfig.lib.json"
         }
       },
       "defaultConfiguration": "production"
@@ -40,7 +40,7 @@
       "executor": "@nx/jest:jest",
       "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
       "options": {
-        "jestConfig": "libs/canvas-pro/jest.config.ts"
+        "jestConfig": "libs/ngx-canvas-pro/jest.config.ts"
       }
     },
     "lint": {

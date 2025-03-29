@@ -31,7 +31,7 @@ export class Layer<T = any, U = any> {
   // private dataToRenderable: (data: T) => Renderable;
   // private dbclickCallback: (axis: {x: number, y: number}, data: T) => void;
 
-    // 数据模式
+  // 数据模式
   private _dataMode: DataMode = 'pull';
   get dataMode(): DataMode {
     return this._dataMode;
@@ -43,9 +43,7 @@ export class Layer<T = any, U = any> {
     this.ctx = this.canvas.getContext('2d');
   }
 
-
-
-    /**
+  /**
    * 设置为推送数据模式
    */
   setPushMode(): this {
@@ -60,7 +58,6 @@ export class Layer<T = any, U = any> {
     this._dataMode = 'pull';
     return this;
   }
-
 
   addEventListener(
     evtName: string,
@@ -146,6 +143,4 @@ export class Layer<T = any, U = any> {
     }
     // renderable.getChildren().forEach(child => this.checkRenderableSelection(child, selection, selectedData));
   }
-
-
 }

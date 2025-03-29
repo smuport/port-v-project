@@ -5,7 +5,7 @@
   "prefix": "app",
   "sourceRoot": "apps/canvas-pro-demo/src",
   "tags": [],
-  "implicitDependencies": ["canvas-pro"],
+  "implicitDependencies": ["ngx-canvas-pro"],
   "targets": {
     "build": {
       "executor": "@angular-devkit/build-angular:application",

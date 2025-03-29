@@ -78,9 +78,6 @@ export class ParticleDemoComponent implements OnInit, OnDestroy {
     setTimeout(() => {
       this.setupLayers();
       this.startAnimation();
-      
-      // 启用滚轮事件
-      this.canvasPro.enableWheelEvents();
     }, 0);
   }
 

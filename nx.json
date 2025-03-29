@@ -81,7 +81,7 @@
       "style": "css"
     }
   },
-  "defaultProject": "ngx-canvas-pro",
+  "defaultProject": "port-v-project",
   "release": {
     "version": {
       "preVersionCommand": "npx nx run-many -t build"

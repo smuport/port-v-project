@@ -1,5 +1,5 @@
 {
-  "name": "ngx-canvas-pro",
+  "name": "port-v-project",
   "$schema": "node_modules/nx/schemas/project-schema.json",
   "includedScripts": [],
   "projectType": "application",
@@ -11,7 +11,7 @@
       "executor": "@angular-devkit/build-angular:application",
       "outputs": ["{options.outputPath}"],
       "options": {
-        "outputPath": "dist/ngx-canvas-pro",
+        "outputPath": "dist/port-v-project",
         "index": "./src/index.html",
         "browser": "./src/main.ts",
         "polyfills": ["zone.js"],
@@ -54,10 +54,10 @@
       "executor": "@angular-devkit/build-angular:dev-server",
       "configurations": {
         "production": {
-          "buildTarget": "ngx-canvas-pro:build:production"
+          "buildTarget": "port-v-project:build:production"
         },
         "development": {
-          "buildTarget": "ngx-canvas-pro:build:development"
+          "buildTarget": "port-v-project:build:development"
         }
       },
       "defaultConfiguration": "development"
@@ -65,7 +65,7 @@
     "extract-i18n": {
       "executor": "@angular-devkit/build-angular:extract-i18n",
       "options": {
-        "buildTarget": "ngx-canvas-pro:build"
+        "buildTarget": "port-v-project:build"
       }
     },
     "lint": {
@@ -84,9 +84,9 @@
     "serve-static": {
       "executor": "@nx/web:file-server",
       "options": {
-        "buildTarget": "ngx-canvas-pro:build",
+        "buildTarget": "port-v-project:build",
         "port": 4200,
-        "staticFilePath": "dist/ngx-canvas-pro/browser",
+        "staticFilePath": "dist/port-v-project/browser",
         "spa": true
       }
     },

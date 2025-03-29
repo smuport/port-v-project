@@ -2,7 +2,7 @@ export default {
   displayName: 'canvas-pro',
   preset: '../../jest.preset.js',
   setupFilesAfterEnv: ['<rootDir>/src/test-setup.ts'],
-  coverageDirectory: '../../coverage/libs/canvas-pro',
+  coverageDirectory: '../../coverage/libs/ngx-canvas-pro',
   transform: {
     '^.+\\.(ts|mjs|js|html)$': [
       'jest-preset-angular',

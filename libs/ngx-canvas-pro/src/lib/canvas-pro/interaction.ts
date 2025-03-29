@@ -13,7 +13,12 @@ export interface DragState {
 export type DragInteractionMode = 'pan' | 'zoom' | 'rotate' | 'none' | 'custom';
 
 // 滚轮行为类型
-export type WheelInteractionMode = 'zoom' | 'pan-vertical' | 'pan-horizontal' | 'none' | 'custom';
+export type WheelInteractionMode =
+  | 'zoom'
+  | 'pan-vertical'
+  | 'pan-horizontal'
+  | 'none'
+  | 'custom';
 
 // 添加新的接口定义
 export interface ViewportInteractionConfig {
@@ -28,7 +33,11 @@ export interface ViewportInteractionConfig {
     // Alt 键 + 拖拽
     alt?: DragInteractionMode;
     // 自定义拖拽处理函数
-    customHandler?: (event: MouseEvent, component: CanvasProComponent, dragState: DragState) => void;
+    customHandler?: (
+      event: MouseEvent,
+      component: CanvasProComponent,
+      dragState: DragState
+    ) => void;
   };
   // 滚轮行为配置
   wheel?: {

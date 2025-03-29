@@ -1,8 +1,8 @@
 export default {
-  displayName: 'ngx-canvas-pro',
+  displayName: 'port-v-project',
   preset: './jest.preset.js',
   setupFilesAfterEnv: ['<rootDir>/src/test-setup.ts'],
-  coverageDirectory: './coverage/ngx-canvas-pro',
+  coverageDirectory: './coverage/port-v-project',
   transform: {
     '^.+\\.(ts|mjs|js|html)$': [
       'jest-preset-angular',

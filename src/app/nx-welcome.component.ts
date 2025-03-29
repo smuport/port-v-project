@@ -432,7 +432,7 @@ import { CommonModule } from '@angular/common';
         <div id="welcome">
           <h1>
             <span> Hello there, </span>
-            Welcome ngx-canvas-pro 👋
+            Welcome port-v-project 👋
           </h1>
         </div>
         <!--  HERO  -->
@@ -798,7 +798,7 @@ nx run-many -t build test lint</pre>
               </svg>
               View project details
             </summary>
-            <pre>nx show project ngx-canvas-pro</pre>
+            <pre>nx show project port-v-project</pre>
           </details>
 
           <details>

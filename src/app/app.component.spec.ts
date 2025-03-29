@@ -15,13 +15,13 @@ describe('AppComponent', () => {
     fixture.detectChanges();
     const compiled = fixture.nativeElement as HTMLElement;
     expect(compiled.querySelector('h1')?.textContent).toContain(
-      'Welcome ngx-canvas-pro'
+      'Welcome port-v-project'
     );
   });
 
-  it(`should have as title 'ngx-canvas-pro'`, () => {
+  it(`should have as title 'port-v-project'`, () => {
     const fixture = TestBed.createComponent(AppComponent);
     const app = fixture.componentInstance;
-    expect(app.title).toEqual('ngx-canvas-pro');
+    expect(app.title).toEqual('port-v-project');
   });
 });
