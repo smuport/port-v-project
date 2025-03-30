@@ -11,3 +11,12 @@ body {
 * {
   box-sizing: border-box;
 }
+
+
+/* 添加 QCWP 相关样式 */
+app-qcwp {
+  display: block;
+  width: 100%;
+  height: calc(100vh - 120px);
+  overflow: auto;
+}

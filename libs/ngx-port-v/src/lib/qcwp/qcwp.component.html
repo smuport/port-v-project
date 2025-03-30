@@ -1,0 +1,167 @@
+<div class="container">
+  <h1>岸桥分路计划</h1>
+  <div class="main-content">
+    <div class="left-panel">
+      <div class="section crane-selection">
+        <h2>岸桥选择</h2>
+        <div class="crane-input">
+          <label for="crane-count">岸桥数量:</label>
+          <input type="number" id="crane-count" [(ngModel)]="craneCount" min="1" max="10">
+          <button (click)="generateCranes()">生成</button>
+        </div>
+        <div class="crane-list" id="crane-list">
+          <div *ngFor="let crane of cranes" 
+               class="crane-item" 
+               [class.selected]="selectedCrane && selectedCrane.id === crane.id"
+               [style.background-color]="getCraneColor(crane.id)"
+               [style.color]="'#fff'"
+               [style.border-color]="getCraneColor(crane.id)"
+               (click)="selectCrane(crane)">
+            {{ crane.name }}
+          </div>
+        </div>
+        <div class="auto-assign">
+          <button id="auto-assign-btn" (click)="autoAssignTasks()">自动分配任务</button>
+        </div>
+      </div>
+      <div class="section assigned-tasks">
+        <h2>已分配任务</h2>
+        <div id="task-info">
+          <p *ngIf="!selectedCrane">请选择一台岸桥</p>
+          <p *ngIf="selectedCrane">当前选择: {{ selectedCrane.name }}</p>
+        </div>
+        <div id="assigned-blocks">
+          <div *ngIf="selectedCrane && assignedTasks[selectedCrane.id]">
+            <div *ngFor="let task of assignedTasks[selectedCrane.id]; let i = index" 
+                 class="task-block assigned"
+                 [style.background-color]="getCraneColor(selectedCrane.id)"
+                 [style.border-color]="getCraneColor(selectedCrane.id)"
+                 [style.color]="'#fff'">
+              <div>顺序: {{ i + 1 }}</div>
+              <div>贝位: {{ task.bayNumber }}</div>
+              <div>位置: {{ task.location }}</div>
+              <div>操作: {{ task.operation }}</div>
+              <div>箱量: {{ task.containerCount }}</div>
+              
+              <button *ngIf="i > 0" (click)="moveTask(i, i - 1)">上移</button>
+              <button *ngIf="i < assignedTasks[selectedCrane.id].length - 1" (click)="moveTask(i, i + 1)">下移</button>
+              <button (click)="removeTask(i)">删除</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="right-panel">
+      <div class="section task-selection">
+        <h2>任务选择</h2>
+        <div class="task-categories">
+          <!-- 舱面卸船 -->
+          <div class="task-category">
+            <h3>舱面卸船</h3>
+            <div class="task-row" id="task-blocks-deck-unload">
+              <ng-container *ngFor="let bayNumber of [2, 6, 10, 14, 18, 22, 26, 30, 34, 38, 42]">
+                <div class="task-block" 
+                     *ngIf="hasBayTask('deckUnload', bayNumber)"
+                     [style.width.px]="bayNumber % 2 === 0 ? config.bayWidth * 2 : config.bayWidth"
+                     [style.background-color]="getTaskColor(getBayTask('deckUnload', bayNumber))"
+                     [style.border-color]="getTaskColor(getBayTask('deckUnload', bayNumber))"
+                     [style.color]="isTaskAssigned(getBayTask('deckUnload', bayNumber)) ? '#fff' : ''"
+                     (click)="assignTask(getBayTask('deckUnload', bayNumber))">
+                  <div>贝位: {{ bayNumber }}</div>
+                  <div>箱量: {{ getBayTask('deckUnload', bayNumber)?.containerCount }}</div>
+                </div>
+                <div class="task-block placeholder" 
+                     *ngIf="!hasBayTask('deckUnload', bayNumber)"
+                     [style.width.px]="bayNumber % 2 === 0 ? config.bayWidth * 2 : config.bayWidth">
+                  <div>贝位: {{ bayNumber }}</div>
+                  <div>无任务</div>
+                </div>
+              </ng-container>
+            </div>
+          </div>
+          
+          <!-- 舱面装船 -->
+          <div class="task-category">
+            <h3>舱面装船</h3>
+            <div class="task-row" id="task-blocks-deck-load">
+              <ng-container *ngFor="let bayNumber of [2, 6, 10, 14, 18, 22, 26, 30, 34, 38, 42]">
+                <div class="task-block" 
+                     *ngIf="hasBayTask('deckLoad', bayNumber)"
+                     [style.width.px]="bayNumber % 2 === 0 ? config.bayWidth * 2 : config.bayWidth"
+                     [style.background-color]="getTaskColor(getBayTask('deckLoad', bayNumber))"
+                     [style.border-color]="getTaskColor(getBayTask('deckLoad', bayNumber))"
+                     [style.color]="isTaskAssigned(getBayTask('deckLoad', bayNumber)) ? '#fff' : ''"
+                     (click)="assignTask(getBayTask('deckLoad', bayNumber))">
+                  <div>贝位: {{ bayNumber }}</div>
+                  <div>箱量: {{ getBayTask('deckLoad', bayNumber)?.containerCount }}</div>
+                </div>
+                <div class="task-block placeholder" 
+                     *ngIf="!hasBayTask('deckLoad', bayNumber)"
+                     [style.width.px]="bayNumber % 2 === 0 ? config.bayWidth * 2 : config.bayWidth">
+                  <div>贝位: {{ bayNumber }}</div>
+                  <div>无任务</div>
+                </div>
+              </ng-container>
+            </div>
+          </div>
+          
+          <!-- 舱内卸船 -->
+          <div class="task-category">
+            <h3>舱内卸船</h3>
+            <div class="task-row" id="task-blocks-hold-unload">
+              <ng-container *ngFor="let bayNumber of [2, 6, 10, 14, 18, 22, 26, 30, 34, 38, 42]">
+                <div class="task-block" 
+                     *ngIf="hasBayTask('holdUnload', bayNumber)"
+                     [style.width.px]="bayNumber % 2 === 0 ? config.bayWidth * 2 : config.bayWidth"
+                     [style.background-color]="getTaskColor(getBayTask('holdUnload', bayNumber))"
+                     [style.border-color]="getTaskColor(getBayTask('holdUnload', bayNumber))"
+                     [style.color]="isTaskAssigned(getBayTask('holdUnload', bayNumber)) ? '#fff' : ''"
+                     (click)="assignTask(getBayTask('holdUnload', bayNumber))">
+                  <div>贝位: {{ bayNumber }}</div>
+                  <div>箱量: {{ getBayTask('holdUnload', bayNumber)?.containerCount }}</div>
+                </div>
+                <div class="task-block placeholder" 
+                     *ngIf="!hasBayTask('holdUnload', bayNumber)"
+                     [style.width.px]="bayNumber % 2 === 0 ? config.bayWidth * 2 : config.bayWidth">
+                  <div>贝位: {{ bayNumber }}</div>
+                  <div>无任务</div>
+                </div>
+              </ng-container>
+            </div>
+          </div>
+          
+          <!-- 舱内装船 -->
+          <div class="task-category">
+            <h3>舱内装船</h3>
+            <div class="task-row" id="task-blocks-hold-load">
+              <ng-container *ngFor="let bayNumber of [2, 6, 10, 14, 18, 22, 26, 30, 34, 38, 42]">
+                <div class="task-block" 
+                     *ngIf="hasBayTask('holdLoad', bayNumber)"
+                     [style.width.px]="bayNumber % 2 === 0 ? config.bayWidth * 2 : config.bayWidth"
+                     [style.background-color]="getTaskColor(getBayTask('holdLoad', bayNumber))"
+                     [style.border-color]="getTaskColor(getBayTask('holdLoad', bayNumber))"
+                     [style.color]="isTaskAssigned(getBayTask('holdLoad', bayNumber)) ? '#fff' : ''"
+                     (click)="assignTask(getBayTask('holdLoad', bayNumber))">
+                  <div>贝位: {{ bayNumber }}</div>
+                  <div>箱量: {{ getBayTask('holdLoad', bayNumber)?.containerCount }}</div>
+                </div>
+                <div class="task-block placeholder" 
+                     *ngIf="!hasBayTask('holdLoad', bayNumber)"
+                     [style.width.px]="bayNumber % 2 === 0 ? config.bayWidth * 2 : config.bayWidth">
+                  <div>贝位: {{ bayNumber }}</div>
+                  <div>无任务</div>
+                </div>
+              </ng-container>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="section gantt-chart">
+        <h2>甘特图</h2>
+        <div id="gantt-container">
+          <canvas #ganttChart></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

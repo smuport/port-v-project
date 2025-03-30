@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>岸桥分路计划(QCWP)</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>岸桥分路计划(QCWP)</h1>
+        
+        <div class="main-content">
+            <!-- 左侧：岸桥选择区域 -->
+            <div class="left-panel">
+                <div class="section crane-selection">
+                    <h2>岸桥选择</h2>
+                    <div class="crane-input">
+                        <label for="crane-count">岸桥数量:</label>
+                        <input type="number" id="crane-count" min="1" max="10" value="1">
+                        <button id="generate-cranes">生成岸桥</button>
+                    </div>
+                    <div id="crane-list" class="crane-list"></div>
+                    <!-- 添加自动安排按钮 -->
+                    <div class="auto-assign">
+                        <button id="auto-assign-btn">自动安排岸桥分路计划</button>
+                    </div>
+                </div>
+                
+                <div class="section assigned-tasks">
+                    <h2>已分配作业块</h2>
+                    <div id="task-info">
+                        <p>请先选择一台岸桥</p>
+                    </div>
+                    <div id="assigned-blocks"></div>
+                </div>
+            </div>
+            
+            <!-- 右侧面板 -->
+            <div class="right-panel">
+                <!-- 右上：作业块选择区域（分四排） -->
+                <div class="section task-selection">
+                    <h2>作业块选择</h2>
+                    <div class="task-categories">
+                        <div class="task-category">
+                            <h3>舱面卸船</h3>
+                            <div id="task-blocks-deck-unload" class="task-row"></div>
+                        </div>
+                        <div class="task-category">
+                            <h3>舱面装船</h3>
+                            <div id="task-blocks-deck-load" class="task-row"></div>
+                        </div>
+                        <div class="task-category">
+                            <h3>舱内卸船</h3>
+                            <div id="task-blocks-hold-unload" class="task-row"></div>
+                        </div>
+                        <div class="task-category">
+                            <h3>舱内装船</h3>
+                            <div id="task-blocks-hold-load" class="task-row"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 右下：甘特图区域 -->
+                <div class="section gantt-chart">
+                    <h2>甘特图</h2>
+                    <div id="gantt-container">
+                        <canvas id="gantt-chart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="algorithm.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>

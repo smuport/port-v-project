@@ -1,24 +1,29 @@
 import { Route } from '@angular/router';
 import { ParticleDemoComponent } from './demo/particle-demo.component';
-import { GanttDemoComponent } from './gantt-demo/gantt-demo.component';
 import { ShipSideDemoComponent } from './ship-side-demo/ship-side-demo.component';
+import { GanttDemoComponent } from './gantt-demo/gantt-demo.component';
+import { QcwpDemoComponent } from './qcwp-demo/qcwp-demo.component';
 
 export const appRoutes: Route[] = [
   {
-    path: 'particle',
-    component: ParticleDemoComponent
+    path: '',
+    redirectTo: 'particle',
+    pathMatch: 'full',
   },
   {
-    path: 'gantt',
-    component: GanttDemoComponent
+    path: 'particle',
+    component: ParticleDemoComponent,
   },
   {
     path: 'ship-side',
-    component: ShipSideDemoComponent
+    component: ShipSideDemoComponent,
   },
   {
-    path: '',
-    redirectTo: 'ship-side',
-    pathMatch: 'full'
-  }
+    path: 'gantt',
+    component: GanttDemoComponent,
+  },
+  {
+    path: 'qcwp',
+    component: QcwpDemoComponent,
+  },
 ];
