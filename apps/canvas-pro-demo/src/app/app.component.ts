@@ -8,6 +8,7 @@ import { RouterModule } from '@angular/router';
     <div class="nav">
       <a routerLink="/particle">粒子效果</a>
       <a routerLink="/gantt">甘特图</a>
+      <a routerLink="/ship-side">船舶侧视图</a>
     </div>
     <router-outlet></router-outlet>
   `,
@@ -15,7 +16,7 @@ import { RouterModule } from '@angular/router';
     .nav {
       position: fixed;
       top: 10px;
-      left: 10px;
+      right: 10px;
       z-index: 100;
       background: rgba(255, 255, 255, 0.8);
       padding: 10px;

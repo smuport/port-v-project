@@ -129,7 +129,7 @@ export class CanvasProComponent implements OnDestroy, AfterViewInit {
     );
   }
 
-  private updateViewportSize() {
+  updateViewportSize() {
     this.renderHandler.updateViewportSize(this.viewport, this.elRef);
   }
 

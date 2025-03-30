@@ -1,0 +1,17 @@
+<div class="ship-side-container">
+  <div class="controls">
+    <h2>船舶侧视图演示</h2>
+    <div *ngIf="selectedBays.length > 0">
+      已选择贝位: {{ selectedBays.join(', ') }}
+    </div>
+  </div>
+  <div class="ship-view">
+    <app-ship-side 
+      *ngIf="vesselData" 
+      [vesselData]="vesselData" 
+      [config]="config"
+      [fillCell]="fillCellFn"
+      (onVesselBaySelected)="onBaySelected($event)">
+    </app-ship-side>
+  </div>
+</div>

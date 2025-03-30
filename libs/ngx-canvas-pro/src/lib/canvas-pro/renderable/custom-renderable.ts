@@ -1,6 +1,7 @@
 import { Renderable, RenderStyle } from './renderable';
 
 export class CustomRenderable<D> extends Renderable {
+
   private renderer: (ctx: OffscreenCanvasRenderingContext2D, data: D) => void;
   constructor(
     data: D,
@@ -12,6 +13,10 @@ export class CustomRenderable<D> extends Renderable {
 
   override render(ctx: OffscreenCanvasRenderingContext2D): void {
     this.renderer(ctx, this.getData());
+  }
+
+  override renderSvg?(svgRoot: SVGElement): SVGElement {
+    throw new Error('Method not implemented.');
   }
 
   override extractData(data: any): D {
