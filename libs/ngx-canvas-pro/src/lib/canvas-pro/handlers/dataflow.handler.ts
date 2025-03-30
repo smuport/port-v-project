@@ -14,7 +14,7 @@ import {
   map,
   filter,
 } from 'rxjs';
-import { Layer } from '../layer';
+import { BaseLayer } from '../base-layer';
 
 @Injectable()
 export class DataflowHandler {
@@ -37,7 +37,7 @@ export class DataflowHandler {
   }
 
   // 添加图层
-  addLayer(layer: Layer) {
+  addLayer(layer: BaseLayer) {
     if (!layer.isValid) {
       console.error(`${layer.name} is not valid`);
       return;
@@ -64,7 +64,7 @@ export class DataflowHandler {
     this.allEventTriggers.push(eventObservable);
   }
 
-  private setupPushDataMode(layer: Layer): Observable<any> {
+  private setupPushDataMode(layer: BaseLayer): Observable<any> {
     return layer.trigger.pipe(
       tap((data) => {
         layer.animation.update(data);
@@ -73,7 +73,7 @@ export class DataflowHandler {
     );
   }
 
-  private setupPullDataMode(layer: Layer): Observable<any> {
+  private setupPullDataMode(layer: BaseLayer): Observable<any> {
     return layer.trigger.pipe(
       exhaustMap(() => layer.dataSource),
       tap((data) => {
@@ -83,7 +83,7 @@ export class DataflowHandler {
     );
   }
 
-  private setupDefaultDataMode(layer: Layer): Observable<any> {
+  private setupDefaultDataMode(layer: BaseLayer): Observable<any> {
     return layer.trigger?.pipe(
       exhaustMap(() => layer?.dataSource),
       tap((data) => {
@@ -93,7 +93,7 @@ export class DataflowHandler {
     );
   }
 
-  private setupAnimationStream(layer: Layer): Observable<any> {
+  private setupAnimationStream(layer: BaseLayer): Observable<any> {
     return layer.animation.onAnimated.asObservable().pipe(
       tap((data) => {
         layer.render(data);
@@ -103,7 +103,7 @@ export class DataflowHandler {
   }
 
   private setupEventStream(
-    layer: Layer,
+    layer: BaseLayer,
     trigger$: Observable<any>
   ): Observable<any> {
     return layer.event$.pipe(
@@ -116,7 +116,7 @@ export class DataflowHandler {
   }
 
   // 启动动画
-  startAnimation(layers: Layer[]) {
+  startAnimation(layers: BaseLayer[]) {
     if (this.frameId) {
       console.log('animation already started.');
       return;

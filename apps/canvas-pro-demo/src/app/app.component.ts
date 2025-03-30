@@ -4,8 +4,33 @@ import { RouterModule } from '@angular/router';
 @Component({
   imports: [RouterModule],
   selector: 'app-root',
-  template: `<router-outlet></router-outlet>`,
-  styleUrl: './app.component.scss',
+  template: `
+    <div class="nav">
+      <a routerLink="/particle">粒子效果</a>
+      <a routerLink="/gantt">甘特图</a>
+    </div>
+    <router-outlet></router-outlet>
+  `,
+  styles: [`
+    .nav {
+      position: fixed;
+      top: 10px;
+      left: 10px;
+      z-index: 100;
+      background: rgba(255, 255, 255, 0.8);
+      padding: 10px;
+      border-radius: 5px;
+    }
+    .nav a {
+      margin-right: 10px;
+      text-decoration: none;
+      color: #333;
+      font-weight: bold;
+    }
+    .nav a:hover {
+      color: #4285F4;
+    }
+  `],
   standalone: true,
 })
 export class AppComponent {

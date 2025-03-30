@@ -15,7 +15,8 @@
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
     "paths": {
-      "@smuport/ngx-canvas-pro": ["libs/ngx-canvas-pro/src/index.ts"]
+      "@smuport/ngx-canvas-pro": ["libs/ngx-canvas-pro/src/index.ts"],
+      "@smuport/ngx-port-v": ["libs/ngx-port-v/src/index.ts"]
     }
   },
   "exclude": ["node_modules", "tmp"]

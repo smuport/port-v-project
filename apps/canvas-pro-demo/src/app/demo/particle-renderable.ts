@@ -13,6 +13,9 @@ export class ParticleRenderable extends Renderable<
   Particle[],
   ParticleRenderStyle
 > {
+  override renderSvg?(svgRoot: SVGElement): SVGElement {
+    throw new Error('Method not implemented.');
+  }
   private particles: Particle[] = [];
   private config: ParticleSystemConfig;
   private lastEmitTime: number = 0;

@@ -52,6 +52,7 @@ export class ParticleLayer extends Layer {
       this.particles,
       this.config
     );
+    this.addRenderable(this.particleRenderable);
 
     // 创建动画控制器
     this.animation = new ParticleAnimation(this.particleRenderable);

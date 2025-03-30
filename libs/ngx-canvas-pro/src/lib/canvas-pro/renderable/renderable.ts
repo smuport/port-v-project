@@ -69,4 +69,19 @@ export abstract class Renderable<D = any, S extends RenderStyle = any> {
     // }
     // return !(x > selection.x + selection.w || y > selection.y + selection.h);
   }
+
+  abstract renderSvg?(svgRoot: SVGElement): SVGElement;
 }
+
+// // 添加 renderSvg 方法到 Renderable 接口
+// export interface Renderable<T = any> {
+//   // 现有方法
+//   setData(data: T): void;
+//   getData(): T;
+//   render(ctx: OffscreenCanvasRenderingContext2D): void;
+//   extractData(data: any): T;
+//   intersects(selection: { x: number; y: number; w: number; h: number }): boolean;
+  
+//   // 新增方法，用于 SVG 渲染
+//   renderSvg?(): SVGElement[];
+// }

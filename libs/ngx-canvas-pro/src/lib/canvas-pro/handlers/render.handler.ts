@@ -1,5 +1,6 @@
 import { Injectable, ElementRef } from '@angular/core';
 import { Layer } from '../layer';
+import { BaseLayer } from '../base-layer';
 
 @Injectable()
 export class RenderHandler {

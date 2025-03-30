@@ -10,6 +10,8 @@ import {
 import { Observable } from 'rxjs';
 
 import { Layer } from './layer';
+import { SvgLayer } from './svg-layer';
+import { BaseLayer } from './base-layer';
 import {
   CpBaseEvent,
   CpRightClickEvent,
@@ -29,10 +31,13 @@ import { DataflowHandler } from './handlers/dataflow.handler';
   providers: [InteractionHandler, RenderHandler, DataflowHandler],
 })
 export class CanvasProComponent implements OnDestroy, AfterViewInit {
-  layers: Layer[] = [];
+  layers: BaseLayer[] = []; // 修改为使用 BaseLayer 接口
   @ViewChild('viewport', { static: true })
   viewport!: ElementRef<HTMLCanvasElement>;
   viewportCtx!: CanvasRenderingContext2D;
+  
+  // 添加 SVG 容器
+  svgContainer: HTMLDivElement;
 
   translatePos = { x: 0, y: 0 };
   isDragging = false;
@@ -67,12 +72,24 @@ export class CanvasProComponent implements OnDestroy, AfterViewInit {
     private interactionHandler: InteractionHandler,
     private renderHandler: RenderHandler,
     private dataflowHandler: DataflowHandler
-  ) {}
+  ) {
+    // 创建 SVG 容器
+    this.svgContainer = document.createElement('div');
+    this.svgContainer.style.position = 'absolute';
+    this.svgContainer.style.top = '0';
+    this.svgContainer.style.left = '0';
+    this.svgContainer.style.width = '100%';
+    this.svgContainer.style.height = '100%';
+    this.svgContainer.style.pointerEvents = 'none';
+  }
 
   ngAfterViewInit(): void {
     this.viewportCtx = this.viewport.nativeElement.getContext(
       '2d'
     ) as CanvasRenderingContext2D;
+
+    // 添加 SVG 容器到 DOM
+    this.viewport.nativeElement.parentElement?.appendChild(this.svgContainer);
 
     // 初始化各个处理器
     this.interactionHandler.initialize(this);
@@ -116,13 +133,44 @@ export class CanvasProComponent implements OnDestroy, AfterViewInit {
     this.renderHandler.updateViewportSize(this.viewport, this.elRef);
   }
 
-  addLayer(layer: Layer) {
-    if (!layer.isValid) {
+  // 修改 addLayer 方法以支持两种类型的 Layer
+  addLayer(layer: BaseLayer) {
+    if (!layer.isValid()) {
       console.error(`${layer.name} is not valid`);
       return;
     }
+    
+    // 如果是 SVG Layer，将其 SVG 元素添加到容器中
+    if (layer.type === 'svg') {
+      const svgLayer = layer as SvgLayer;
+      this.svgContainer.appendChild(svgLayer.svgElement);
+    }
+    
     this.layers.push(layer);
     this.dataflowHandler.addLayer(layer);
+  }
+
+  // 修改 drawViewport 方法以支持两种类型的 Layer
+  drawVierport(): void {
+    // 使用 renderHandler 处理 Canvas 绘制
+    const canvasLayers: Layer[] = this.layers.filter((layer) => layer instanceof Layer);
+    this.renderHandler.drawViewport(
+      this.viewport,
+      this.viewportCtx,
+      canvasLayers,
+      this.translatePos,
+      this.scale,
+      this.rotation
+    );
+    
+    // 更新 SVG Layers 的变换
+    for (const layer of this.layers) {
+      if (layer.type === 'svg') {
+        const svgLayer = layer as SvgLayer;
+        const transform = `translate(${this.translatePos.x}px, ${this.translatePos.y}px) scale(${this.scale}) rotate(${this.rotation}rad)`;
+        svgLayer.svgElement.style.transform = transform;
+      }
+    }
   }
 
   startAnimation() {
@@ -149,16 +197,16 @@ export class CanvasProComponent implements OnDestroy, AfterViewInit {
     this.dataflowHandler.stopListenEvent();
   }
 
-  drawVierport(): void {
-    this.renderHandler.drawViewport(
-      this.viewport,
-      this.viewportCtx,
-      this.layers,
-      this.translatePos,
-      this.scale,
-      this.rotation
-    );
-  }
+  // drawVierport(): void {
+  //   this.renderHandler.drawViewport(
+  //     this.viewport,
+  //     this.viewportCtx,
+  //     this.layers,
+  //     this.translatePos,
+  //     this.scale,
+  //     this.rotation
+  //   );
+  // }
 
   reDrawViewport() {
     const parentRect = this.getParentRect();
@@ -186,6 +234,8 @@ export class CanvasProComponent implements OnDestroy, AfterViewInit {
   }
 
   ngOnDestroy() {
+    // 移除 SVG 容器
+    this.svgContainer.remove();
     this.dataflowHandler.destroy();
   }
 

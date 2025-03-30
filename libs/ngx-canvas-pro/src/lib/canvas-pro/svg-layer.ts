@@ -1,25 +1,19 @@
 import {
-  map,
   Observable,
-  shareReplay,
   Subject,
-  tap,
-  withLatestFrom,
 } from 'rxjs';
 import { AnimationObject, NoopAnimation } from './animation-object';
 import { CpBaseEvent } from './event';
 import { Renderable } from './renderable/renderable';
+
+// 修改 SvgLayer 类以实现 BaseLayer 接口
 import { BaseLayer, LayerType } from './base-layer';
 
-export type DataMode = 'pull' | 'push';
-
-export class Layer<T = any, U = any> implements BaseLayer<T, U> {
+export class SvgLayer<T = any, U = any> implements BaseLayer<T, U> {
   name: string;
   w: number = 0;
   h: number = 0;
-  type: LayerType = 'canvas'; // 添加类型标识
-  canvas: OffscreenCanvas; // 画在哪里？
-  ctx: OffscreenCanvasRenderingContext2D | null;
+  svgElement: SVGSVGElement; // SVG 元素
   dataSource: Observable<T> = new Observable(); // 画什么？
   trigger: Observable<U> = new Observable(); // 何时画？
   animation: AnimationObject<T> = new NoopAnimation();
@@ -29,17 +23,25 @@ export class Layer<T = any, U = any> implements BaseLayer<T, U> {
   >;
   eventMap = new Map<string, (evt: CpBaseEvent, data: T) => void>();
   private renderables: Renderable[] = [];
-
+  private svgNamespace = 'http://www.w3.org/2000/svg';
+  
   // 数据模式
-  private _dataMode: DataMode = 'pull';
-  get dataMode(): DataMode {
+  private _dataMode: 'pull' | 'push' = 'pull';
+  get dataMode(): 'pull' | 'push' {
     return this._dataMode;
   }
 
   constructor(name: string, w = 15000, h = 1500) {
     this.name = name;
-    this.canvas = new OffscreenCanvas(w, h);
-    this.ctx = this.canvas.getContext('2d');
+    // 创建 SVG 元素
+    this.svgElement = document.createElementNS(this.svgNamespace, 'svg') as SVGSVGElement;
+    this.svgElement.setAttribute('width', w.toString());
+    this.svgElement.setAttribute('height', h.toString());
+    this.svgElement.setAttribute('viewBox', `0 0 ${w} ${h}`);
+    this.svgElement.style.position = 'absolute';
+    this.svgElement.style.top = '0';
+    this.svgElement.style.left = '0';
+    this.svgElement.style.pointerEvents = 'none'; // 默认不接收鼠标事件
     this.w = w;
     this.h = h;
   }
@@ -65,6 +67,7 @@ export class Layer<T = any, U = any> implements BaseLayer<T, U> {
     callback: (evt: CpBaseEvent, data: T) => void
   ) {
     this.eventMap.set(evtName, callback);
+    return this;
   }
 
   triggerEvent<A extends CpBaseEvent>(evt: A) {
@@ -73,47 +76,52 @@ export class Layer<T = any, U = any> implements BaseLayer<T, U> {
 
   setDataSource(dataSource: Observable<T>) {
     this.dataSource = dataSource;
+    return this;
   }
 
   setTrigger(trigger: Observable<U>) {
     this.trigger = trigger;
+    return this;
   }
 
   addRenderable(renderable: Renderable) {
     this.renderables.push(renderable);
+    return this;
   }
 
   setAnimation(ao: AnimationObject<T>): void {
     this.animation = ao;
   }
 
-  updateCanvasSize(w: number, h: number) {
-    this.canvas.width = w;
-    this.canvas.height = h;
+  updateSvgSize(w: number, h: number) {
+    this.w = w;
+    this.h = h;
+    this.svgElement.setAttribute('width', w.toString());
+    this.svgElement.setAttribute('height', h.toString());
+    this.svgElement.setAttribute('viewBox', `0 0 ${w} ${h}`);
   }
 
   isValid() {
     return this.dataSource && this.trigger && this.renderables.length > 0;
   }
 
-  // render(data: T) {
-  //   this.ctx.clearRect(
-  //     0,
-  //     0,
-  //     this.ctx.canvas.width,
-  //     this.ctx.canvas.height
-  //   );
-  //   this.renderer(this.ctx, data);
-  // }
   render(data: T) {
-    if (!this.ctx) {
-      return;
+    // 清除所有子元素
+    while (this.svgElement.firstChild) {
+      this.svgElement.removeChild(this.svgElement.firstChild);
     }
-    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    
+    // 渲染所有 renderables
     for (const renderable of this.renderables) {
       const extractData = renderable.extractData(data);
       renderable.setData(extractData);
-      renderable.render(this.ctx);
+      // 这里需要修改 renderable 接口以支持 SVG 渲染
+      if ('renderSvg' in renderable && typeof renderable.renderSvg === 'function') {
+        renderable.renderSvg(this.svgElement);
+        // for (const element of svgElements) {
+        //   this.svgElement.appendChild(element);
+        // }
+      }
     }
   }
 
@@ -128,9 +136,6 @@ export class Layer<T = any, U = any> implements BaseLayer<T, U> {
     for (const renderable of this.renderables) {
       this.checkRenderableSelection(renderable, selection, selectedData);
     }
-    // if (this.renderable) {
-    //   this.checkRenderableSelection(this.renderable, selection, selectedData);
-    // }
     return selectedData;
   }
 
@@ -142,11 +147,11 @@ export class Layer<T = any, U = any> implements BaseLayer<T, U> {
     if (renderable.intersects(selection)) {
       selectedData.push(renderable.getData());
     }
-    // renderable.getChildren().forEach(child => this.checkRenderableSelection(child, selection, selectedData));
   }
-
+  type: LayerType = 'svg'; // 添加类型标识
+  
   // 实现 BaseLayer 接口的 updateSize 方法
   updateSize(w: number, h: number): void {
-    this.updateCanvasSize(w, h);
+    this.updateSvgSize(w, h);
   }
 }
