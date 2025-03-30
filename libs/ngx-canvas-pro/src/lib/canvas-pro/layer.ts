@@ -1,6 +1,7 @@
 import {
   map,
   Observable,
+  of,
   shareReplay,
   Subject,
   tap,
@@ -20,8 +21,8 @@ export class Layer<T = any, U = any> implements BaseLayer<T, U> {
   type: LayerType = 'canvas'; // 添加类型标识
   canvas: OffscreenCanvas; // 画在哪里？
   ctx: OffscreenCanvasRenderingContext2D | null;
-  dataSource: Observable<T> = new Observable(); // 画什么？
-  trigger: Observable<U> = new Observable(); // 何时画？
+  dataSource: Observable<T> = new Observable<T>(); // 画什么？
+  trigger: Observable<U> = of(); // 何时画？
   animation: AnimationObject<T> = new NoopAnimation();
   event$ = new Subject<CpBaseEvent>();
   eventObservable?: Observable<
@@ -71,8 +72,12 @@ export class Layer<T = any, U = any> implements BaseLayer<T, U> {
     this.event$.next(evt);
   }
 
-  setDataSource(dataSource: Observable<T>) {
-    this.dataSource = dataSource;
+  setDataSource(dataSource: Observable<T> | T) {
+    if (dataSource instanceof Observable) {
+      this.dataSource = dataSource;
+    } else {
+      this.dataSource = of(dataSource);
+    }
   }
 
   setTrigger(trigger: Observable<U>) {

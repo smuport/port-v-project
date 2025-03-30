@@ -19,6 +19,33 @@ import { ParticleLayer } from './particle-layer';
   template: `
     <div class="demo-container">
       <canvas-pro #canvasPro [interactionConfig]="interactionConfig"></canvas-pro>
+      
+      <!-- 添加操作面板 -->
+      <div class="control-panel" [class.collapsed]="isPanelCollapsed">
+        <div class="panel-header" (click)="togglePanel()">
+          <h3>操作指南 {{ isPanelCollapsed ? '▼' : '▲' }}</h3>
+        </div>
+        @if (!isPanelCollapsed) {
+          <div class="panel-content">
+            <h4>鼠标操作</h4>
+            <ul>
+              <li><strong>拖拽</strong>: 平移画布</li>
+              <li><strong>双击</strong>: 在点击位置创建爆炸效果</li>
+              <li><strong>滚轮</strong>: 缩放画布</li>
+            </ul>
+            
+            <h4>组合键操作</h4>
+            <ul>
+              <li><strong>Shift + 拖拽</strong>: 创建粒子轨迹</li>
+              <li><strong>Ctrl + 拖拽</strong>: 旋转画布</li>
+              <li><strong>Alt + 拖拽</strong>: 缩放画布</li>
+              <li><strong>Ctrl + 滚轮</strong>: 切换粒子颜色</li>
+              <li><strong>Alt + 滚轮</strong>: 调整粒子大小</li>
+              <li><strong>Shift + 滚轮</strong>: 水平平移画布</li>
+            </ul>
+          </div>
+        }
+      </div>
     </div>
   `,
   styles: [
@@ -27,6 +54,63 @@ import { ParticleLayer } from './particle-layer';
         width: 100%;
         height: 100vh;
         background-color: #000;
+        position: relative;
+      }
+      
+      .control-panel {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        width: 250px;
+        background-color: rgba(0, 0, 0, 0.7);
+        border-radius: 8px;
+        color: white;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+        transition: all 0.3s ease;
+        z-index: 1000;
+      }
+      
+      .panel-header {
+        padding: 10px 15px;
+        cursor: pointer;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+      }
+      
+      .panel-header h3 {
+        margin: 0;
+        font-size: 16px;
+        display: flex;
+        justify-content: space-between;
+      }
+      
+      .panel-content {
+        padding: 10px 15px;
+        max-height: 300px;
+        overflow-y: auto;
+      }
+      
+      .panel-content h4 {
+        margin: 10px 0 5px;
+        font-size: 14px;
+        color: #00BFFF;
+      }
+      
+      .panel-content ul {
+        margin: 0;
+        padding-left: 20px;
+      }
+      
+      .panel-content li {
+        margin-bottom: 5px;
+        font-size: 13px;
+      }
+      
+      .panel-content strong {
+        color: #FFA500;
+      }
+      
+      .collapsed {
+        width: 150px;
       }
     `,
   ],
@@ -41,6 +125,9 @@ export class ParticleDemoComponent implements OnInit, OnDestroy {
   private effectsLayer!: ParticleLayer;
   private meteorLayer!: ParticleLayer; // 流星图层
   private trailLayer!: ParticleLayer; // 新增轨迹图层
+  
+  // 添加面板折叠状态
+  isPanelCollapsed = false;
   
   // 粒子配置状态
   private particleConfig = {
@@ -72,6 +159,11 @@ export class ParticleDemoComponent implements OnInit, OnDestroy {
       customHandler: this.handleParticleConfig.bind(this)
     }
   };
+
+  // 切换面板折叠状态
+  togglePanel(): void {
+    this.isPanelCollapsed = !this.isPanelCollapsed;
+  }
 
   ngOnInit(): void {
     // 获取 CanvasProComponent 实例

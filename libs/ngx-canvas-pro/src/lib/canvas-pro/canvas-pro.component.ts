@@ -123,15 +123,13 @@ export class CanvasProComponent implements OnDestroy, AfterViewInit {
     this.viewport.nativeElement.addEventListener('blur', (event) =>
       this.onMouseUp(event)
     );
-    // 添加滚轮事件监听
-    this.viewport.nativeElement.addEventListener('wheel', (event) =>
-      this.onWheel(event)
-    );
+
   }
 
   updateViewportSize() {
     this.renderHandler.updateViewportSize(this.viewport, this.elRef);
   }
+  
 
   // 修改 addLayer 方法以支持两种类型的 Layer
   addLayer(layer: BaseLayer) {
@@ -263,8 +261,86 @@ export class CanvasProComponent implements OnDestroy, AfterViewInit {
     this.viewportCtx.canvas.style.cursor = 'all-scroll';
     const dx = event.clientX - this.interactionHandler.dragState.startPos.x;
     const dy = event.clientY - this.interactionHandler.dragState.startPos.y;
-    this.translatePos.x += dx;
-    this.translatePos.y += dy;
+    
+    // 计算新的平移位置
+    const newTranslateX = this.translatePos.x + dx;
+    const newTranslateY = this.translatePos.y + dy;
+    
+    // 获取视口尺寸
+    const viewportWidth = this.viewport.nativeElement.width;
+    const viewportHeight = this.viewport.nativeElement.height;
+    
+    // 获取所有Layer中最大的尺寸
+    let maxLayerWidth = 0;
+    let maxLayerHeight = 0;
+    
+    for (const layer of this.layers) {
+      if (layer instanceof Layer) {
+        maxLayerWidth = Math.max(maxLayerWidth, layer.w);
+        maxLayerHeight = Math.max(maxLayerHeight, layer.h);
+      }
+    }
+    
+    // 计算允许的最大平移范围
+    // 正方向不能超过0（即不能露出Layer左上方的空白）
+    // 负方向不能超过视口尺寸与Layer尺寸的差值（不能露出Layer右下方的空白）
+    const minX = Math.min(0, viewportWidth - maxLayerWidth * this.scale);
+    const minY = Math.min(0, viewportHeight - maxLayerHeight * this.scale);
+    
+    // 应用边界限制
+    this.translatePos.x = Math.max(minX, Math.min(0, newTranslateX));
+    this.translatePos.y = Math.max(minY, Math.min(0, newTranslateY));
+    
+    this.drawVierport();
+  }
+
+  // 滚轮垂直平移处理
+  handleWheelPanVertical(event: WheelEvent) {
+    // 计算新的平移位置
+    const newTranslateY = this.translatePos.y - event.deltaY;
+    
+    // 获取视口尺寸
+    const viewportHeight = this.viewport.nativeElement.height;
+    
+    // 获取所有Layer中最大的高度
+    let maxLayerHeight = 0;
+    for (const layer of this.layers) {
+      if (layer instanceof Layer) {
+        maxLayerHeight = Math.max(maxLayerHeight, layer.h);
+      }
+    }
+    
+    // 计算允许的最大垂直平移范围
+    const minY = Math.min(0, viewportHeight - maxLayerHeight * this.scale);
+    
+    // 应用边界限制
+    this.translatePos.y = Math.max(minY, Math.min(0, newTranslateY));
+    
+    this.drawVierport();
+  }
+
+  // 滚轮水平平移处理
+  handleWheelPanHorizontal(event: WheelEvent) {
+    // 计算新的平移位置
+    const newTranslateX = this.translatePos.x - event.deltaY;
+    
+    // 获取视口尺寸
+    const viewportWidth = this.viewport.nativeElement.width;
+    
+    // 获取所有Layer中最大的宽度
+    let maxLayerWidth = 0;
+    for (const layer of this.layers) {
+      if (layer instanceof Layer) {
+        maxLayerWidth = Math.max(maxLayerWidth, layer.w);
+      }
+    }
+    
+    // 计算允许的最大水平平移范围
+    const minX = Math.min(0, viewportWidth - maxLayerWidth * this.scale);
+    
+    // 应用边界限制
+    this.translatePos.x = Math.max(minX, Math.min(0, newTranslateX));
+    
     this.drawVierport();
   }
 
@@ -334,18 +410,6 @@ export class CanvasProComponent implements OnDestroy, AfterViewInit {
     this.drawVierport();
   }
 
-  // 滚轮垂直平移处理
-  handleWheelPanVertical(event: WheelEvent) {
-    this.translatePos.y -= event.deltaY;
-    this.drawVierport();
-  }
-
-  // 滚轮水平平移处理
-  handleWheelPanHorizontal(event: WheelEvent) {
-    this.translatePos.x -= event.deltaY;
-    this.drawVierport();
-  }
-
   // 获取鼠标位置
   getMousePos(event: MouseEvent) {
     return this.renderHandler.getMousePos(event, this.viewport);
@@ -403,6 +467,11 @@ export class CanvasProComponent implements OnDestroy, AfterViewInit {
       const cpRUpEvent = new CpRightClickUpEvent(this.getAxis($event));
       this.triggerEvent(cpRUpEvent);
     }
+  }
+
+  @HostListener('wheel', ['$event'])
+  onWheelEvent(event: WheelEvent): void {
+    this.onWheel(event);
   }
 
   triggerEvent<T extends CpBaseEvent>(cpEvent: T) {

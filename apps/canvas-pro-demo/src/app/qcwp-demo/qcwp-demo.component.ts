@@ -5,7 +5,6 @@ import { QcwpComponent } from '@smuport/ngx-port-v';
   selector: 'app-qcwp-demo',
   template: `
     <div class="qcwp-demo-container">
-      <h1>岸桥分路计划演示</h1>
       <app-qcwp></app-qcwp>
     </div>
   `,

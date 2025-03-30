@@ -1,22 +1,23 @@
 import { Renderable, RenderStyle } from './renderable';
 
-export class CustomRenderable<D> extends Renderable {
+export class SvgRenderable<D> extends Renderable {
+  renderer: (svgRoot: SVGElement, data: D) => void;
 
-  private renderer: (ctx: OffscreenCanvasRenderingContext2D, data: D) => void;
   constructor(
     data: D,
-    renderer: (ctx: OffscreenCanvasRenderingContext2D, data: D) => void
+    renderer: (svgRoot: SVGElement, data: D) => void
   ) {
     super(data);
     this.renderer = renderer;
   }
 
   override render(ctx: OffscreenCanvasRenderingContext2D): void {
-    this.renderer(ctx, this.getData());
+    throw new Error('Svg renderable not support render canvas.');
   }
 
   override renderSvg?(svgRoot: SVGElement): SVGElement {
-    throw new Error('Canvas renderable not support renderSvg.');
+    this.renderer(svgRoot, this.getData());
+    return svgRoot;
   }
 
   override extractData(data: any): D {

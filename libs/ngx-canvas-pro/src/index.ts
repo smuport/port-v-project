@@ -1,6 +1,7 @@
 export * from './lib/canvas-pro/canvas-pro.component';
 export * from './lib/canvas-pro/renderable/renderable';
 export * from './lib/canvas-pro/renderable/custom-renderable';
+export * from './lib/canvas-pro/renderable/svg-renderable';
 export * from './lib/canvas-pro/event';
 export * from './lib/canvas-pro/layer';
 export * from './lib/canvas-pro/base-layer';

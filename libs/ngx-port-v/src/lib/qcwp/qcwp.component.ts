@@ -2,7 +2,7 @@ import { Component, ElementRef, OnInit, ViewChild, AfterViewInit, HostListener, 
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Crane, Task, QcwpConfig } from './qcwp.model';
-import { CanvasProComponent, CustomRenderable, Layer, ViewportInteractionConfig } from '@smuport/ngx-canvas-pro';
+import { CanvasProComponent, CustomRenderable, Layer, SvgLayer, SvgRenderable, ViewportInteractionConfig } from '@smuport/ngx-canvas-pro';
 import { of, Subject } from 'rxjs';
 
 @Component({
@@ -23,9 +23,9 @@ export class QcwpComponent implements OnInit, AfterViewInit, OnDestroy {
   
   // 常量配置，与原始 demo 保持一致
   config: QcwpConfig = {
-    unitTime: 2, // 单位箱子的作业时间（分钟）
+    unitTime: 2.5, // 单位箱子的作业时间（分钟）
     bayWidth: 50, // 甘特图中贝位的宽度
-    timeHeight: 10, // 甘特图中每分钟的高度
+    timeHeight: 5, // 甘特图中每分钟的高度
     taskWidth: 40, // 任务块的宽度
     leftPadding: 100, // 左侧预留空间
     craneColors: ['#3498db', '#2ecc71', '#e74c3c', '#f39c12', '#9b59b6', '#1abc9c'] // 岸桥颜色
@@ -47,7 +47,7 @@ export class QcwpComponent implements OnInit, AfterViewInit, OnDestroy {
   }
   
   // CanvasPro 相关变量
-  private ganttLayer!: Layer;
+  private ganttLayer!: SvgLayer;
   private gridLayer!: Layer;
   private ganttData$ = new Subject<any>();
   private gridData$ = new Subject<any>();
@@ -76,12 +76,12 @@ export class QcwpComponent implements OnInit, AfterViewInit, OnDestroy {
     this.destroy$.complete();
   }
   
-  @HostListener('window:resize')
-  onResize(): void {
-    if (this.ganttCanvas) {
-      this.drawGanttChart();
-    }
-  }
+//   @HostListener('window:resize')
+//   onResize(): void {
+//     if (this.ganttCanvas) {
+//       this.drawGanttChart();
+//     }
+//   }
   
   initTasks(): void {
     // 初始化示例任务，与原始 demo 保持一致
@@ -271,10 +271,11 @@ export class QcwpComponent implements OnInit, AfterViewInit, OnDestroy {
   private initGanttChart(): void {
     if (!this.ganttCanvas) return;
     
-    // 创建网格图层
-    this.gridLayer = new Layer('grid-layer', 15000, 1500);
+    // 创建网格图层 (仍然使用 Canvas)
+    this.gridLayer = new Layer('grid-layer', 1500, 15000);
     this.gridLayer.setDataSource(this.gridData$);
     this.gridLayer.setTrigger(of(true));
+   
     
     // 添加网格渲染器
     this.gridLayer.addRenderable(new CustomRenderable(
@@ -283,32 +284,117 @@ export class QcwpComponent implements OnInit, AfterViewInit, OnDestroy {
             this.drawGrid(ctx);
           }
     ));
-
     
-    // 创建甘特图图层
-    this.ganttLayer = new Layer('gantt-layer', 15000, 1500);
+    // 创建甘特图图层 (使用 SVG)
+    this.ganttLayer = new SvgLayer('gantt-layer', 1500, 1500);
     this.ganttLayer.setDataSource(this.ganttData$);
     this.ganttLayer.setTrigger(of(true));
-    
-    // 添加甘特图渲染器
-    this.ganttLayer.addRenderable(new CustomRenderable(
+    this.ganttLayer.addRenderable(new SvgRenderable(
         null,
-        (ctx: OffscreenCanvasRenderingContext2D, data) => {
-            this.drawGanttTasks(ctx, data);
+        (svgRoot: SVGElement) => {
+            this.drawGanttTasksSvg(svgRoot);
           }
     ));
-
+    
+    // 启用 SVG 图层的鼠标事件
+    this.ganttLayer.svgElement.style.pointerEvents = 'all';
     
     // 添加图层到画布
     this.ganttCanvas.addLayer(this.gridLayer);
     this.ganttCanvas.addLayer(this.ganttLayer);
     
-    // 配置交互行为 - 设置滚轮只能上下平移
-    
     // 启动数据流
     this.ganttCanvas.startDataflow();
     this.ganttCanvas.startAnimation();
     this.ganttCanvas.startListenEvent(); 
+  }
+
+  // 新增 SVG 绘制甘特图任务的方法
+  private drawGanttTasksSvg(svgRoot: SVGElement): void {
+    // 清空现有的 SVG 元素
+    while (svgRoot.firstChild) {
+      svgRoot.removeChild(svgRoot.firstChild);
+    }
+    
+    // 绘制每个岸桥的任务
+    for (const craneId in this.assignedTasks) {
+      const tasks = this.assignedTasks[craneId];
+      let currentTime = 0;
+      
+      // 为每个岸桥选择一个颜色
+      const colorIndex = (parseInt(craneId) - 1) % this.config.craneColors.length;
+      const color = this.config.craneColors[colorIndex];
+      
+      tasks.forEach((task: Task) => {
+        // 计算任务在甘特图中的位置
+        const x = this.config.leftPadding + ((task.bayNumber - 1) / 2) * this.config.bayWidth;
+        const y = currentTime * this.config.timeHeight;
+        
+        // 计算任务的高度（时间）
+        const taskTime = task.containerCount * this.config.unitTime;
+        const height = taskTime * this.config.timeHeight;
+        
+        // 创建任务块 SVG 组
+        const taskGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        taskGroup.setAttribute('data-task-id', task.id);
+        taskGroup.setAttribute('data-crane-id', craneId);
+        
+        // 创建任务块矩形
+        const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+        rect.setAttribute('x', (x - this.config.taskWidth/2).toString());
+        rect.setAttribute('y', y.toString());
+        rect.setAttribute('width', this.config.taskWidth.toString());
+        rect.setAttribute('height', height.toString());
+        rect.setAttribute('fill', color);
+        rect.setAttribute('stroke', '#333');
+        rect.setAttribute('stroke-width', '1');
+        
+        // 添加点击事件
+        taskGroup.addEventListener('click', (event) => {
+          // 可以在这里添加任务块的点击事件处理
+          console.log(`任务 ${task.id} 被点击`);
+        });
+        
+        // 添加文本 - 岸桥名称
+        const craneText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        craneText.setAttribute('x', x.toString());
+        craneText.setAttribute('y', (y + height / 2 - 10).toString());
+        craneText.setAttribute('text-anchor', 'middle');
+        craneText.setAttribute('fill', '#fff');
+        craneText.setAttribute('font-size', '10px');
+        craneText.textContent = `岸桥 ${craneId}`;
+        
+        // 添加文本 - 贝位号
+        const bayText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        bayText.setAttribute('x', x.toString());
+        bayText.setAttribute('y', (y + height / 2).toString());
+        bayText.setAttribute('text-anchor', 'middle');
+        bayText.setAttribute('fill', '#fff');
+        bayText.setAttribute('font-size', '10px');
+        bayText.textContent = `贝位: ${task.bayNumber}`;
+        
+        // 添加文本 - 箱量
+        const containerText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        containerText.setAttribute('x', x.toString());
+        containerText.setAttribute('y', (y + height / 2 + 10).toString());
+        containerText.setAttribute('text-anchor', 'middle');
+        containerText.setAttribute('fill', '#fff');
+        containerText.setAttribute('font-size', '10px');
+        containerText.textContent = `${task.containerCount}箱`;
+        
+        // 将所有元素添加到任务组
+        taskGroup.appendChild(rect);
+        taskGroup.appendChild(craneText);
+        taskGroup.appendChild(bayText);
+        taskGroup.appendChild(containerText);
+        
+        // 将任务组添加到 SVG 图层
+        svgRoot.appendChild(taskGroup);
+        
+        // 更新当前时间
+        currentTime += taskTime;
+      });
+    }
   }
   
   private drawGanttChart(): void {
@@ -323,6 +409,7 @@ export class QcwpComponent implements OnInit, AfterViewInit, OnDestroy {
       config: this.config
     });
     
+    
     // 重绘画布
     this.ganttCanvas.drawVierport();
   }
@@ -334,12 +421,14 @@ export class QcwpComponent implements OnInit, AfterViewInit, OnDestroy {
     
     const width = ctx.canvas.width;
     const height = ctx.canvas.height;
+    console.log(width, height);
     
     // 绘制水平时间线
-    for (let i = 0; i <= 200; i++) {
+    for (let i = 0; i <= 2000; i++) {
       const y = i * this.config.timeHeight * 10; // 每10分钟一条主线
       
       if (y > height) break;
+      console.log(y);
       
       // 绘制主时间线
       ctx.beginPath();
@@ -398,55 +487,6 @@ export class QcwpComponent implements OnInit, AfterViewInit, OnDestroy {
     ctx.lineWidth = 2;
     ctx.strokeStyle = '#999';
     ctx.stroke();
-  }
-  
-  private drawGanttTasks(ctx: OffscreenCanvasRenderingContext2D, data: any): void {
-    const { assignedTasks, config } = data;
-    
-    // 绘制每个岸桥的任务
-    for (const craneId in assignedTasks) {
-      const tasks = assignedTasks[craneId];
-      let currentTime = 0;
-      
-      // 为每个岸桥选择一个颜色
-      const colorIndex = (parseInt(craneId) - 1) % config.craneColors.length;
-      const color = config.craneColors[colorIndex];
-      
-      tasks.forEach((task: Task) => {
-        // 计算任务在甘特图中的位置
-        const x = config.leftPadding + ((task.bayNumber - 1) / 2) * config.bayWidth;
-        const y = currentTime * config.timeHeight;
-        
-        // 计算任务的高度（时间）
-        const taskTime = task.containerCount * config.unitTime;
-        const height = taskTime * config.timeHeight;
-        
-        // 绘制任务块
-        ctx.fillStyle = color;
-        ctx.fillRect(x - config.taskWidth/2, y, config.taskWidth, height);
-        
-        // 绘制任务边框
-        ctx.strokeStyle = '#333';
-        ctx.lineWidth = 1;
-        ctx.strokeRect(x - config.taskWidth/2, y, config.taskWidth, height);
-        
-        // 绘制任务信息
-        ctx.fillStyle = '#fff';
-        ctx.font = '10px Arial';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        
-        // 绘制岸桥名称
-        ctx.fillText(`岸桥 ${craneId}`, x, y + height / 2 - 10);
-        // 绘制贝位号
-        ctx.fillText(`贝位: ${task.bayNumber}`, x, y + height / 2);
-        // 绘制箱量
-        ctx.fillText(`${task.containerCount}箱`, x, y + height / 2 + 10);
-        
-        // 更新当前时间
-        currentTime += taskTime;
-      });
-    }
   }
   
   getTaskColor(task: Task | null): string {
