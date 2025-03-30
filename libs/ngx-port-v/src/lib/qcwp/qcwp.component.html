@@ -158,8 +158,8 @@
       </div>
       <div class="section gantt-chart">
         <h2>甘特图</h2>
-        <div id="gantt-container">
-          <canvas #ganttChart></canvas>
+        <div id="gantt-container" style="width: 100%; height: 500px;">
+          <canvas-pro #ganttCanvas [interactionConfig]="interactionConfig"></canvas-pro>
         </div>
       </div>
     </div>
