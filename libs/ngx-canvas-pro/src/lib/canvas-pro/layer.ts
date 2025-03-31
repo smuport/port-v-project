@@ -11,6 +11,7 @@ import { AnimationObject, NoopAnimation } from './animation-object';
 import { CpBaseEvent } from './event';
 import { Renderable } from './renderable/renderable';
 import { BaseLayer, LayerType } from './base-layer';
+import { CustomRenderable } from './renderable/custom-renderable';
 
 export type DataMode = 'pull' | 'push';
 
@@ -82,14 +83,22 @@ export class Layer<T = any, U = any> implements BaseLayer<T, U> {
 
   setTrigger(trigger: Observable<U>) {
     this.trigger = trigger;
+    return this;
+  }
+
+  setRenderer(renderer: (ctx: OffscreenCanvasRenderingContext2D, data: T) => void) {
+    this.renderables.push(new CustomRenderable(renderer));
+    return this;   
   }
 
   addRenderable(renderable: Renderable) {
     this.renderables.push(renderable);
+    return this;
   }
 
-  setAnimation(ao: AnimationObject<T>): void {
+  setAnimation(ao: AnimationObject<T>): Layer {
     this.animation = ao;
+    return this;
   }
 
   updateCanvasSize(w: number, h: number) {
@@ -144,8 +153,11 @@ export class Layer<T = any, U = any> implements BaseLayer<T, U> {
     selection: { x: number; y: number; w: number; h: number },
     selectedData: any[]
   ) {
-    if (renderable.intersects(selection)) {
-      selectedData.push(renderable.getData());
+    const selectedItems = renderable.checkSelection(selection);
+    if (selectedItems.length > 0) {
+      selectedItems.forEach((item: any) => {
+        selectedData.push(item);
+      });
     }
     // renderable.getChildren().forEach(child => this.checkRenderableSelection(child, selection, selectedData));
   }

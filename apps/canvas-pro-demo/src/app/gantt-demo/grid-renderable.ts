@@ -90,11 +90,6 @@ export class GridRenderable extends Renderable<GanttConfig> {
     return svgRoot;
   }
 
-  override intersects(selection: { x: number; y: number; w: number; h: number }): boolean {
-    // 网格总是被选中
-    return true;
-  }
-
   // 判断日期是否是今天
   private isToday(date: Date): boolean {
     const today = new Date();

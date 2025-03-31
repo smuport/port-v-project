@@ -56,13 +56,13 @@ export abstract class Renderable<D = any, S extends RenderStyle = any> {
   }
 
   // 检查是否与选框相交
-  intersects(selection: {
+  checkSelection(selection: {
     x: number;
     y: number;
     w: number;
     h: number;
-  }): boolean {
-    return false;
+  }): any[] {
+    return [];
     // const { x, y } = this.configuator.getStyle();
     // if (x === undefined || y === undefined) {
     // return false;

@@ -10,7 +10,7 @@ export interface DragState {
 }
 
 // 拖拽行为类型
-export type DragInteractionMode = 'pan' | 'zoom' | 'rotate' | 'none' | 'custom';
+export type DragInteractionMode = 'pan' | 'zoom' | 'rotate' | 'none' | 'custom' | 'frame-select';
 
 // 滚轮行为类型
 export type WheelInteractionMode =

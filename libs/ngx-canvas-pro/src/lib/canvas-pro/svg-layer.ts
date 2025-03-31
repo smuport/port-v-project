@@ -41,7 +41,7 @@ export class SvgLayer<T = any, U = any> implements BaseLayer<T, U> {
     this.svgElement.style.position = 'absolute';
     this.svgElement.style.top = '0';
     this.svgElement.style.left = '0';
-    this.svgElement.style.pointerEvents = 'none'; // 默认不接收鼠标事件
+    // this.svgElement.style.pointerEvents = 'none'; // 默认不接收鼠标事件
     this.w = w;
     this.h = h;
   }
@@ -144,8 +144,11 @@ export class SvgLayer<T = any, U = any> implements BaseLayer<T, U> {
     selection: { x: number; y: number; w: number; h: number },
     selectedData: any[]
   ) {
-    if (renderable.intersects(selection)) {
-      selectedData.push(renderable.getData());
+    const selectedItems = renderable.checkSelection(selection);
+    if (selectedItems.length > 0) {
+      selectedItems.forEach((item: any) => {
+        selectedData.push(item);
+      });
     }
   }
   type: LayerType = 'svg'; // 添加类型标识

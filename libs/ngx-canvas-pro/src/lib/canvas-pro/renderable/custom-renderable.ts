@@ -3,11 +3,12 @@ import { Renderable, RenderStyle } from './renderable';
 export class CustomRenderable<D> extends Renderable {
 
   private renderer: (ctx: OffscreenCanvasRenderingContext2D, data: D) => void;
+  selectionChecker: (selection: { x: number; y: number; w: number; h: number; }) => any[] = () => [];
   constructor(
-    data: D,
-    renderer: (ctx: OffscreenCanvasRenderingContext2D, data: D) => void
+    renderer: (ctx: OffscreenCanvasRenderingContext2D, data: D) => void,
+    initialData?: D,
   ) {
-    super(data);
+    super(initialData);
     this.renderer = renderer;
   }
 
@@ -22,5 +23,15 @@ export class CustomRenderable<D> extends Renderable {
   override extractData(data: any): D {
     this.setData(data);
     return data;
+  }
+
+  setSelectionChecker(
+    checker: (selection: { x: number; y: number; w: number; h: number; }) => any[],
+  ) {
+    this.selectionChecker = checker;
+  }
+
+  override checkSelection(selection: { x: number; y: number; w: number; h: number; }): any[] {
+      return this.selectionChecker(selection);
   }
 }

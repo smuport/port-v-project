@@ -220,28 +220,28 @@ export class GanttSvgRenderable extends Renderable<GanttTask[]> {
     return this.tasks;
   }
 
-  override intersects(selection: { x: number; y: number; w: number; h: number }): boolean {
-    // 简单实现：检查是否有任务在选择框内
-    return this.tasks.some(task => {
-      const startDays = this.getDaysDifference(this.config.startDate, task.startDate);
-      const endDays = this.getDaysDifference(this.config.startDate, task.endDate);
-      const x = startDays * this.config.columnWidth;
-      const width = (endDays - startDays) * this.config.columnWidth;
+  // override intersects(selection: { x: number; y: number; w: number; h: number }): boolean {
+  //   // 简单实现：检查是否有任务在选择框内
+  //   return this.tasks.some(task => {
+  //     const startDays = this.getDaysDifference(this.config.startDate, task.startDate);
+  //     const endDays = this.getDaysDifference(this.config.startDate, task.endDate);
+  //     const x = startDays * this.config.columnWidth;
+  //     const width = (endDays - startDays) * this.config.columnWidth;
       
-      // 找到任务在列表中的索引
-      const index = this.tasks.indexOf(task);
-      const y = this.config.headerHeight + index * this.config.rowHeight;
-      const height = this.config.rowHeight;
+  //     // 找到任务在列表中的索引
+  //     const index = this.tasks.indexOf(task);
+  //     const y = this.config.headerHeight + index * this.config.rowHeight;
+  //     const height = this.config.rowHeight;
       
-      // 检查矩形相交
-      return !(
-        x + width < selection.x ||
-        x > selection.x + selection.w ||
-        y + height < selection.y ||
-        y > selection.y + selection.h
-      );
-    });
-  }
+  //     // 检查矩形相交
+  //     return !(
+  //       x + width < selection.x ||
+  //       x > selection.x + selection.w ||
+  //       y + height < selection.y ||
+  //       y > selection.y + selection.h
+  //     );
+  //   });
+  // }
 
   // 计算两个日期之间的天数差
   private getDaysDifference(date1: Date, date2: Date): number {

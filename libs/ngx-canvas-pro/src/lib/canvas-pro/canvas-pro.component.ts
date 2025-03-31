@@ -14,6 +14,7 @@ import { SvgLayer } from './svg-layer';
 import { BaseLayer } from './base-layer';
 import {
   CpBaseEvent,
+  CpFrameSelectEvent,
   CpRightClickEvent,
   CpRightClickUpEvent,
   CpRightMoveEvent,
@@ -40,10 +41,10 @@ export class CanvasProComponent implements OnDestroy, AfterViewInit {
   svgContainer: HTMLDivElement;
 
   translatePos = { x: 0, y: 0 };
-  isDragging = false;
-  isRightDragging = false;
-  startDragPos = { x: 0, y: 0 };
-  endDragPos = { x: 0, y: 0 };
+  // isDragging = false;
+  // isRightDragging = false;
+  // startDragPos = { x: 0, y: 0 };
+  // endDragPos = { x: 0, y: 0 };
   scale = 1;
   rotation = 0;
 
@@ -80,7 +81,8 @@ export class CanvasProComponent implements OnDestroy, AfterViewInit {
     this.svgContainer.style.left = '0';
     this.svgContainer.style.width = '100%';
     this.svgContainer.style.height = '100%';
-    this.svgContainer.style.pointerEvents = 'none';
+    // 允许 SVG 元素接收指针事件
+    this.svgContainer.style.pointerEvents = 'auto';
   }
 
   ngAfterViewInit(): void {
@@ -90,6 +92,9 @@ export class CanvasProComponent implements OnDestroy, AfterViewInit {
 
     // 添加 SVG 容器到 DOM
     this.viewport.nativeElement.parentElement?.appendChild(this.svgContainer);
+    
+    // 为 SVG 容器添加事件监听，将事件传递给 Canvas
+    this.setupSvgEventForwarding();
 
     // 初始化各个处理器
     this.interactionHandler.initialize(this);
@@ -98,6 +103,79 @@ export class CanvasProComponent implements OnDestroy, AfterViewInit {
 
     this.updateViewportSize();
     this.addEvents();
+  }
+
+  // 添加新方法：设置 SVG 事件转发到 Canvas
+  private setupSvgEventForwarding(): void {
+  // 需要转发的鼠标事件类型
+  const eventTypes = [
+    'mousedown', 
+    'mousemove', 
+    'mouseup', 
+    'wheel',
+    'contextmenu'
+  ];
+  
+  // 为每种事件类型添加监听器
+  eventTypes.forEach(eventType => {
+    this.svgContainer.addEventListener(eventType, (event: Event) => {
+      // 检查事件目标是否为 SVG 元素
+      const target = event.target as HTMLElement;
+      const isSvgElement = 
+                          target.tagName === 'g' || 
+                          target.tagName === 'rect' || 
+                          target.tagName === 'circle' || 
+                          target.tagName === 'path' ||
+                          target.tagName === 'polygon' ||
+                          target.tagName === 'text';
+      
+      // 如果点击的是 SVG 元素，不转发事件，让 SVG 元素自己处理
+      if (isSvgElement) {
+        // 但仍然需要阻止右键菜单
+        if (eventType === 'contextmenu') {
+          event.preventDefault();
+        }
+        return;
+      }
+      
+      // 如果点击的是 SVG 容器的空白区域，转发事件到 Canvas
+      const canvasEvent = new Event(eventType, {
+        bubbles: true,
+        cancelable: true,
+      });
+      
+      // 复制鼠标事件的属性
+      if (event instanceof MouseEvent) {
+        Object.defineProperties(canvasEvent, {
+          clientX: { value: event.clientX },
+          clientY: { value: event.clientY },
+          button: { value: event.button },
+          buttons: { value: event.buttons },
+          altKey: { value: event.altKey },
+          ctrlKey: { value: event.ctrlKey },
+          shiftKey: { value: event.shiftKey },
+          metaKey: { value: event.metaKey },
+        });
+      }
+      
+      // 复制滚轮事件的属性
+      if (event instanceof WheelEvent) {
+        Object.defineProperties(canvasEvent, {
+          deltaX: { value: event.deltaX },
+          deltaY: { value: event.deltaY },
+          deltaZ: { value: event.deltaZ },
+          deltaMode: { value: event.deltaMode },
+        });
+      }
+      
+      // 转发事件到 Canvas
+      this.viewport.nativeElement.dispatchEvent(canvasEvent);
+      
+      // 阻止原始事件的默认行为和冒泡
+      event.preventDefault();
+      event.stopPropagation();
+    });
+  });
   }
 
   @HostListener('window:resize', ['$event'])
@@ -121,9 +199,10 @@ export class CanvasProComponent implements OnDestroy, AfterViewInit {
     );
     // 监听窗口失去焦点事件，防止拖动状态保持
     this.viewport.nativeElement.addEventListener('blur', (event) =>
-      this.onMouseUp(event)
+      this.onBlur(event)
     );
-
+    // 添加全局鼠标松开事件监听，处理鼠标在画布外松开的情况
+    window.addEventListener('mouseup', (event) => this.onGlobalMouseUp(event));
   }
 
   updateViewportSize() {
@@ -142,6 +221,9 @@ export class CanvasProComponent implements OnDestroy, AfterViewInit {
     if (layer.type === 'svg') {
       const svgLayer = layer as SvgLayer;
       this.svgContainer.appendChild(svgLayer.svgElement);
+      
+      // 为 SVG 元素设置 pointer-events 属性，确保它可以接收事件
+      svgLayer.svgElement.style.pointerEvents = 'auto';
     }
     
     this.layers.push(layer);
@@ -240,16 +322,56 @@ export class CanvasProComponent implements OnDestroy, AfterViewInit {
   // 事件处理方法，现在只是代理到对应的处理器
   onMouseDown(event: MouseEvent) {
     this.interactionHandler.handleMouseDown(event);
-    this.startDragPos = { x: event.clientX, y: event.clientY };
+    // this.startDragPos = { x: event.clientX, y: event.clientY };
   }
 
   onMouseMove(event: MouseEvent) {
     this.interactionHandler.handleMouseMove(event, this.interactionConfig);
   }
 
+  // 添加框选相关属性 - 修改为公共属性以便 InteractionHandler 访问
+  public frameSelectRect = { x: 0, y: 0, width: 0, height: 0 };
+  public isFrameSelecting = false;
+  private selectedItems: any[] = [];
+
+  // onMouseUp(event?: MouseEvent | FocusEvent) {
+  //   this.interactionHandler.handleMouseUp(event as MouseEvent);
+  //   this.isDragging = false;
+  // }
+
+   // 添加 blur 事件处理方法
+   onBlur(event: FocusEvent): void {
+    // 如果正在框选，完成框选
+    if (this.isFrameSelecting) {
+      this.finishFrameSelect();
+    }
+    this.onMouseUp(event);
+  }
+
+  // 添加全局鼠标松开事件处理
+  onGlobalMouseUp(event: MouseEvent): void {
+    // 如果鼠标在画布外松开，但仍在框选状态，则完成框选
+    if (this.isFrameSelecting) {
+      this.finishFrameSelect();
+    }
+    
+    // 重置拖拽状态 - 只通过 interactionHandler 管理
+    if (this.interactionHandler.dragState.isDragging) {
+      this.interactionHandler.dragState.isDragging = false;
+    }
+  }
+
+  // 修改 onMouseUp 方法，处理框选完成
   onMouseUp(event?: MouseEvent | FocusEvent) {
+    console.log('onMouseUp', this.isFrameSelecting);
+    // 如果正在进行框选，完成框选
+    if (this.isFrameSelecting) {
+      this.finishFrameSelect();
+    }
+    
     this.interactionHandler.handleMouseUp(event as MouseEvent);
-    this.isDragging = false;
+    
+    // this.isDragging = false;
   }
 
   onWheel(event: WheelEvent) {
@@ -480,4 +602,106 @@ export class CanvasProComponent implements OnDestroy, AfterViewInit {
       layer.triggerEvent(cpEvent);
     }
   }
+
+  // 添加处理框选的方法
+  handleFrameSelect(event: MouseEvent) {
+    console.log('handleFrameSelect');
+    this.viewportCtx.canvas.style.cursor = 'crosshair';
+    
+    if (!this.isFrameSelecting) {
+      // 开始框选
+      this.isFrameSelecting = true;
+      const mousePos = this.getMousePos(event);
+      this.frameSelectRect = {
+        x: mousePos.x,
+        y: mousePos.y,
+        width: 0,
+        height: 0
+      };
+    } else {
+      // 更新框选区域
+      const mousePos = this.getMousePos(event);
+      this.frameSelectRect.width = mousePos.x - this.frameSelectRect.x;
+      this.frameSelectRect.height = mousePos.y - this.frameSelectRect.y;
+    }
+    
+    // 重绘视图，包括框选矩形
+    this.drawVierport();
+    this.drawFrameSelectRect();
+  }
+  
+  // 绘制框选矩形
+  private drawFrameSelectRect() {
+    if (!this.isFrameSelecting) return;
+    
+    this.viewportCtx.save();
+    this.viewportCtx.strokeStyle = 'rgba(0, 123, 255, 0.8)';
+    this.viewportCtx.lineWidth = 1;
+    this.viewportCtx.setLineDash([5, 3]);
+    this.viewportCtx.strokeRect(
+      this.frameSelectRect.x,
+      this.frameSelectRect.y,
+      this.frameSelectRect.width,
+      this.frameSelectRect.height
+    );
+    this.viewportCtx.fillStyle = 'rgba(0, 123, 255, 0.1)';
+    this.viewportCtx.fillRect(
+      this.frameSelectRect.x,
+      this.frameSelectRect.y,
+      this.frameSelectRect.width,
+      this.frameSelectRect.height
+    );
+    this.viewportCtx.restore();
+  }
+  
+  // 完成框选
+  finishFrameSelect() {
+    if (!this.isFrameSelecting) return;
+    
+    // 标准化选择框（处理负宽度/高度）
+    const selection = this.normalizeRect(this.frameSelectRect);
+    
+    // 检查每个图层中的元素是否在选择框内
+    this.selectedItems = [];
+    for (const layer of this.layers) {
+      if (layer instanceof Layer) {
+        const selectedData = layer.checkSelection(selection);
+        if (selectedData && selectedData.length > 0) {
+          this.selectedItems.push(...selectedData);
+        }
+      }
+    }
+    
+    // 触发框选事件
+    const cpFrameSelectEvent = new CpFrameSelectEvent();
+    cpFrameSelectEvent.selection = selection;
+    cpFrameSelectEvent.selectedItems = this.selectedItems;
+    this.triggerEvent(cpFrameSelectEvent);
+    
+    // 重置框选状态
+    this.isFrameSelecting = false;
+    this.frameSelectRect = { x: 0, y: 0, width: 0, height: 0 };
+    this.drawVierport();
+    
+    console.log('框选完成，选中项：', this.selectedItems);
+  }
+  
+  // 标准化矩形（处理负宽度/高度）
+  private normalizeRect(rect: { x: number, y: number, width: number, height: number }) {
+    const normalized = { x: rect.x, y: rect.y, w: rect.width, h: rect.height };
+    
+    if (normalized.w < 0) {
+      normalized.x += normalized.w;
+      normalized.w = Math.abs(normalized.w);
+    }
+    
+    if (normalized.h < 0) {
+      normalized.y += normalized.h;
+      normalized.h = Math.abs(normalized.h);
+    }
+    
+    return normalized;
+  }
+  
+
 }

@@ -279,7 +279,6 @@ export class QcwpComponent implements OnInit, AfterViewInit, OnDestroy {
     
     // 添加网格渲染器
     this.gridLayer.addRenderable(new CustomRenderable(
-        null,
         (ctx: OffscreenCanvasRenderingContext2D) => {
             this.drawGrid(ctx);
           }
@@ -290,7 +289,6 @@ export class QcwpComponent implements OnInit, AfterViewInit, OnDestroy {
     this.ganttLayer.setDataSource(this.ganttData$);
     this.ganttLayer.setTrigger(of(true));
     this.ganttLayer.addRenderable(new SvgRenderable(
-        null,
         (svgRoot: SVGElement) => {
             this.drawGanttTasksSvg(svgRoot);
           }

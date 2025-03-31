@@ -39,3 +39,10 @@ export interface UnloadInstruct {
     x: number
 }
 
+export interface HandlingTask {
+    vesselCode: string,
+    bay: string,
+    dh: string,
+    amount: number
+}
+

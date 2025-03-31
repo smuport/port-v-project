@@ -4,10 +4,10 @@ export class SvgRenderable<D> extends Renderable {
   renderer: (svgRoot: SVGElement, data: D) => void;
 
   constructor(
-    data: D,
-    renderer: (svgRoot: SVGElement, data: D) => void
+    renderer: (svgRoot: SVGElement, data: D) => void,
+    initialData?: D,
   ) {
-    super(data);
+    super(initialData);
     this.renderer = renderer;
   }
 

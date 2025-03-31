@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, ViewChild, AfterViewInit, ElementRef, Input, Output, EventEmitter } from '@angular/core';
-import { CanvasProComponent, CustomRenderable, Layer, ViewportInteractionConfig } from '@smuport/ngx-canvas-pro';
+import { CanvasProComponent, CpClickEvent, CustomRenderable, Layer, SvgLayer, SvgRenderable, ViewportInteractionConfig } from '@smuport/ngx-canvas-pro';
 import { BehaviorSubject, interval, startWith } from 'rxjs';
 import { Cell, VesBaySideView, Vessel } from '../model/vessel';
 
@@ -45,23 +45,25 @@ export class ShipSideComponent implements AfterViewInit {
   // 添加交互配置
   interactionConfig: ViewportInteractionConfig = {
     drag: {
-      default: 'none',     // 默认禁用平移
-      shift: 'pan',        // 按住 shift 键可以平移
+      default: 'frame-select',     // 默认禁用平移
+      shift: 'frame-select',        // 按住 shift 键可以平移
       ctrl: 'none',
       alt: 'none'
     },
     wheel: {
       default: 'none',     // 默认禁用缩放
-      shift: 'none',
+      shift: 'pan-horizontal',        // 按住 shift 键可以水平缩放
       ctrl: 'none',
       alt: 'none'
     }
   };
 
+  useSvgHandlingTask = true;
+
   constructor() { }
 
   ngAfterViewInit(): void {
-    this.drawRect();
+    // this.drawRect();
     if (this.canvasContainer) {
       const canvasElement: HTMLElement = this.canvasContainer.nativeElement;
       canvasElement.style.width = `${this.vesselData.allWidth}px`;
@@ -75,26 +77,18 @@ export class ShipSideComponent implements AfterViewInit {
     this.canvasPro.addLayer(vessel);
     const vesselBay = this.getVesselBayLayer('vesselBay');
     this.canvasPro.addLayer(vesselBay);
-    this.drawLayers();
     
-    // 添加键盘事件监听，用于更改鼠标样式
-    this.setupKeyboardEvents();
+    // 根据标志决定使用哪种实现
+    if (this.useSvgHandlingTask) {
+      this.canvasPro.addLayer(this.getSvgHandlingTaskLayer('svgHandlingTask'));
+    } else {
+      this.canvasPro.addLayer(this.getHandlingTaskLayer('handlingTask'));
+    }
+    
+    this.drawLayers();
+
   }
   
-  // 添加键盘事件处理方法
-  setupKeyboardEvents(): void {
-    window.addEventListener('keydown', (event) => {
-      if (event.key === 'Shift') {
-        this.canvasPro.viewport.nativeElement.style.cursor = 'move';
-      }
-    });
-
-    window.addEventListener('keyup', (event) => {
-      if (event.key === 'Shift') {
-        this.canvasPro.viewport.nativeElement.style.cursor = 'default';
-      }
-    });
-  }
 
   drawRect() {
     const overlayCanvas = document.getElementById('overlayCanvas') as HTMLCanvasElement;
@@ -226,24 +220,226 @@ export class ShipSideComponent implements AfterViewInit {
 
   getVesselLayer(layerName: string) {
     const insLayer = new Layer<any>(layerName);
-    const insSource = this.vesselDataUpdateSubject.asObservable();
-    insLayer.setDataSource(insSource);
-    const layerTrigger = interval(5 * 60 * 1000).pipe(startWith(0));
-    insLayer.setTrigger(layerTrigger);
-    insLayer.updateCanvasSize(this.vesselData.allWidth, this.vesselData.allHeight + 150);
-    insLayer.addRenderable(new CustomRenderable<Vessel | null>(
-      null,
-      (ctx, data) => {
-        this.renderVessel(ctx, data);
-        this.canvasPro.updateViewportSize();
-      }
-    ))
-    // insLayer.setRenderer((ctx, data) => {
-    //   this.renderVessel(ctx, data);
-    //   this.canvasPro.updateViewportSize();
-    // });
-    // this.canvasPro.updateViewportSize();
+    insLayer.setPushMode()
+    .setTrigger(this.vesselDataUpdateSubject)
+    .setRenderer(this.renderVessel.bind(this));
     return insLayer
+  }
+
+  getHandlingTaskLayer(layerName: string) {
+    const layer = new Layer<any>(layerName);
+    layer.setPushMode()
+   .setTrigger(this.vesselDataUpdateSubject)
+   .setRenderer(this.renderHandlingTask.bind(this));
+   return layer;
+  }
+
+  getSvgHandlingTaskLayer(layerName: string) {
+    const svgLayer = new SvgLayer<any>(layerName);
+    svgLayer.setPushMode()
+      .setTrigger(this.vesselDataUpdateSubject)
+      .addRenderable(new SvgRenderable(
+        (svgHost: SVGElement, data: Vessel) => {
+          this.rennderSvgHandlingTask(svgHost, data);
+        }
+      ))
+
+    
+    return svgLayer;
+  }
+
+  rennderSvgHandlingTask(svgHost: SVGElement, data: Vessel) {
+    // 清空现有SVG元素
+    while (svgHost.firstChild) {
+      svgHost.removeChild(svgHost.firstChild);
+    }
+  
+    const width = this.config.width;
+    const height = this.config.height;
+    
+    // 创建装船指令三角形
+    data.loadInstruct.forEach((item: any) => {
+      const startY = item.dh == 'D' ? 6 * height : data.allHeight + 9 * height;
+      
+      // 创建SVG三角形
+      const triangle = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+      triangle.setAttribute('points', 
+        `${item.x},${startY} ${item.x + width/2},${startY + height} ${item.x + width},${startY}`
+      );
+      triangle.setAttribute('fill', '#007BFF');
+      triangle.setAttribute('stroke', 'black');
+      triangle.setAttribute('stroke-width', '1');
+      // 创建文本元素显示装载数量
+      const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      text.setAttribute('x', (item.x + width/2).toString());
+      text.setAttribute('y', (startY - height).toString());
+      text.setAttribute('text-anchor', 'middle');
+      text.setAttribute('dominant-baseline', 'middle');
+      text.setAttribute('font-family', 'Arial');
+      text.setAttribute('font-size', '18px');
+      text.setAttribute('font-weight', 'lighter');
+      text.setAttribute('fill', 'black');
+      text.textContent = item.loadAmount;
+      
+      // 添加交互效果
+      triangle.addEventListener('mouseover', () => {
+        triangle.setAttribute('fill', '#0056b3');
+        triangle.setAttribute('stroke-width', '2');
+      });
+      triangle.style.cursor = 'pointer';
+      
+      triangle.addEventListener('mouseout', () => {
+        triangle.setAttribute('fill', '#007BFF');
+        triangle.setAttribute('stroke-width', '1');
+      });
+      
+      triangle.addEventListener('click', () => {
+        console.log(`装船指令: ${item.loadAmount} 箱, 贝位: ${item.bay}`);
+      });
+
+      
+      // 将元素添加到SVG图层
+      svgHost.appendChild(triangle);
+      svgHost.appendChild(text);
+    });
+    
+    // 创建卸船指令三角形
+    data.unloadInstruct.forEach((item: any) => {
+      const startY = item.dh == 'D' ? 2 * height : data.allHeight + 5 * height;
+      
+      // 创建SVG三角形
+      const triangle = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+      triangle.setAttribute('points', 
+        `${item.x},${startY} ${item.x + width/2},${startY - height} ${item.x + width},${startY}`
+      );
+      triangle.setAttribute('fill', 'rgb(255, 100, 100)');
+      triangle.setAttribute('stroke', 'black');
+      triangle.setAttribute('stroke-width', '1');
+      triangle.style.cursor = 'pointer';
+      
+      // 创建文本元素显示卸载数量
+      const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      text.setAttribute('x', (item.x + width/2).toString());
+      text.setAttribute('y', (startY + height).toString());
+      text.setAttribute('text-anchor', 'middle');
+      text.setAttribute('dominant-baseline', 'middle');
+      text.setAttribute('font-family', 'Arial');
+      text.setAttribute('font-size', '18px');
+      text.setAttribute('font-weight', 'lighter');
+      text.setAttribute('fill', 'black');
+      text.textContent = item.unloadAmount;
+      
+      // 添加交互效果
+      triangle.addEventListener('mouseover', () => {
+        triangle.setAttribute('fill', 'rgb(220, 53, 69)');
+        triangle.setAttribute('stroke-width', '2');
+      });
+      
+      triangle.addEventListener('mouseout', () => {
+        triangle.setAttribute('fill', 'rgb(255, 100, 100)');
+        triangle.setAttribute('stroke-width', '1');
+      });
+      
+      triangle.addEventListener('click', () => {
+        console.log(`卸船指令: ${item.unloadAmount} 箱, 贝位: ${item.bay}`);
+      });
+      
+      // 将元素添加到SVG图层
+      svgHost.appendChild(triangle);
+      svgHost.appendChild(text);
+    });
+  }
+
+  
+
+  getVesselBayLayer(layerName: string) {
+    const renderable = new CustomRenderable(
+      (ctx: OffscreenCanvasRenderingContext2D, data: Vessel | null) => {
+        this.renderVesselBay(ctx, data);
+      }
+    );
+    renderable.setSelectionChecker((selection) => {
+      const rect = selection;
+      const vessel = renderable.getData();
+      const selectedBays: string[] = [];
+      vessel.vesBaySideViews.forEach((item: VesBaySideView) => {
+        item.cells.forEach((cell: Cell) => {
+          const bayX = cell.x;
+          if (
+            (bayX >= rect.x &&
+              bayX + this.config.width <= rect.x + rect.w) || (bayX + this.config.width <= rect.x && bayX >= rect.x + rect.w)
+          ) {
+            if (item.bayName && !selectedBays.includes(item.bayName)) {
+              selectedBays.push(item.bayName);
+  
+            }
+          }
+        })
+      });
+      this.onVesselBaySelected.emit(selectedBays);
+      return selectedBays
+    })
+
+    const layer = new Layer<any>(layerName);
+    layer.setPushMode()
+    .setTrigger(this.vesselDataUpdateSubject)
+    .addRenderable(renderable);
+    // .setRenderer(this.renderVesselBay.bind(this));
+    layer.updateCanvasSize(this.vesselData.allWidth, this.vesselData.allHeight + 150);
+    
+    
+
+    return layer;
+  }
+
+  renderHandlingTask(ctx: OffscreenCanvasRenderingContext2D, data: Vessel | null) {
+    if (!data) {
+      return;
+    }
+    const width = this.config.width;
+    const height = this.config.height;
+    data.loadInstruct.forEach((item: any) => {
+      const startY = item.dh == 'D' ? 6 * height : data.allHeight + 9 * height
+      ctx.beginPath();
+      ctx.moveTo(item.x, startY);
+      ctx.lineTo(item.x + width / 2, startY + height);
+      ctx.lineTo(item.x + width, startY);
+      ctx.lineTo(item.x, startY);
+      ctx.closePath();
+      ctx.stroke();
+      ctx.fillStyle = '#007BFF';
+      ctx.fill();
+      ctx.font = 'lighter 18px Arial';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillStyle = 'black';
+      ctx.fillText(
+        item.loadAmount,
+        item.x + width / 2,
+        startY - height
+      );
+    })
+    data.unloadInstruct.forEach((item: any) => {
+      const startY = item.dh == 'D' ? 2 * height : data.allHeight + 5 * height
+      ctx.beginPath();
+      ctx.moveTo(item.x, startY);
+      ctx.lineTo(item.x + width / 2, startY - height);
+      ctx.lineTo(item.x + width, startY);
+      ctx.lineTo(item.x, startY);
+      ctx.closePath();
+      ctx.stroke();
+      ctx.fillStyle = 'rgb(255, 100, 100)';
+      ctx.fill();
+      ctx.font = 'lighter 18px Arial';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillStyle = 'black';
+      ctx.fillText(
+        item.unloadAmount,
+        item.x + width / 2,
+        startY + height
+      );
+    })
   }
 
 
@@ -324,30 +520,6 @@ export class ShipSideComponent implements AfterViewInit {
     });
   }
 
-  drawLayers() {
-    this.canvasPro.startDataflow();
-    this.canvasPro.startAnimation();
-    this.canvasPro.startListenEvent();
-  }
-
-  getVesselBayLayer(layerName: string) {
-    const insLayer = new Layer<any>(layerName);
-    const insSource = this.vesselDataUpdateSubject.asObservable();
-    insLayer.setDataSource(insSource);
-    const layerTrigger = interval(5 * 60 * 1000).pipe(startWith(0));
-    insLayer.setTrigger(layerTrigger);
-    insLayer.updateCanvasSize(this.vesselData.allWidth, this.vesselData.allHeight + 150);
-    insLayer.addRenderable(new CustomRenderable<Vessel | null>(
-      null,
-      (ctx, data) => {
-        this.renderVesselBay(ctx, data);
-        this.canvasPro.updateViewportSize();
-      }
-    ));
-
-    return insLayer;
-  }
-
   renderVesselBay(ctx: OffscreenCanvasRenderingContext2D, data: Vessel<VesBaySideView<Cell>> | null) {
     if (!data) return;
     ctx.clearRect(0, 0, this.canvasPro.viewport.nativeElement.width, this.canvasPro.viewport.nativeElement.height);
@@ -365,48 +537,55 @@ export class ShipSideComponent implements AfterViewInit {
       })
     });
 
-    data.loadInstruct.forEach((item: any) => {
-      const startY = item.dh == 'D' ? 6 * height : data.allHeight + 9 * height
-      ctx.beginPath();
-      ctx.moveTo(item.x, startY);
-      ctx.lineTo(item.x + width / 2, startY + height);
-      ctx.lineTo(item.x + width, startY);
-      ctx.lineTo(item.x, startY);
-      ctx.closePath();
-      ctx.stroke();
-      ctx.fillStyle = '#007BFF';
-      ctx.fill();
-      ctx.font = 'lighter 18px Arial';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillStyle = 'black';
-      ctx.fillText(
-        item.loadAmount,
-        item.x + width / 2,
-        startY - height
-      );
-    })
-    data.unloadInstruct.forEach((item: any) => {
-      const startY = item.dh == 'D' ? 2 * height : data.allHeight + 5 * height
-      ctx.beginPath();
-      ctx.moveTo(item.x, startY);
-      ctx.lineTo(item.x + width / 2, startY - height);
-      ctx.lineTo(item.x + width, startY);
-      ctx.lineTo(item.x, startY);
-      ctx.closePath();
-      ctx.stroke();
-      ctx.fillStyle = 'rgb(255, 100, 100)';
-      ctx.fill();
-      ctx.font = 'lighter 18px Arial';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillStyle = 'black';
-      ctx.fillText(
-        item.unloadAmount,
-        item.x + width / 2,
-        startY + height
-      );
-    })
+    // data.loadInstruct.forEach((item: any) => {
+    //   const startY = item.dh == 'D' ? 6 * height : data.allHeight + 9 * height
+    //   ctx.beginPath();
+    //   ctx.moveTo(item.x, startY);
+    //   ctx.lineTo(item.x + width / 2, startY + height);
+    //   ctx.lineTo(item.x + width, startY);
+    //   ctx.lineTo(item.x, startY);
+    //   ctx.closePath();
+    //   ctx.stroke();
+    //   ctx.fillStyle = '#007BFF';
+    //   ctx.fill();
+    //   ctx.font = 'lighter 18px Arial';
+    //   ctx.textAlign = 'center';
+    //   ctx.textBaseline = 'middle';
+    //   ctx.fillStyle = 'black';
+    //   ctx.fillText(
+    //     item.loadAmount,
+    //     item.x + width / 2,
+    //     startY - height
+    //   );
+    // })
+    // data.unloadInstruct.forEach((item: any) => {
+    //   const startY = item.dh == 'D' ? 2 * height : data.allHeight + 5 * height
+    //   ctx.beginPath();
+    //   ctx.moveTo(item.x, startY);
+    //   ctx.lineTo(item.x + width / 2, startY - height);
+    //   ctx.lineTo(item.x + width, startY);
+    //   ctx.lineTo(item.x, startY);
+    //   ctx.closePath();
+    //   ctx.stroke();
+    //   ctx.fillStyle = 'rgb(255, 100, 100)';
+    //   ctx.fill();
+    //   ctx.font = 'lighter 18px Arial';
+    //   ctx.textAlign = 'center';
+    //   ctx.textBaseline = 'middle';
+    //   ctx.fillStyle = 'black';
+    //   ctx.fillText(
+    //     item.unloadAmount,
+    //     item.x + width / 2,
+    //     startY + height
+    //   );
+    // })
+  }
+
+  drawLayers() {
+    this.canvasPro.startDataflow();
+    this.canvasPro.startAnimation();
+    this.canvasPro.startListenEvent();
+    this.canvasPro.updateViewportSize();
   }
 
 }
