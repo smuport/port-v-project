@@ -106,13 +106,13 @@ export class InteractionHandler {
     // 根据交互模式执行相应操作
     switch (interactionMode) {
       case 'pan':
-        this.component.handlePan(event);
+        this.component.handlePan(event, this.dragState.startPos);
         break;
       case 'zoom':
         this.component.handleDragZoom(event);
         break;
       case 'rotate':
-        this.component.handleRotate(event);
+        this.component.handleRotate(event, this.dragState.startPos);
         break;
       case 'frame-select':
         this.component.handleFrameSelect(event);

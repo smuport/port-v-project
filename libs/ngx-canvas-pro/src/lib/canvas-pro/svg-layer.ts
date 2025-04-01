@@ -103,6 +103,7 @@ export class SvgLayer<T = any, U = any> implements BaseLayer<T, U> {
   }
 
   updateSvgSize(w: number, h: number) {
+    // 该函数是调整整个SVG画布的大小，不是调整视口大小
     this.w = w;
     this.h = h;
     this.svgElement.setAttribute('width', w.toString());

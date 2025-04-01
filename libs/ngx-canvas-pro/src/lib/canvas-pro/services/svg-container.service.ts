@@ -167,4 +167,19 @@ export class SvgContainerService {
     
     this.svgContainer = null;
   }
+
+  // 添加获取容器的方法
+  getContainer(): HTMLElement {
+    if (!this.svgContainer) {
+      this.svgContainer = this.renderer.createElement('div');
+      // 设置基本样式
+      this.renderer.setStyle(this.svgContainer, 'position', 'absolute');
+      this.renderer.setStyle(this.svgContainer, 'top', '0');
+      this.renderer.setStyle(this.svgContainer, 'left', '0');
+      this.renderer.setStyle(this.svgContainer, 'width', '100%');
+      this.renderer.setStyle(this.svgContainer, 'height', '100%');
+      this.renderer.setStyle(this.svgContainer, 'pointer-events', 'none');
+    }
+    return this.svgContainer as HTMLElement;
+  }
 }

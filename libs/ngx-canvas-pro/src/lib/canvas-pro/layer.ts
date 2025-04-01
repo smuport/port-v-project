@@ -102,6 +102,7 @@ export class Layer<T = any, U = any> implements BaseLayer<T, U> {
   }
 
   updateCanvasSize(w: number, h: number) {
+    // 该函数是调整整个OffScreenCanvas画布的大小，不是调整视口大小
     this.canvas.width = w;
     this.canvas.height = h;
   }

@@ -1,19 +1,23 @@
 import { Injectable } from '@angular/core';
 import { Layer } from '../layer';
+import { BaseLayer } from '../base-layer';
 
 @Injectable()
 export class TransformService {
+  // 保留变换状态变量
   public translatePos = { x: 0, y: 0 };
   public scale = 1;
   public rotation = 0;
 
   constructor() {}
 
+  // 其他方法需要修改，使用ViewportService获取视口信息
   handlePan(
     event: MouseEvent, 
     startPos: { x: number, y: number }, 
-    viewport: HTMLCanvasElement,
-    layers: Layer[]
+    viewportWidth: number,
+    viewportHeight: number,
+    layers: BaseLayer[]
   ): void {
     const dx = event.clientX - startPos.x;
     const dy = event.clientY - startPos.y;
@@ -30,19 +34,16 @@ export class TransformService {
     const newTranslateX = this.translatePos.x + rotatedDx;
     const newTranslateY = this.translatePos.y + rotatedDy;
     
-    // 获取视口尺寸
-    const viewportWidth = viewport.width;
-    const viewportHeight = viewport.height;
-    
     // 获取所有Layer中最大的尺寸
     let maxLayerWidth = 0;
     let maxLayerHeight = 0;
     
     for (const layer of layers) {
-      if (layer instanceof Layer) {
-        maxLayerWidth = Math.max(maxLayerWidth, layer.w);
-        maxLayerHeight = Math.max(maxLayerHeight, layer.h);
-      }
+      maxLayerWidth = Math.max(maxLayerWidth, layer.w);
+      maxLayerHeight = Math.max(maxLayerHeight, layer.h);
+      // if (layer instanceof Layer) {
+       
+      // }
     }
     
     // 计算允许的最大平移范围
@@ -56,14 +57,11 @@ export class TransformService {
 
   handleWheelPanVertical(
     event: WheelEvent,
-    viewport: HTMLCanvasElement,
-    layers: Layer[]
+    viewportHeight: number,
+    layers: BaseLayer[]
   ): void {
     // 计算新的平移位置
     const newTranslateY = this.translatePos.y - event.deltaY;
-    
-    // 获取视口尺寸
-    const viewportHeight = viewport.height;
     
     // 获取所有Layer中最大的高度
     let maxLayerHeight = 0;
@@ -82,14 +80,11 @@ export class TransformService {
 
   handleWheelPanHorizontal(
     event: WheelEvent,
-    viewport: HTMLCanvasElement,
-    layers: Layer[]
+    viewportWidth: number,
+    layers: BaseLayer[]
   ): void {
     // 计算新的平移位置
     const newTranslateX = this.translatePos.x - event.deltaY;
-    
-    // 获取视口尺寸
-    const viewportWidth = viewport.width;
     
     // 获取所有Layer中最大的宽度
     let maxLayerWidth = 0;
@@ -107,7 +102,6 @@ export class TransformService {
   }
 
   handleDragZoom(
-    event: MouseEvent,
     deltaY: number,
     mousePos: { x: number, y: number }
   ): void {
@@ -125,17 +119,11 @@ export class TransformService {
   }
 
   handleRotate(
-    event: MouseEvent,
     startPos: { x: number, y: number },
     mousePos: { x: number, y: number },
-    viewport: HTMLCanvasElement
+    centerX: number,
+    centerY: number
   ): void {
-    // 获取画布中心点
-    const canvasWidth = viewport.width;
-    const canvasHeight = viewport.height;
-    const centerX = canvasWidth / 2;
-    const centerY = canvasHeight / 2;
-
     // 计算鼠标相对于画布中心的角度
     const startAngle = Math.atan2(
       startPos.y - centerY,
@@ -168,5 +156,12 @@ export class TransformService {
     this.translatePos.x = mousePos.x - worldPos.x * newScale;
     this.translatePos.y = mousePos.y - worldPos.y * newScale;
     this.scale = newScale;
+  }
+  
+  // 重置变换状态
+  resetTransform() {
+    this.translatePos = { x: 0, y: 0 };
+    this.scale = 1;
+    this.rotation = 0;
   }
 }

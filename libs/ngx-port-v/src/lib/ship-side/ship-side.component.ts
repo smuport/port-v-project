@@ -46,6 +46,8 @@ export class ShipSideComponent implements AfterViewInit {
     }
   };
 
+  private baynoXMap = new Map<number, number>()
+
   useSvgHandlingTask = true;
 
   constructor() { 
@@ -76,7 +78,12 @@ export class ShipSideComponent implements AfterViewInit {
 
   }
 
+  getBaynoX(bayno: number) {
+    return this.baynoXMap.get(bayno);
+  }
+
   measureVessel(vessel: Vessel, cellWidth: number, cellHeight: number) {
+    this.baynoXMap.clear();
     let minDTier = 999;
     let maxDTier = 0;
     let maxHTier = 0;
@@ -160,6 +167,7 @@ export class ShipSideComponent implements AfterViewInit {
       bayName = vesBaySideView.bayName;
       let idx = baynoRange.indexOf(+bayName);
       bayXRange[idx] = x;
+      this.baynoXMap.set(+bayName, x)
       if (vesBaySideView.dh === 'D') {
         vesBaySideView.cells.forEach((cell: Cell, index: number) => {
           const firstTier = +vesBaySideView.cells[0].tier;
