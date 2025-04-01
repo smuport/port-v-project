@@ -1,5 +1,6 @@
 import {
   Observable,
+  of,
   Subject,
 } from 'rxjs';
 import { AnimationObject, NoopAnimation } from './animation-object';
@@ -11,6 +12,7 @@ import { BaseLayer, LayerType } from './base-layer';
 
 export class SvgLayer<T = any, U = any> implements BaseLayer<T, U> {
   name: string;
+  type: LayerType = 'svg'; // 添加类型标识
   w: number = 0;
   h: number = 0;
   svgElement: SVGSVGElement; // SVG 元素
@@ -35,9 +37,12 @@ export class SvgLayer<T = any, U = any> implements BaseLayer<T, U> {
     this.name = name;
     // 创建 SVG 元素
     this.svgElement = document.createElementNS(this.svgNamespace, 'svg') as SVGSVGElement;
+    // svg 宽高应该和offscreencanvas 一样大小
+    //viewBox 应该和viewport大小一样
+    
     this.svgElement.setAttribute('width', w.toString());
     this.svgElement.setAttribute('height', h.toString());
-    this.svgElement.setAttribute('viewBox', `0 0 ${w} ${h}`);
+    // this.svgElement.setAttribute('viewBox', `0 0 ${w} ${h}`);
     this.svgElement.style.position = 'absolute';
     this.svgElement.style.top = '0';
     this.svgElement.style.left = '0';
@@ -74,8 +79,12 @@ export class SvgLayer<T = any, U = any> implements BaseLayer<T, U> {
     this.event$.next(evt);
   }
 
-  setDataSource(dataSource: Observable<T>) {
-    this.dataSource = dataSource;
+  setDataSource(dataSource: Observable<T> | T) {
+    if (dataSource instanceof Observable) {
+      this.dataSource = dataSource;
+    } else {
+      this.dataSource = of(dataSource)
+    }
     return this;
   }
 
@@ -98,7 +107,7 @@ export class SvgLayer<T = any, U = any> implements BaseLayer<T, U> {
     this.h = h;
     this.svgElement.setAttribute('width', w.toString());
     this.svgElement.setAttribute('height', h.toString());
-    this.svgElement.setAttribute('viewBox', `0 0 ${w} ${h}`);
+    // this.svgElement.setAttribute('viewBox', `0 0 ${w} ${h}`);
   }
 
   isValid() {
@@ -151,7 +160,6 @@ export class SvgLayer<T = any, U = any> implements BaseLayer<T, U> {
       });
     }
   }
-  type: LayerType = 'svg'; // 添加类型标识
   
   // 实现 BaseLayer 接口的 updateSize 方法
   updateSize(w: number, h: number): void {

@@ -12,15 +12,23 @@ export class RenderHandler {
     this.component = component;
   }
 
+  fitParent(viewport: ElementRef<HTMLCanvasElement>,
+    parent: HTMLElement | null) {
+      if (!parent) {
+        return;
+      }
+      const parentRect =
+      parent.getBoundingClientRect();
+      viewport.nativeElement.width = parentRect.width;
+      viewport.nativeElement.height = parentRect.height;
+    }
+
   // 更新视口大小
   updateViewportSize(
-    viewport: ElementRef<HTMLCanvasElement>,
-    elRef: ElementRef
+    w: number, h: number
   ) {
-    const parentRect =
-      elRef.nativeElement.parentElement.getBoundingClientRect();
-    viewport.nativeElement.width = parentRect.width;
-    viewport.nativeElement.height = parentRect.height;
+    this.component.viewport.nativeElement.width = w;
+    this.component.viewport.nativeElement.height = h;
   }
 
   // 绘制视口
@@ -69,6 +77,29 @@ export class RenderHandler {
 
     // 恢复上下文状态
     viewportCtx.restore();
+  }
+
+  // 获取SVG变换矩阵
+  getSvgTransform(
+    translatePos: { x: number; y: number },
+    scale: number,
+    rotation: number,
+    canvasWidth: number,
+    canvasHeight: number
+  ): string {
+    // 获取画布中心点
+    const centerX = canvasWidth / 2;
+    const centerY = canvasHeight / 2;
+    
+    // 计算旋转角度（从弧度转为度）
+    const rotationDeg = (rotation * 180) / Math.PI;
+    
+    // 构建SVG变换字符串
+    // 注意：SVG变换的顺序与Canvas相反，最先应用的变换写在最右边
+    return `translate(${centerX}px, ${centerY}px) ` +
+           `rotate(${rotationDeg}deg) ` +
+           `scale(${scale}) ` +
+           `translate(${-centerX + translatePos.x}px, ${-centerY + translatePos.y}px)`;
   }
 
   // 获取鼠标位置

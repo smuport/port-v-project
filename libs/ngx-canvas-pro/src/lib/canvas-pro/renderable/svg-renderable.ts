@@ -2,6 +2,7 @@ import { Renderable, RenderStyle } from './renderable';
 
 export class SvgRenderable<D> extends Renderable {
   renderer: (svgRoot: SVGElement, data: D) => void;
+  svgs!: NodeListOf<ChildNode>;
 
   constructor(
     renderer: (svgRoot: SVGElement, data: D) => void,
@@ -17,6 +18,7 @@ export class SvgRenderable<D> extends Renderable {
 
   override renderSvg?(svgRoot: SVGElement): SVGElement {
     this.renderer(svgRoot, this.getData());
+    this.svgs = svgRoot.childNodes;
     return svgRoot;
   }
 

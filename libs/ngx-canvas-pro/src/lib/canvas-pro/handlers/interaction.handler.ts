@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { DragState, ViewportInteractionConfig } from '../interaction';
 import { CpClickEvent, CpDbClickEvent } from '../event';
 import { CanvasProComponent } from '../canvas-pro.component';
+import { Layer } from '../layer';
 
 @Injectable()
 export class InteractionHandler {
@@ -140,9 +141,7 @@ export class InteractionHandler {
     this.setDragging(false);
 
     // 通知组件可能需要结束框选
-    if (this.component.isFrameSelecting) {
-      this.component.finishFrameSelect();
-    }
+    this.component.finishFrameSelect();
 
     if (event && 'button' in event) {
       if (event.button === 0) {

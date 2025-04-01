@@ -32,7 +32,7 @@ import { ShipSideComponent, Vessel } from '@smuport/ngx-port-v';
   imports: [CommonModule, ShipSideComponent]
 })
 export class ShipSideDemoComponent implements OnInit {
-  vesselData: Vessel | null = null;
+  vessel!: Vessel;
   selectedBays: string[] = [];
   
   // 配置
@@ -46,7 +46,7 @@ export class ShipSideDemoComponent implements OnInit {
   ngOnInit(): void {
     // 加载船舶数据
     this.http.get<Vessel>('mock-data/vessel.json').subscribe(data => {
-      this.vesselData = data;
+      this.vessel = data;
     });
   }
 

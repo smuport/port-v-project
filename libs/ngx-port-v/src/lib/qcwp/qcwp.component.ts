@@ -1,18 +1,23 @@
-import { Component, ElementRef, OnInit, ViewChild, AfterViewInit, HostListener, OnDestroy } from '@angular/core';
+import { Component, ElementRef, OnInit, ViewChild, AfterViewInit, HostListener, OnDestroy, Input, input, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Crane, Task, QcwpConfig } from './qcwp.model';
 import { CanvasProComponent, CustomRenderable, Layer, SvgLayer, SvgRenderable, ViewportInteractionConfig } from '@smuport/ngx-canvas-pro';
 import { of, Subject } from 'rxjs';
+import { ShipSideComponent } from '../ship-side/ship-side.component';
+import { HandlingTask, Vessel } from '../model/vessel';
 
 @Component({
   selector: 'app-qcwp',
   templateUrl: './qcwp.component.html',
   styleUrls: ['./qcwp.component.css'],
   standalone: true,
-  imports: [CommonModule, FormsModule, CanvasProComponent]
+  imports: [CommonModule, FormsModule, CanvasProComponent, ShipSideComponent]
 })
 export class QcwpComponent implements OnInit, AfterViewInit, OnDestroy {
+  // 添加折叠状态变量
+  isShipSideCollapsed = false;
+
   @ViewChild('ganttCanvas', { static: false }) ganttCanvas!: CanvasProComponent;
   
   craneCount: number = 3;
@@ -24,10 +29,10 @@ export class QcwpComponent implements OnInit, AfterViewInit, OnDestroy {
   // 常量配置，与原始 demo 保持一致
   config: QcwpConfig = {
     unitTime: 2.5, // 单位箱子的作业时间（分钟）
-    bayWidth: 50, // 甘特图中贝位的宽度
+    bayWidth: 27, // 甘特图中基数贝位的宽度
     timeHeight: 5, // 甘特图中每分钟的高度
-    taskWidth: 40, // 任务块的宽度
-    leftPadding: 100, // 左侧预留空间
+    taskWidth: 48, // 任务块的宽度
+    leftPadding: 48, // 左侧预留空间
     craneColors: ['#3498db', '#2ecc71', '#e74c3c', '#f39c12', '#9b59b6', '#1abc9c'] // 岸桥颜色
   };
 
@@ -52,17 +57,22 @@ export class QcwpComponent implements OnInit, AfterViewInit, OnDestroy {
   private ganttData$ = new Subject<any>();
   private gridData$ = new Subject<any>();
   private destroy$ = new Subject<void>();
+  // private _vessel: Vessel | null = null;
+  vessel = input.required<Vessel>();
+
+  constructor() {
+    effect(() => {
+      const value = this.vessel();
+      if (value) {
+        // this._vessel = value;
+        this.initTasks(value);
+      }
+    });
+  }
   
-  // 任务类型分类
-  taskTypes = {
-    deckUnload: { title: '舱面卸船', tasks: [] as Task[] },
-    deckLoad: { title: '舱面装船', tasks: [] as Task[] },
-    holdUnload: { title: '舱内卸船', tasks: [] as Task[] },
-    holdLoad: { title: '舱内装船', tasks: [] as Task[] }
-  };
-  
+
   ngOnInit(): void {
-    this.initTasks();
+
     this.generateCranes();
   }
   
@@ -75,6 +85,32 @@ export class QcwpComponent implements OnInit, AfterViewInit, OnDestroy {
     this.destroy$.next();
     this.destroy$.complete();
   }
+
+
+
+  onHandlingTaskSelected($event: HandlingTask[]) {
+    const tasks: Task[] = [];
+    for (const handingTask of $event) {
+      tasks.push({
+        id: `${handingTask.bay}-${handingTask.dh}-${handingTask.amount}`,
+        bayNumber: +handingTask.bay,
+        location: handingTask.dh,
+        operation: handingTask.type,
+        containerCount: handingTask.amount
+      });
+      // this.tasks.push({
+      //   id: `${task.bay}-${task.dh}-${task.amount}`,
+      //   bayNumber: +task.bay,
+      //   location: task.dh,
+      //   operation: task.type,
+      //   containerCount: task.amount
+      // });
+    }
+    for (const task of tasks) {
+      this.assignTask(task);
+    }
+    
+  }
   
 //   @HostListener('window:resize')
 //   onResize(): void {
@@ -83,58 +119,76 @@ export class QcwpComponent implements OnInit, AfterViewInit, OnDestroy {
 //     }
 //   }
   
-  initTasks(): void {
+  initTasks(vessel: Vessel): void {
     // 初始化示例任务，与原始 demo 保持一致
-    this.tasks = [
-      { id: '1', bayNumber: 2, location: '舱面', operation: '装船', containerCount: 5 },
-      { id: '2', bayNumber: 6, location: '舱面', operation: '装船', containerCount: 27 },
-      { id: '3', bayNumber: 6, location: '舱内', operation: '装船', containerCount: 40 },
-      { id: '4', bayNumber: 6, location: '舱面', operation: '卸船', containerCount: 24 },
-      { id: '5', bayNumber: 6, location: '舱内', operation: '卸船', containerCount: 24 },
-      { id: '6', bayNumber: 14, location: '舱面', operation: '装船', containerCount: 14 },
-      { id: '7', bayNumber: 14, location: '舱内', operation: '卸船', containerCount: 24 },
-      { id: '8', bayNumber: 14, location: '舱面', operation: '卸船', containerCount: 24 },
-      { id: '9', bayNumber: 14, location: '舱内', operation: '装船', containerCount: 33 },
-      { id: '10', bayNumber: 18, location: '舱面', operation: '装船', containerCount: 32 },
-      { id: '11', bayNumber: 18, location: '舱内', operation: '装船', containerCount: 65 },
-      { id: '12', bayNumber: 22, location: '舱面', operation: '装船', containerCount: 24 },
-      { id: '13', bayNumber: 26, location: '舱面', operation: '装船', containerCount: 24 },
-      { id: '14', bayNumber: 34, location: '舱面', operation: '装船', containerCount: 11 },
-      { id: '15', bayNumber: 34, location: '舱面', operation: '卸船', containerCount: 24 },
-      { id: '16', bayNumber: 34, location: '舱内', operation: '装船', containerCount: 33 },
-      { id: '17', bayNumber: 34, location: '舱内', operation: '卸船', containerCount: 24 },
-      { id: '18', bayNumber: 38, location: '舱面', operation: '装船', containerCount: 22 },
-      { id: '19', bayNumber: 38, location: '舱面', operation: '卸船', containerCount: 24 },
-      { id: '20', bayNumber: 42, location: '舱面', operation: '装船', containerCount: 24 },
-      { id: '21', bayNumber: 42, location: '舱面', operation: '卸船', containerCount: 25 },
-    ];
+    for (const task of vessel.loadInstruct) {
+      this.tasks.push({
+        id: `${task.bay}-${task.dh}-${task.loadAmount}`,
+        bayNumber: +task.bay,
+        location: task.dh,
+        operation: 'load',
+        containerCount: task.loadAmount
+      });
+    }
+    for (const task of vessel.unloadInstruct) {
+      this.tasks.push({
+        id: `${task.bay}-${task.dh}-${task.unloadAmount}`,
+        bayNumber: +task.bay,
+        location: task.dh,
+        operation: 'load',
+        containerCount: task.unloadAmount
+      });
+    }
+    // this.tasks = [
+    //   { id: '1', bayNumber: 2, location: '舱面', operation: '装船', containerCount: 5 },
+    //   { id: '2', bayNumber: 6, location: '舱面', operation: '装船', containerCount: 27 },
+    //   { id: '3', bayNumber: 6, location: '舱内', operation: '装船', containerCount: 40 },
+    //   { id: '4', bayNumber: 6, location: '舱面', operation: '卸船', containerCount: 24 },
+    //   { id: '5', bayNumber: 6, location: '舱内', operation: '卸船', containerCount: 24 },
+    //   { id: '6', bayNumber: 14, location: '舱面', operation: '装船', containerCount: 14 },
+    //   { id: '7', bayNumber: 14, location: '舱内', operation: '卸船', containerCount: 24 },
+    //   { id: '8', bayNumber: 14, location: '舱面', operation: '卸船', containerCount: 24 },
+    //   { id: '9', bayNumber: 14, location: '舱内', operation: '装船', containerCount: 33 },
+    //   { id: '10', bayNumber: 18, location: '舱面', operation: '装船', containerCount: 32 },
+    //   { id: '11', bayNumber: 18, location: '舱内', operation: '装船', containerCount: 65 },
+    //   { id: '12', bayNumber: 22, location: '舱面', operation: '装船', containerCount: 24 },
+    //   { id: '13', bayNumber: 26, location: '舱面', operation: '装船', containerCount: 24 },
+    //   { id: '14', bayNumber: 34, location: '舱面', operation: '装船', containerCount: 11 },
+    //   { id: '15', bayNumber: 34, location: '舱面', operation: '卸船', containerCount: 24 },
+    //   { id: '16', bayNumber: 34, location: '舱内', operation: '装船', containerCount: 33 },
+    //   { id: '17', bayNumber: 34, location: '舱内', operation: '卸船', containerCount: 24 },
+    //   { id: '18', bayNumber: 38, location: '舱面', operation: '装船', containerCount: 22 },
+    //   { id: '19', bayNumber: 38, location: '舱面', operation: '卸船', containerCount: 24 },
+    //   { id: '20', bayNumber: 42, location: '舱面', operation: '装船', containerCount: 24 },
+    //   { id: '21', bayNumber: 42, location: '舱面', operation: '卸船', containerCount: 25 },
+    // ];
     
-    // 分类任务
-    this.categorizeTasks();
-  }
+  //   // 分类任务
+  //   this.categorizeTasks();
+  // }
   
-  categorizeTasks(): void {
-    // 清空分类
-    this.taskTypes.deckUnload.tasks = [];
-    this.taskTypes.deckLoad.tasks = [];
-    this.taskTypes.holdUnload.tasks = [];
-    this.taskTypes.holdLoad.tasks = [];
+  // categorizeTasks(): void {
+  //   // 清空分类
+  //   this.taskTypes.deckUnload.tasks = [];
+  //   this.taskTypes.deckLoad.tasks = [];
+  //   this.taskTypes.holdUnload.tasks = [];
+  //   this.taskTypes.holdLoad.tasks = [];
     
-    // 按贝位号排序任务
-    this.tasks.sort((a, b) => a.bayNumber - b.bayNumber);
+  //   // 按贝位号排序任务
+  //   this.tasks.sort((a, b) => a.bayNumber - b.bayNumber);
     
-    // 分类任务
-    this.tasks.forEach(task => {
-      if (task.location === '舱面' && task.operation === '卸船') {
-        this.taskTypes.deckUnload.tasks.push(task);
-      } else if (task.location === '舱面' && task.operation === '装船') {
-        this.taskTypes.deckLoad.tasks.push(task);
-      } else if (task.location === '舱内' && task.operation === '卸船') {
-        this.taskTypes.holdUnload.tasks.push(task);
-      } else if (task.location === '舱内' && task.operation === '装船') {
-        this.taskTypes.holdLoad.tasks.push(task);
-      }
-    });
+  //   // 分类任务
+  //   this.tasks.forEach(task => {
+  //     if (task.location === '舱面' && task.operation === '卸船') {
+  //       this.taskTypes.deckUnload.tasks.push(task);
+  //     } else if (task.location === '舱面' && task.operation === '装船') {
+  //       this.taskTypes.deckLoad.tasks.push(task);
+  //     } else if (task.location === '舱内' && task.operation === '卸船') {
+  //       this.taskTypes.holdUnload.tasks.push(task);
+  //     } else if (task.location === '舱内' && task.operation === '装船') {
+  //       this.taskTypes.holdLoad.tasks.push(task);
+  //     }
+  //   });
   }
   
   generateCranes(): void {
@@ -325,7 +379,7 @@ export class QcwpComponent implements OnInit, AfterViewInit, OnDestroy {
       
       tasks.forEach((task: Task) => {
         // 计算任务在甘特图中的位置
-        const x = this.config.leftPadding + ((task.bayNumber - 1) / 2) * this.config.bayWidth;
+        const x = this.config.leftPadding + ((task.bayNumber) / 2) * this.config.bayWidth;
         const y = currentTime * this.config.timeHeight;
         
         // 计算任务的高度（时间）
@@ -419,14 +473,12 @@ export class QcwpComponent implements OnInit, AfterViewInit, OnDestroy {
     
     const width = ctx.canvas.width;
     const height = ctx.canvas.height;
-    console.log(width, height);
     
     // 绘制水平时间线
     for (let i = 0; i <= 2000; i++) {
       const y = i * this.config.timeHeight * 10; // 每10分钟一条主线
       
       if (y > height) break;
-      console.log(y);
       
       // 绘制主时间线
       ctx.beginPath();
@@ -457,18 +509,18 @@ export class QcwpComponent implements OnInit, AfterViewInit, OnDestroy {
     }
     
     // 绘制垂直贝位线
-    const bayNumbers = [2, 6, 10, 14, 18, 22, 26, 30, 34, 38, 42];
+    const bayNumbers = [2, 6, 10, 14, 18, 22, 26, 30, 34, 38, 42, 46, 50, 54, 58, 62, 66, 70];
     
     bayNumbers.forEach(bayNumber => {
       // 计算贝位位置
-      const x = this.config.leftPadding + ((bayNumber - 1) / 2) * this.config.bayWidth;
+      const x = this.config.leftPadding + ((bayNumber) / 2) * this.config.bayWidth;
       
       ctx.beginPath();
       ctx.moveTo(x, 0);
       ctx.lineTo(x, height);
       
       // 贝位线加粗
-      ctx.lineWidth = 1;
+      ctx.lineWidth = 2;
       ctx.stroke();
       
       // 标记贝位号
@@ -502,31 +554,9 @@ export class QcwpComponent implements OnInit, AfterViewInit, OnDestroy {
     return this.config.craneColors[colorIndex];
   }
   
-  // 添加以下方法到组件类中
-  getBayTask(type: string, bayNumber: number): Task | null {
-    let tasks: Task[] = [];
-    
-    switch (type) {
-      case 'deckUnload':
-        tasks = this.taskTypes.deckUnload.tasks;
-        break;
-      case 'deckLoad':
-        tasks = this.taskTypes.deckLoad.tasks;
-        break;
-      case 'holdUnload':
-        tasks = this.taskTypes.holdUnload.tasks;
-        break;
-      case 'holdLoad':
-        tasks = this.taskTypes.holdLoad.tasks;
-        break;
-    }
-    
-    const task = tasks.find(t => t.bayNumber === bayNumber);
-    return task || null;
-  }
-  
-  hasBayTask(type: string, bayNumber: number): boolean {
-    return this.getBayTask(type, bayNumber) !== null;
+  // 添加切换折叠状态的方法
+  toggleShipSide(): void {
+    this.isShipSideCollapsed = !this.isShipSideCollapsed;
   }
 }
 

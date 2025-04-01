@@ -7,8 +7,7 @@
   </div>
   <div class="ship-view">
     <app-ship-side 
-      *ngIf="vesselData" 
-      [vesselData]="vesselData" 
+      [vessel]="vessel" 
       [config]="config"
       [fillCell]="fillCellFn"
       (onVesselBaySelected)="onBaySelected($event)">

@@ -15,6 +15,7 @@ export interface RenderStyle {
 
 export abstract class Renderable<D = any, S extends RenderStyle = any> {
   private bricks: Map<string, Brick> = new Map();
+  protected selectionChecker: (selection: { x: number; y: number; w: number; h: number; }) => any[] = () => [];
   protected updater?: (data: D) => void;
   constructor(
     private data?: D,
@@ -42,6 +43,12 @@ export abstract class Renderable<D = any, S extends RenderStyle = any> {
     return this.bricks.get(key);
   }
 
+  setSelectionChecker(
+    checker: (selection: { x: number; y: number; w: number; h: number; }) => any[],
+  ) {
+    this.selectionChecker = checker;
+  }
+
   abstract render(ctx: OffscreenCanvasRenderingContext2D): void;
 
   getData() {
@@ -62,7 +69,8 @@ export abstract class Renderable<D = any, S extends RenderStyle = any> {
     w: number;
     h: number;
   }): any[] {
-    return [];
+    return this.selectionChecker(selection);
+    // return [];
     // const { x, y } = this.configuator.getStyle();
     // if (x === undefined || y === undefined) {
     // return false;

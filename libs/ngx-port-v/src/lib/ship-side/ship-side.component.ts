@@ -1,8 +1,9 @@
 import { CommonModule } from '@angular/common';
-import { Component, ViewChild, AfterViewInit, ElementRef, Input, Output, EventEmitter } from '@angular/core';
-import { CanvasProComponent, CpClickEvent, CustomRenderable, Layer, SvgLayer, SvgRenderable, ViewportInteractionConfig } from '@smuport/ngx-canvas-pro';
-import { BehaviorSubject, interval, startWith } from 'rxjs';
-import { Cell, VesBaySideView, Vessel } from '../model/vessel';
+import { Component, ViewChild, AfterViewInit, ElementRef, Input, Output, EventEmitter, input, effect, InputOptionsWithTransform } from '@angular/core';
+import { BaseLayer, CanvasProComponent, CpClickEvent, CustomRenderable, Layer, SvgLayer, SvgRenderable, ViewportInteractionConfig } from '@smuport/ngx-canvas-pro';
+import { BehaviorSubject, interval, startWith, Subject } from 'rxjs';
+import { Cell, HandlingTask, VesBaySideView, Vessel } from '../model/vessel';
+import { v } from '@angular/core/weak_ref.d-Bp6cSy-X';
 
 @Component({
   selector: 'app-ship-side',
@@ -15,43 +16,30 @@ import { Cell, VesBaySideView, Vessel } from '../model/vessel';
   ]
 })
 export class ShipSideComponent implements AfterViewInit {
-  private _vesselData!: Vessel;
-  @Input() set vesselData(data: Vessel) {
-    this._vesselData = this.measureVessel(data, this.config.width, this.config.height);
-    this._vesselData = data;
-    this.vesselDataUpdateSubject.next(data);
-  };
-  get vesselData(): Vessel {
-    return this._vesselData;
-  };
-  vesselDataUpdateSubject = new BehaviorSubject<Vessel | null>(null);
+
+  vessel = input.required<Vessel>();
+  vesselDataUpdateSubject = new BehaviorSubject<Vessel>(undefined!);
   @Input() config: { width: number; height: number; } = {
     width: 24,
     height: 12,
   };
   @Output() onVesselBaySelected = new EventEmitter<string[]>();
-  @Input() fillCell: (data: any) => string = (data: any) => 'red';
-  @ViewChild('canvasContainer') canvasContainer!: ElementRef;
+  @Output() onHandlingTaskSelected = new EventEmitter<HandlingTask[]>();
+  @Input() fillCell: (data: any) => string = (data: any) => 'lightgray';
+  // @ViewChild('canvasContainer') canvasContainer!: ElementRef;
   @ViewChild('canvasPro', { static: true })
   canvasPro!: CanvasProComponent;
 
-  modalWidth: number = 0;
-
-  //绘制矩形
-  isDragging = false;
-  startDragPos = { x: 0, y: 0 };
-  rectDragPos = { x: 0, y: 0 };
-  
   // 添加交互配置
   interactionConfig: ViewportInteractionConfig = {
     drag: {
-      default: 'frame-select',     // 默认禁用平移
+      default: 'rotate',     // 默认禁用平移
       shift: 'frame-select',        // 按住 shift 键可以平移
-      ctrl: 'none',
+      ctrl: 'pan',
       alt: 'none'
     },
     wheel: {
-      default: 'none',     // 默认禁用缩放
+      default: 'zoom',     // 默认禁用缩放
       shift: 'pan-horizontal',        // 按住 shift 键可以水平缩放
       ctrl: 'none',
       alt: 'none'
@@ -60,24 +48,23 @@ export class ShipSideComponent implements AfterViewInit {
 
   useSvgHandlingTask = true;
 
-  constructor() { }
+  constructor() { 
+    effect(() => {
+      const data = this.vessel();
+      if (!data) return;
+      const measuredData = this.measureVessel(data, this.config.width, this.config.height);
+      this.vesselDataUpdateSubject.next(measuredData);
+      return measuredData;
+    });
+  }
 
   ngAfterViewInit(): void {
-    // this.drawRect();
-    if (this.canvasContainer) {
-      const canvasElement: HTMLElement = this.canvasContainer.nativeElement;
-      canvasElement.style.width = `${this.vesselData.allWidth}px`;
-      canvasElement.style.height = `${this.vesselData.allHeight + 150}px`;
-    }
-    
     // 设置交互配置
     this.canvasPro.interactionConfig = this.interactionConfig;
-    
     const vessel = this.getVesselLayer('vessel');
     this.canvasPro.addLayer(vessel);
     const vesselBay = this.getVesselBayLayer('vesselBay');
     this.canvasPro.addLayer(vesselBay);
-    
     // 根据标志决定使用哪种实现
     if (this.useSvgHandlingTask) {
       this.canvasPro.addLayer(this.getSvgHandlingTaskLayer('svgHandlingTask'));
@@ -87,60 +74,6 @@ export class ShipSideComponent implements AfterViewInit {
     
     this.drawLayers();
 
-  }
-  
-
-  drawRect() {
-    const overlayCanvas = document.getElementById('overlayCanvas') as HTMLCanvasElement;
-    const overlayCtx = overlayCanvas.getContext('2d')!;
-    overlayCanvas.width = this.vesselData.allWidth;
-    overlayCanvas.height = this.vesselData.allHeight + 150;
-    this.canvasPro.viewport.nativeElement.addEventListener('mousedown', event => {
-      // 只有在没有按下 Shift 键时才启用选择框
-      if (!event.shiftKey) {
-        this.isDragging = true;
-        this.startDragPos = { x: event.offsetX, y: event.offsetY };
-      }
-    })
-    this.canvasPro.viewport.nativeElement.addEventListener('mousemove', event => {
-      if (this.isDragging) {
-        this.rectDragPos.x = event.offsetX - this.startDragPos.x;
-        this.rectDragPos.y = event.offsetY - this.startDragPos.y;
-        overlayCtx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
-        overlayCtx.strokeStyle = 'blue';
-        overlayCtx.lineWidth = 2;
-        overlayCtx.save();
-        overlayCtx.strokeRect(
-          this.startDragPos.x,
-          this.startDragPos.y,
-          this.rectDragPos.x,
-          this.rectDragPos.y
-        );
-        overlayCtx.restore();
-      }
-    });
-    this.canvasPro.viewport.nativeElement.addEventListener('mouseup', () => {
-      if (this.isDragging) {
-        this.isDragging = false;
-        overlayCtx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
-        const rect = {
-          x: this.startDragPos.x,
-          y: this.startDragPos.y,
-          width: this.rectDragPos.x,
-          height: this.rectDragPos.y
-        };
-        const selectedBays = this.baysInRect(rect);
-        this.onVesselBaySelected.emit(selectedBays);
-      }
-    });
-    
-    // 添加鼠标离开事件处理
-    this.canvasPro.viewport.nativeElement.addEventListener('mouseleave', () => {
-      if (this.isDragging) {
-        this.isDragging = false;
-        overlayCtx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
-      }
-    });
   }
 
   measureVessel(vessel: Vessel, cellWidth: number, cellHeight: number) {
@@ -154,6 +87,30 @@ export class ShipSideComponent implements AfterViewInit {
     let hullHeight = 0;
     let deckHeight = 0;
     let allHeight = 0;
+    let maxBay = 0
+    const baynoRange: number[] = []
+    const bayXRange: number[] = []
+    vessel.vesBaySideViews.sort((a, b) => {
+      return +a.bayName - (+b.bayName)
+    })
+    vessel.vesBaySideViews.forEach((v) => {
+      // if (+v.bayName < minBay) {
+      //   minBay = +v.bayName
+      // }
+      if (+v.bayName > maxBay) {
+        maxBay = +v.bayName
+      }
+      if (baynoRange.indexOf(+v.bayName) < 0) {
+        baynoRange.push(+v.bayName)
+        bayXRange.push(0)
+        
+      }
+    })
+
+    // for (let bayno = 1; bayno <= maxBay; bayno+=2) {
+    //   baynoRange.push(bayno)
+    // }
+    const visitedBays: string[] = [];
     let bayName = '';
     vessel.vesBaySideViews.forEach((vesBaySideView: VesBaySideView) => {
       if (vesBaySideView.bayName != bayName) {
@@ -196,10 +153,13 @@ export class ShipSideComponent implements AfterViewInit {
     let interval: number = cellWidth / 4
 
     vessel.vesBaySideViews.forEach((vesBaySideView: VesBaySideView) => {
+
       if (vesBaySideView.bayName != bayName) {
         vesBaySideView.bayType === 'back' ? x = x + cellWidth : x = x + cellWidth + interval;
       }
       bayName = vesBaySideView.bayName;
+      let idx = baynoRange.indexOf(+bayName);
+      bayXRange[idx] = x;
       if (vesBaySideView.dh === 'D') {
         vesBaySideView.cells.forEach((cell: Cell, index: number) => {
           const firstTier = +vesBaySideView.cells[0].tier;
@@ -215,11 +175,32 @@ export class ShipSideComponent implements AfterViewInit {
         })
       }
     })
+    vessel.loadInstruct.forEach((t, i) => {
+      let index = 0;
+      if (+t.bay % 2 == 0) {
+        index = baynoRange.indexOf(+t.bay - 1);
+      } else {
+        index = baynoRange.indexOf(+t.bay);
+      }
+      console.log(baynoRange, +t.bay)
+      t.x = bayXRange[index] + cellWidth / 2
+    })
+
+    vessel.unloadInstruct.forEach((t, i) => {
+      let index = 0;
+      if (+t.bay % 2 == 0) {
+        index = baynoRange.indexOf(+t.bay - 1);
+      } else {
+        index = baynoRange.indexOf(+t.bay);
+      }
+      console.log(baynoRange, +t.bay)
+      t.x = bayXRange[index] + cellWidth / 2
+    })
     return vessel
   }
 
   getVesselLayer(layerName: string) {
-    const insLayer = new Layer<any>(layerName);
+    const insLayer = new Layer<Vessel>(layerName);
     insLayer.setPushMode()
     .setTrigger(this.vesselDataUpdateSubject)
     .setRenderer(this.renderVessel.bind(this));
@@ -227,7 +208,7 @@ export class ShipSideComponent implements AfterViewInit {
   }
 
   getHandlingTaskLayer(layerName: string) {
-    const layer = new Layer<any>(layerName);
+    const layer = new Layer<Vessel>(layerName);
     layer.setPushMode()
    .setTrigger(this.vesselDataUpdateSubject)
    .setRenderer(this.renderHandlingTask.bind(this));
@@ -235,17 +216,70 @@ export class ShipSideComponent implements AfterViewInit {
   }
 
   getSvgHandlingTaskLayer(layerName: string) {
-    const svgLayer = new SvgLayer<any>(layerName);
+    const svgRenderable = new SvgRenderable(
+      (svgHost: SVGElement, data: Vessel) => {
+        this.rennderSvgHandlingTask(svgHost, data);
+      }
+    );
+    svgRenderable.setSelectionChecker((selection) => {
+      const bays: any[] = []
+      svgRenderable.svgs.forEach((child) => {
+        const x = (child as SVGElement).getAttribute('x');
+        const y = (child as SVGElement).getAttribute('y');
+        if (x && y && selection.x <= +x && selection.y <= +y && selection.x + selection.w >= +x && selection.y+selection.h >= +y) {
+          bays.push(child)
+        }
+      })
+      
+      return bays;
+      // return svgElement instanceof SVGGElement;
+    });
+    const svgLayer = new SvgLayer<Vessel>(layerName);
     svgLayer.setPushMode()
       .setTrigger(this.vesselDataUpdateSubject)
-      .addRenderable(new SvgRenderable(
-        (svgHost: SVGElement, data: Vessel) => {
-          this.rennderSvgHandlingTask(svgHost, data);
-        }
-      ))
+      .addRenderable(svgRenderable)
 
     
     return svgLayer;
+  }
+
+  getVesselBayLayer(layerName: string) {
+    const renderable = new CustomRenderable(
+      (ctx: OffscreenCanvasRenderingContext2D, data: Vessel) => {
+        this.renderVesselBay(ctx, data);
+      }
+    );
+    renderable.setSelectionChecker((selection) => {
+      const rect = selection;
+      const vessel = renderable.getData();
+      const selectedBays: string[] = [];
+      vessel.vesBaySideViews.forEach((item: VesBaySideView) => {
+        item.cells.forEach((cell: Cell) => {
+          const bayX = cell.x;
+          if (
+            (bayX >= rect.x &&
+              bayX + this.config.width <= rect.x + rect.w) || (bayX + this.config.width <= rect.x && bayX >= rect.x + rect.w)
+          ) {
+            if (item.bayName && !selectedBays.includes(item.bayName)) {
+              selectedBays.push(item.bayName);
+  
+            }
+          }
+        })
+      });
+      this.onVesselBaySelected.emit(selectedBays);
+      return selectedBays
+    })
+
+    const layer = new Layer<any>(layerName);
+    layer.setPushMode()
+    .setTrigger(this.vesselDataUpdateSubject)
+    .addRenderable(renderable);
+    // .setRenderer(this.renderVesselBay.bind(this));
+    
+    
+
+    return layer;
   }
 
   rennderSvgHandlingTask(svgHost: SVGElement, data: Vessel) {
@@ -294,6 +328,9 @@ export class ShipSideComponent implements AfterViewInit {
       });
       
       triangle.addEventListener('click', () => {
+        item.type = 'load';
+        item.amount = item.loadAmount;
+        this.onHandlingTaskSelected.emit([item]);
         console.log(`装船指令: ${item.loadAmount} 箱, 贝位: ${item.bay}`);
       });
 
@@ -315,6 +352,8 @@ export class ShipSideComponent implements AfterViewInit {
       triangle.setAttribute('fill', 'rgb(255, 100, 100)');
       triangle.setAttribute('stroke', 'black');
       triangle.setAttribute('stroke-width', '1');
+      triangle.setAttribute('data-bay', item.bay);
+      console.log(triangle.getAttribute('data-bay'))
       triangle.style.cursor = 'pointer';
       
       // 创建文本元素显示卸载数量
@@ -341,6 +380,9 @@ export class ShipSideComponent implements AfterViewInit {
       });
       
       triangle.addEventListener('click', () => {
+        item.type = 'unload';
+        item.amount = item.unloadAmount;
+        this.onHandlingTaskSelected.emit([item]);
         console.log(`卸船指令: ${item.unloadAmount} 箱, 贝位: ${item.bay}`);
       });
       
@@ -350,52 +392,7 @@ export class ShipSideComponent implements AfterViewInit {
     });
   }
 
-  
-
-  getVesselBayLayer(layerName: string) {
-    const renderable = new CustomRenderable(
-      (ctx: OffscreenCanvasRenderingContext2D, data: Vessel | null) => {
-        this.renderVesselBay(ctx, data);
-      }
-    );
-    renderable.setSelectionChecker((selection) => {
-      const rect = selection;
-      const vessel = renderable.getData();
-      const selectedBays: string[] = [];
-      vessel.vesBaySideViews.forEach((item: VesBaySideView) => {
-        item.cells.forEach((cell: Cell) => {
-          const bayX = cell.x;
-          if (
-            (bayX >= rect.x &&
-              bayX + this.config.width <= rect.x + rect.w) || (bayX + this.config.width <= rect.x && bayX >= rect.x + rect.w)
-          ) {
-            if (item.bayName && !selectedBays.includes(item.bayName)) {
-              selectedBays.push(item.bayName);
-  
-            }
-          }
-        })
-      });
-      this.onVesselBaySelected.emit(selectedBays);
-      return selectedBays
-    })
-
-    const layer = new Layer<any>(layerName);
-    layer.setPushMode()
-    .setTrigger(this.vesselDataUpdateSubject)
-    .addRenderable(renderable);
-    // .setRenderer(this.renderVesselBay.bind(this));
-    layer.updateCanvasSize(this.vesselData.allWidth, this.vesselData.allHeight + 150);
-    
-    
-
-    return layer;
-  }
-
-  renderHandlingTask(ctx: OffscreenCanvasRenderingContext2D, data: Vessel | null) {
-    if (!data) {
-      return;
-    }
+  renderHandlingTask(ctx: OffscreenCanvasRenderingContext2D, data: Vessel) {
     const width = this.config.width;
     const height = this.config.height;
     data.loadInstruct.forEach((item: any) => {
@@ -442,30 +439,8 @@ export class ShipSideComponent implements AfterViewInit {
     })
   }
 
-
-  baysInRect(rect: { x: number; y: number; width: number; height: number }) {
-    const selectedBays: string[] = [];
-    this.vesselData.vesBaySideViews.forEach(item => {
-      item.cells.forEach((cell: Cell) => {
-        const bayX = cell.x;
-        if (
-          (bayX >= rect.x &&
-            bayX + this.config.width <= rect.x + rect.width) || (bayX + this.config.width <= rect.x && bayX >= rect.x + rect.width)
-        ) {
-          if (item.bayName && !selectedBays.includes(item.bayName)) {
-            selectedBays.push(item.bayName);
-
-          }
-        }
-      })
-    });
-    return selectedBays
-  }
-
-  renderVessel(ctx: OffscreenCanvasRenderingContext2D, data: Vessel | null) {
-    if (!data) {
-      return;
-    }
+  renderVessel(ctx: OffscreenCanvasRenderingContext2D, data: Vessel) {
+    console.log('renderVessel');
     ctx.clearRect(0, 0, this.canvasPro.viewport.nativeElement.width, this.canvasPro.viewport.nativeElement.height);
     const width = this.config.width;
     const height = this.config.height;
@@ -518,10 +493,12 @@ export class ShipSideComponent implements AfterViewInit {
         data.allHeight + this.config.height
       );
     });
+    this.canvasPro.updateViewportSize(allWidth, allHeight + 150);
   }
 
-  renderVesselBay(ctx: OffscreenCanvasRenderingContext2D, data: Vessel<VesBaySideView<Cell>> | null) {
-    if (!data) return;
+  renderVesselBay(ctx: OffscreenCanvasRenderingContext2D, data: Vessel<VesBaySideView<Cell>>) {
+    // if (!data) return;
+    console.log('renderVesselBay', data);
     ctx.clearRect(0, 0, this.canvasPro.viewport.nativeElement.width, this.canvasPro.viewport.nativeElement.height);
     const width = this.config.width;
     const height = this.config.height;
@@ -581,11 +558,18 @@ export class ShipSideComponent implements AfterViewInit {
     // })
   }
 
+  // 增加组件扩展性
+  addLayer(layer: BaseLayer) {
+    this.canvasPro.addLayer(layer);
+  }
+
   drawLayers() {
     this.canvasPro.startDataflow();
     this.canvasPro.startAnimation();
     this.canvasPro.startListenEvent();
-    this.canvasPro.updateViewportSize();
+    // this.canvasPro.updateViewportSize();
   }
+
+
 
 }

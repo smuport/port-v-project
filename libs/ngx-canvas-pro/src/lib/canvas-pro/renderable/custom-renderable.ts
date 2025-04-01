@@ -3,7 +3,6 @@ import { Renderable, RenderStyle } from './renderable';
 export class CustomRenderable<D> extends Renderable {
 
   private renderer: (ctx: OffscreenCanvasRenderingContext2D, data: D) => void;
-  selectionChecker: (selection: { x: number; y: number; w: number; h: number; }) => any[] = () => [];
   constructor(
     renderer: (ctx: OffscreenCanvasRenderingContext2D, data: D) => void,
     initialData?: D,
@@ -25,13 +24,7 @@ export class CustomRenderable<D> extends Renderable {
     return data;
   }
 
-  setSelectionChecker(
-    checker: (selection: { x: number; y: number; w: number; h: number; }) => any[],
-  ) {
-    this.selectionChecker = checker;
-  }
-
-  override checkSelection(selection: { x: number; y: number; w: number; h: number; }): any[] {
-      return this.selectionChecker(selection);
-  }
+  // override checkSelection(selection: { x: number; y: number; w: number; h: number; }): any[] {
+  //     return this.selectionChecker(selection);
+  // }
 }

@@ -1,11 +1,11 @@
 import { Component } from '@angular/core';
-import { QcwpComponent } from '@smuport/ngx-port-v';
+import { QcwpComponent, Vessel } from '@smuport/ngx-port-v';
 
 @Component({
   selector: 'app-qcwp-demo',
   template: `
     <div class="qcwp-demo-container">
-      <app-qcwp></app-qcwp>
+      <app-qcwp [vessel]="vessel"></app-qcwp>
     </div>
   `,
   styles: [`
@@ -27,5 +27,25 @@ import { QcwpComponent } from '@smuport/ngx-port-v';
   imports: [QcwpComponent]
 })
 export class QcwpDemoComponent {
-  constructor() {}
+  vessel!: Vessel;
+  constructor() {
+    this.getVessel();
+  }
+
+    getVessel() {
+        // 加载船舶数据
+        fetch('mock-data/vessel.json')
+        // fetch('mock-data/vessel-nansha.json')
+          .then(response => response.json())
+          .then(data => {
+            // 处理船舶数据
+            this.vessel = data;
+          })
+          .catch(error => {
+            console.error('Error loading vessel data:', error);
+          });
+  }
+
+
+
 }

@@ -1,0 +1,198 @@
+{
+    "loadInstruct": [
+      {
+        "bay": "30",
+        "dh": "D",
+        "loadAmount": 29
+      },
+      {
+        "bay": "30",
+        "dh": "H",
+        "loadAmount": 26
+      },
+      {
+        "bay": "10",
+        "dh": "D",
+        "loadAmount": 20
+      },
+      {
+        "bay": "10",
+        "dh": "H",
+        "loadAmount": 32
+      }
+    ],
+    "unloadInstruct": [],
+    "vesBaySideViews": [
+      {
+        "bayName": "29",
+        "bayType": "front",
+        "cells": [
+          {
+            "data": null,
+            "tier": "82"
+          },
+          {
+            "data": null,
+            "tier": "86"
+          },
+          {
+            "data": null,
+            "tier": "84"
+          }
+        ],
+        "dh": "D"
+      },
+      {
+        "bayName": "31",
+        "bayType": "back",
+        "cells": [
+          {
+            "data": null,
+            "tier": "82"
+          },
+          {
+            "data": null,
+            "tier": "86"
+          },
+          {
+            "data": null,
+            "tier": "84"
+          }
+        ],
+        "dh": "D"
+      },
+      {
+        "bayName": "29",
+        "bayType": "front",
+        "cells": [
+          {
+            "data": null,
+            "tier": "04"
+          },
+          {
+            "data": null,
+            "tier": "08"
+          },
+          {
+            "data": null,
+            "tier": "02"
+          },
+          {
+            "data": null,
+            "tier": "06"
+          }
+        ],
+        "dh": "H"
+      },
+      {
+        "bayName": "31",
+        "bayType": "back",
+        "cells": [
+          {
+            "data": null,
+            "tier": "04"
+          },
+          {
+            "data": null,
+            "tier": "08"
+          },
+          {
+            "data": null,
+            "tier": "02"
+          },
+          {
+            "data": null,
+            "tier": "06"
+          }
+        ],
+        "dh": "H"
+      },
+      {
+        "bayName": "09",
+        "bayType": "front",
+        "cells": [
+          {
+            "data": null,
+            "tier": "82"
+          },
+          {
+            "data": null,
+            "tier": "84"
+          }
+        ],
+        "dh": "D"
+      },
+      {
+        "bayName": "11",
+        "bayType": "back",
+        "cells": [
+          {
+            "data": null,
+            "tier": "82"
+          },
+          {
+            "data": null,
+            "tier": "84"
+          }
+        ],
+        "dh": "D"
+      },
+      {
+        "bayName": "09",
+        "bayType": "front",
+        "cells": [
+          {
+            "data": null,
+            "tier": "04"
+          },
+          {
+            "data": null,
+            "tier": "08"
+          },
+          {
+            "data": null,
+            "tier": "10"
+          },
+          {
+            "data": null,
+            "tier": "06"
+          },
+          {
+            "data": null,
+            "tier": "02"
+          }
+        ],
+        "dh": "H"
+      },
+      {
+        "bayName": "11",
+        "bayType": "back",
+        "cells": [
+          {
+            "data": null,
+            "tier": "04"
+          },
+          {
+            "data": null,
+            "tier": "08"
+          },
+          {
+            "data": null,
+            "tier": "10"
+          },
+          {
+            "data": null,
+            "tier": "06"
+          },
+          {
+            "data": null,
+            "tier": "02"
+          }
+        ],
+        "dh": "H"
+      }
+    ],
+    "vesselCode": "STIC",
+    "vesselNameEn": "SITC INCHON",
+    "vesselNameZh": "\u6d77\u4e30\u4ec1\u5ddd"
+  }

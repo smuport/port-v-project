@@ -43,6 +43,7 @@ export interface HandlingTask {
     vesselCode: string,
     bay: string,
     dh: string,
+    type: 'load' | 'unload',
     amount: number
 }
 
