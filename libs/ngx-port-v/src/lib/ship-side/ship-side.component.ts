@@ -1,9 +1,8 @@
 import { CommonModule } from '@angular/common';
-import { Component, ViewChild, AfterViewInit, ElementRef, Input, Output, EventEmitter, input, effect, InputOptionsWithTransform } from '@angular/core';
-import { BaseLayer, CanvasProComponent, CpClickEvent, CustomRenderable, Layer, SvgLayer, SvgRenderable, ViewportInteractionConfig } from '@smuport/ngx-canvas-pro';
-import { BehaviorSubject, interval, startWith, Subject } from 'rxjs';
+import { Component, ViewChild, AfterViewInit, Input, Output, EventEmitter, input, effect, InputOptionsWithTransform } from '@angular/core';
+import { BaseLayer, CanvasProComponent, CustomRenderable, Layer, SvgLayer, SvgRenderable, ViewportInteractionConfig } from '@smuport/ngx-canvas-pro';
+import { BehaviorSubject } from 'rxjs';
 import { Cell, HandlingTask, VesBaySideView, Vessel } from '../model/vessel';
-import { v } from '@angular/core/weak_ref.d-Bp6cSy-X';
 
 @Component({
   selector: 'app-ship-side',
@@ -19,30 +18,32 @@ export class ShipSideComponent implements AfterViewInit {
 
   vessel = input.required<Vessel>();
   vesselDataUpdateSubject = new BehaviorSubject<Vessel>(undefined!);
-  @Input() config: { width: number; height: number; } = {
-    width: 24,
-    height: 12,
-  };
-  @Output() onVesselBaySelected = new EventEmitter<string[]>();
-  @Output() onHandlingTaskSelected = new EventEmitter<HandlingTask[]>();
+  config = input<{ width: number; height: number; }>(
+    {
+      width: 24,
+      height: 12,
+    }
+  );
+  @Output() vesselBaySelected = new EventEmitter<string[]>();
+  @Output() handlingTaskSelected = new EventEmitter<HandlingTask[]>();
   @Input() fillCell: (data: any) => string = (data: any) => 'lightgray';
   // @ViewChild('canvasContainer') canvasContainer!: ElementRef;
   @ViewChild('canvasPro', { static: true })
   canvasPro!: CanvasProComponent;
 
   // 添加交互配置
-  interactionConfig: ViewportInteractionConfig = {
+  @Input() interactionConfig: ViewportInteractionConfig = {
     drag: {
-      default: 'rotate',     // 默认禁用平移
+      default: 'none',     // 默认禁用平移
       shift: 'frame-select',        // 按住 shift 键可以平移
-      ctrl: 'pan',
-      alt: 'none'
+      ctrl: 'zoom',
+      alt: 'pan'
     },
     wheel: {
-      default: 'zoom',     // 默认禁用缩放
+      default: 'none',     // 默认禁用缩放
       shift: 'pan-horizontal',        // 按住 shift 键可以水平缩放
-      ctrl: 'none',
-      alt: 'none'
+      ctrl: 'zoom',
+      alt: 'pan-vertical'
     }
   };
 
@@ -54,7 +55,7 @@ export class ShipSideComponent implements AfterViewInit {
     effect(() => {
       const data = this.vessel();
       if (!data) return;
-      const measuredData = this.measureVessel(data, this.config.width, this.config.height);
+      const measuredData = this.measureVessel(data, this.config().width, this.config().height);
       this.vesselDataUpdateSubject.next(measuredData);
       return measuredData;
     });
@@ -67,19 +68,19 @@ export class ShipSideComponent implements AfterViewInit {
     this.canvasPro.addLayer(vessel);
     const vesselBay = this.getVesselBayLayer('vesselBay');
     this.canvasPro.addLayer(vesselBay);
-    // 根据标志决定使用哪种实现
-    if (this.useSvgHandlingTask) {
-      this.canvasPro.addLayer(this.getSvgHandlingTaskLayer('svgHandlingTask'));
-    } else {
-      this.canvasPro.addLayer(this.getHandlingTaskLayer('handlingTask'));
-    }
+    // // 根据标志决定使用哪种实现
+    // if (this.useSvgHandlingTask) {
+    //   this.canvasPro.addLayer(this.getSvgHandlingTaskLayer('svgHandlingTask'));
+    // } else {
+    //   this.canvasPro.addLayer(this.getHandlingTaskLayer('handlingTask'));
+    // }
     
     this.drawLayers();
 
   }
 
-  getBaynoX(bayno: number) {
-    return this.baynoXMap.get(bayno);
+  getBaynoX(bayno: number): number {
+    return this.baynoXMap.get(bayno) || 0;
   }
 
   measureVessel(vessel: Vessel, cellWidth: number, cellHeight: number) {
@@ -119,6 +120,7 @@ export class ShipSideComponent implements AfterViewInit {
     // }
     const visitedBays: string[] = [];
     let bayName = '';
+
     vessel.vesBaySideViews.forEach((vesBaySideView: VesBaySideView) => {
       if (vesBaySideView.bayName != bayName) {
         if (vesBaySideView.bayType === 'front') {
@@ -143,7 +145,6 @@ export class ShipSideComponent implements AfterViewInit {
         }
       })
     })
-
     hullWidth = (groupAmount * 2 + singleAmount) * cellWidth + (groupAmount + singleAmount - 1) * cellWidth / 4;
     allWidth = hullWidth + cellWidth * 5;
     hullHeight = maxHTier * cellHeight / 2 + cellHeight / 2;
@@ -157,18 +158,21 @@ export class ShipSideComponent implements AfterViewInit {
 
     let y: number;
     let x: number = cellWidth;
-    let interval: number = cellWidth / 4
+    const interval = cellWidth / 4
 
     vessel.vesBaySideViews.forEach((vesBaySideView: VesBaySideView) => {
-
+      // vesBaySideViews 中 bayName 一定是基数贝
       if (vesBaySideView.bayName != bayName) {
-        vesBaySideView.bayType === 'back' ? x = x + cellWidth : x = x + cellWidth + interval;
+        x = vesBaySideView.bayType === 'back' ?  x + cellWidth : x + cellWidth + interval;
       }
       bayName = vesBaySideView.bayName;
-      let idx = baynoRange.indexOf(+bayName);
+      const idx = baynoRange.indexOf(+bayName);
       bayXRange[idx] = x;
-      this.baynoXMap.set(+bayName, x)
+      this.baynoXMap.set(+bayName, x);
+      this.baynoXMap.set(+bayName + 1, x)
+
       if (vesBaySideView.dh === 'D') {
+        vesBaySideView.cells.sort((a, b) => +a.tier - +b.tier)
         vesBaySideView.cells.forEach((cell: Cell, index: number) => {
           const firstTier = +vesBaySideView.cells[0].tier;
           y = deckHeight - ((firstTier - minDTier) / 2 + index + 1) * cellHeight;
@@ -182,27 +186,6 @@ export class ShipSideComponent implements AfterViewInit {
           cell.y = y;
         })
       }
-    })
-    vessel.loadInstruct.forEach((t, i) => {
-      let index = 0;
-      if (+t.bay % 2 == 0) {
-        index = baynoRange.indexOf(+t.bay - 1);
-      } else {
-        index = baynoRange.indexOf(+t.bay);
-      }
-      console.log(baynoRange, +t.bay)
-      t.x = bayXRange[index] + cellWidth / 2
-    })
-
-    vessel.unloadInstruct.forEach((t, i) => {
-      let index = 0;
-      if (+t.bay % 2 == 0) {
-        index = baynoRange.indexOf(+t.bay - 1);
-      } else {
-        index = baynoRange.indexOf(+t.bay);
-      }
-      console.log(baynoRange, +t.bay)
-      t.x = bayXRange[index] + cellWidth / 2
     })
     return vessel
   }
@@ -230,23 +213,75 @@ export class ShipSideComponent implements AfterViewInit {
       }
     );
     svgRenderable.setSelectionChecker((selection) => {
-      const bays: any[] = []
+      const selectedTasks: HandlingTask[] = [];
+      // 遍历所有SVG元素
       svgRenderable.svgs.forEach((child) => {
-        const x = (child as SVGElement).getAttribute('x');
-        const y = (child as SVGElement).getAttribute('y');
-        if (x && y && selection.x <= +x && selection.y <= +y && selection.x + selection.w >= +x && selection.y+selection.h >= +y) {
-          bays.push(child)
+        if (child instanceof SVGPolygonElement) {
+
+          // 检查是否有任何点在选择框内
+          let isIntersecting = false;
+          const x = child.getAttribute('x');
+          const y = child.getAttribute('y');
+          if (!x || !y) return;
+          if (+x >= selection.x && 
+            +x <= selection.x + selection.w &&
+            +y >= selection.y && 
+            +y <= selection.y + selection.h) {
+          isIntersecting = true;
+          }
+          if (isIntersecting) {
+            // 获取关联的数据
+            const taskId = child.getAttribute('data-task-id');
+            if (!taskId) return;
+            const v: Vessel = svgRenderable.getData();
+            const task = v.handlingTasks?.find((t) => `${t.bay}-${t.dh}-${t.type}` === taskId && t.amount > 0);
+            if (task) {
+              selectedTasks.push(task);
+            }
+            // // 查找对应的处理任务
+            // let task!: HandlingTask;
+            // const data = svgRenderable.getData();
+            // if (type === 'load') {
+            //   const loadTask: LoadInstruct = data.loadInstruct.find((item: LoadInstruct) => +item.bay === +bay && item.loadAmount > 0);
+            //   if (!loadTask) return;
+            //   task = {
+            //     vesselCode: this.vessel().vesselCode,
+            //     bay: loadTask.bay,
+            //     amount: loadTask.loadAmount,
+            //     type: 'load',
+            //     dh: loadTask.dh,
+            //   }
+            // } else if (type === 'unload') {
+            //   const unloadTask: UnloadInstruct = data.unloadInstruct.find((item: UnloadInstruct) => +item.bay === +bay && item.unloadAmount > 0);
+            //   if (!unloadTask) return;
+            //   task = {
+            //     vesselCode: this.vessel().vesselCode,
+            //     bay: unloadTask.bay,
+            //     amount: unloadTask.unloadAmount,
+            //     type: 'unload',
+            //     dh: unloadTask.dh,
+            //   }
+            // }
+            
+            // if (task && !selectedTasks.includes(task)) {
+            //   selectedTasks.push(task);
+            // }
+          }
         }
-      })
+      });
       
-      return bays;
-      // return svgElement instanceof SVGGElement;
+      // 如果有选中的任务，触发事件
+      if (selectedTasks.length > 0) {
+        this.handlingTaskSelected.emit(selectedTasks);
+      }
+      
+      return selectedTasks;
     });
+    
     const svgLayer = new SvgLayer<Vessel>(layerName);
     svgLayer.setPushMode()
       .setTrigger(this.vesselDataUpdateSubject)
-      .addRenderable(svgRenderable)
-
+      .addRenderable(svgRenderable);
     
     return svgLayer;
   }
@@ -266,7 +301,7 @@ export class ShipSideComponent implements AfterViewInit {
           const bayX = cell.x;
           if (
             (bayX >= rect.x &&
-              bayX + this.config.width <= rect.x + rect.w) || (bayX + this.config.width <= rect.x && bayX >= rect.x + rect.w)
+              bayX + this.config().width <= rect.x + rect.w) || (bayX + this.config().width <= rect.x && bayX >= rect.x + rect.w)
           ) {
             if (item.bayName && !selectedBays.includes(item.bayName)) {
               selectedBays.push(item.bayName);
@@ -275,11 +310,11 @@ export class ShipSideComponent implements AfterViewInit {
           }
         })
       });
-      this.onVesselBaySelected.emit(selectedBays);
+      this.vesselBaySelected.emit(selectedBays);
       return selectedBays
     })
 
-    const layer = new Layer<any>(layerName);
+    const layer = new Layer(layerName);
     layer.setPushMode()
     .setTrigger(this.vesselDataUpdateSubject)
     .addRenderable(renderable);
@@ -296,24 +331,49 @@ export class ShipSideComponent implements AfterViewInit {
       svgHost.removeChild(svgHost.firstChild);
     }
   
-    const width = this.config.width;
-    const height = this.config.height;
-    
-    // 创建装船指令三角形
-    data.loadInstruct.forEach((item: any) => {
-      const startY = item.dh == 'D' ? 6 * height : data.allHeight + 9 * height;
+    const width = this.config().width;
+    const height = this.config().height;
+
+     // 创建装船指令三角形
+     data.handlingTasks?.forEach((task) => {
+      let startY = 0;
+      if (task.amount <= 0) return;
+      if (task.type === 'load') {
+        startY = task.dh == 'D' ? 6 * height : data.allHeight + 9 * height;
+
+      } else {
+        startY = task.dh == 'D' ? 2 * height : data.allHeight + 5 * height;
+
+      }
       
       // 创建SVG三角形
       const triangle = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
-      triangle.setAttribute('points', 
-        `${item.x},${startY} ${item.x + width/2},${startY + height} ${item.x + width},${startY}`
-      );
-      triangle.setAttribute('fill', '#007BFF');
+      const x = this.getBaynoX(+task.bay) + width / 2
+
+      if (task.type === 'load') {
+        triangle.setAttribute('points', 
+          `${x},${startY} ${x + width/2},${startY + height} ${x + width},${startY}`
+        );
+        triangle.setAttribute('fill', '#007BFF');
+      } else {
+        triangle.setAttribute('points', 
+        `${x},${startY} ${x + width/2},${startY - height} ${x + width},${startY}`);
+      triangle.setAttribute('fill', 'rgb(255, 100, 100)');
+      }
+
+      
       triangle.setAttribute('stroke', 'black');
       triangle.setAttribute('stroke-width', '1');
+      // 添加数据属性用于选择
+      triangle.setAttribute('x', x.toString());
+      triangle.setAttribute('y', startY.toString());
+      triangle.setAttribute('data-bay', task.bay);
+      triangle.setAttribute('data-type', 'load');
+      triangle.setAttribute('data-task-id', `${task.bay}-${task.dh}-${task.type}`);
+      
       // 创建文本元素显示装载数量
       const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-      text.setAttribute('x', (item.x + width/2).toString());
+      text.setAttribute('x', (x + width/2).toString());
       text.setAttribute('y', (startY - height).toString());
       text.setAttribute('text-anchor', 'middle');
       text.setAttribute('dominant-baseline', 'middle');
@@ -321,7 +381,7 @@ export class ShipSideComponent implements AfterViewInit {
       text.setAttribute('font-size', '18px');
       text.setAttribute('font-weight', 'lighter');
       text.setAttribute('fill', 'black');
-      text.textContent = item.loadAmount;
+      text.textContent = task.amount.toString();
       
       // 添加交互效果
       triangle.addEventListener('mouseover', () => {
@@ -336,10 +396,8 @@ export class ShipSideComponent implements AfterViewInit {
       });
       
       triangle.addEventListener('click', () => {
-        item.type = 'load';
-        item.amount = item.loadAmount;
-        this.onHandlingTaskSelected.emit([item]);
-        console.log(`装船指令: ${item.loadAmount} 箱, 贝位: ${item.bay}`);
+        this.handlingTaskSelected.emit([task]);
+        console.log(`${task.type}指令: ${task.amount} 箱, 贝位: ${task.bay}`);
       });
 
       
@@ -348,68 +406,127 @@ export class ShipSideComponent implements AfterViewInit {
       svgHost.appendChild(text);
     });
     
-    // 创建卸船指令三角形
-    data.unloadInstruct.forEach((item: any) => {
-      const startY = item.dh == 'D' ? 2 * height : data.allHeight + 5 * height;
+    // // 创建装船指令三角形
+    // data.loadInstruct.forEach((item: any) => {
+    //   const startY = item.dh == 'D' ? 6 * height : data.allHeight + 9 * height;
       
-      // 创建SVG三角形
-      const triangle = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
-      triangle.setAttribute('points', 
-        `${item.x},${startY} ${item.x + width/2},${startY - height} ${item.x + width},${startY}`
-      );
-      triangle.setAttribute('fill', 'rgb(255, 100, 100)');
-      triangle.setAttribute('stroke', 'black');
-      triangle.setAttribute('stroke-width', '1');
-      triangle.setAttribute('data-bay', item.bay);
-      console.log(triangle.getAttribute('data-bay'))
-      triangle.style.cursor = 'pointer';
+    //   // 创建SVG三角形
+    //   const triangle = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+    //   triangle.setAttribute('points', 
+    //     `${item.x},${startY} ${item.x + width/2},${startY + height} ${item.x + width},${startY}`
+    //   );
+    //   triangle.setAttribute('fill', '#007BFF');
+    //   triangle.setAttribute('stroke', 'black');
+    //   triangle.setAttribute('stroke-width', '1');
+    //   // 添加数据属性用于选择
+    //   triangle.setAttribute('x', item.x);
+    //   triangle.setAttribute('y', startY.toString());
+    //   triangle.setAttribute('data-bay', item.bay);
+    //   triangle.setAttribute('data-type', 'load');
       
-      // 创建文本元素显示卸载数量
-      const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-      text.setAttribute('x', (item.x + width/2).toString());
-      text.setAttribute('y', (startY + height).toString());
-      text.setAttribute('text-anchor', 'middle');
-      text.setAttribute('dominant-baseline', 'middle');
-      text.setAttribute('font-family', 'Arial');
-      text.setAttribute('font-size', '18px');
-      text.setAttribute('font-weight', 'lighter');
-      text.setAttribute('fill', 'black');
-      text.textContent = item.unloadAmount;
+    //   // 创建文本元素显示装载数量
+    //   const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    //   text.setAttribute('x', (item.x + width/2).toString());
+    //   text.setAttribute('y', (startY - height).toString());
+    //   text.setAttribute('text-anchor', 'middle');
+    //   text.setAttribute('dominant-baseline', 'middle');
+    //   text.setAttribute('font-family', 'Arial');
+    //   text.setAttribute('font-size', '18px');
+    //   text.setAttribute('font-weight', 'lighter');
+    //   text.setAttribute('fill', 'black');
+    //   text.textContent = item.loadAmount;
       
-      // 添加交互效果
-      triangle.addEventListener('mouseover', () => {
-        triangle.setAttribute('fill', 'rgb(220, 53, 69)');
-        triangle.setAttribute('stroke-width', '2');
-      });
+    //   // 添加交互效果
+    //   triangle.addEventListener('mouseover', () => {
+    //     triangle.setAttribute('fill', '#0056b3');
+    //     triangle.setAttribute('stroke-width', '2');
+    //   });
+    //   triangle.style.cursor = 'pointer';
       
-      triangle.addEventListener('mouseout', () => {
-        triangle.setAttribute('fill', 'rgb(255, 100, 100)');
-        triangle.setAttribute('stroke-width', '1');
-      });
+    //   triangle.addEventListener('mouseout', () => {
+    //     triangle.setAttribute('fill', '#007BFF');
+    //     triangle.setAttribute('stroke-width', '1');
+    //   });
       
-      triangle.addEventListener('click', () => {
-        item.type = 'unload';
-        item.amount = item.unloadAmount;
-        this.onHandlingTaskSelected.emit([item]);
-        console.log(`卸船指令: ${item.unloadAmount} 箱, 贝位: ${item.bay}`);
-      });
+    //   triangle.addEventListener('click', () => {
+    //     item.type = 'load';
+    //     item.amount = item.loadAmount;
+    //     this.onHandlingTaskSelected.emit([item]);
+    //     console.log(`装船指令: ${item.loadAmount} 箱, 贝位: ${item.bay}`);
+    //   });
+
       
-      // 将元素添加到SVG图层
-      svgHost.appendChild(triangle);
-      svgHost.appendChild(text);
-    });
+    //   // 将元素添加到SVG图层
+    //   svgHost.appendChild(triangle);
+    //   svgHost.appendChild(text);
+    // });
+    
+    // // 创建卸船指令三角形
+    // data.unloadInstruct.forEach((item: any) => {
+    //   const startY = item.dh == 'D' ? 2 * height : data.allHeight + 5 * height;
+      
+    //   // 创建SVG三角形
+    //   const triangle = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+    //   triangle.setAttribute('points', 
+    //     `${item.x},${startY} ${item.x + width/2},${startY - height} ${item.x + width},${startY}`
+    //   );
+    //   triangle.setAttribute('fill', 'rgb(255, 100, 100)');
+    //   triangle.setAttribute('stroke', 'black');
+    //   triangle.setAttribute('stroke-width', '1');
+    //   // 添加数据属性用于选择
+    //   triangle.setAttribute('x', item.x);
+    //   triangle.setAttribute('y', startY.toString());
+    //   triangle.setAttribute('data-bay', item.bay);
+    //   triangle.setAttribute('data-type', 'unload');
+      
+    //   // 创建文本元素显示卸载数量
+    //   const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    //   text.setAttribute('x', (item.x + width/2).toString());
+    //   text.setAttribute('y', (startY + height).toString());
+    //   text.setAttribute('text-anchor', 'middle');
+    //   text.setAttribute('dominant-baseline', 'middle');
+    //   text.setAttribute('font-family', 'Arial');
+    //   text.setAttribute('font-size', '18px');
+    //   text.setAttribute('font-weight', 'lighter');
+    //   text.setAttribute('fill', 'black');
+    //   text.textContent = item.unloadAmount;
+      
+    //   // 添加交互效果
+    //   triangle.addEventListener('mouseover', () => {
+    //     triangle.setAttribute('fill', 'rgb(220, 53, 69)');
+    //     triangle.setAttribute('stroke-width', '2');
+    //   });
+      
+    //   triangle.addEventListener('mouseout', () => {
+    //     triangle.setAttribute('fill', 'rgb(255, 100, 100)');
+    //     triangle.setAttribute('stroke-width', '1');
+    //   });
+      
+    //   triangle.addEventListener('click', () => {
+    //     item.type = 'unload';
+    //     item.amount = item.unloadAmount;
+    //     this.onHandlingTaskSelected.emit([item]);
+    //     console.log(`卸船指令: ${item.unloadAmount} 箱, 贝位: ${item.bay}`);
+    //   });
+      
+    //   // 将元素添加到SVG图层
+    //   svgHost.appendChild(triangle);
+    //   svgHost.appendChild(text);
+    // });
   }
 
   renderHandlingTask(ctx: OffscreenCanvasRenderingContext2D, data: Vessel) {
-    const width = this.config.width;
-    const height = this.config.height;
-    data.loadInstruct.forEach((item: any) => {
-      const startY = item.dh == 'D' ? 6 * height : data.allHeight + 9 * height
+    const width = this.config().width;
+    const height = this.config().height;
+    data.handlingTasks?.forEach((task) => {
+      const x = this.getBaynoX(+task.bay);
+      if (!x) return;
+      const startY = task.dh == 'D' ? 6 * height : data.allHeight + 9 * height
       ctx.beginPath();
-      ctx.moveTo(item.x, startY);
-      ctx.lineTo(item.x + width / 2, startY + height);
-      ctx.lineTo(item.x + width, startY);
-      ctx.lineTo(item.x, startY);
+      ctx.moveTo(x, startY);
+      ctx.lineTo(x + width / 2, startY + height);
+      ctx.lineTo(x + width, startY);
+      ctx.lineTo(x, startY);
       ctx.closePath();
       ctx.stroke();
       ctx.fillStyle = '#007BFF';
@@ -419,41 +536,62 @@ export class ShipSideComponent implements AfterViewInit {
       ctx.textBaseline = 'middle';
       ctx.fillStyle = 'black';
       ctx.fillText(
-        item.loadAmount,
-        item.x + width / 2,
+        task.amount.toString(),
+        x + width / 2,
         startY - height
       );
     })
-    data.unloadInstruct.forEach((item: any) => {
-      const startY = item.dh == 'D' ? 2 * height : data.allHeight + 5 * height
-      ctx.beginPath();
-      ctx.moveTo(item.x, startY);
-      ctx.lineTo(item.x + width / 2, startY - height);
-      ctx.lineTo(item.x + width, startY);
-      ctx.lineTo(item.x, startY);
-      ctx.closePath();
-      ctx.stroke();
-      ctx.fillStyle = 'rgb(255, 100, 100)';
-      ctx.fill();
-      ctx.font = 'lighter 18px Arial';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillStyle = 'black';
-      ctx.fillText(
-        item.unloadAmount,
-        item.x + width / 2,
-        startY + height
-      );
-    })
+    // data.loadInstruct.forEach((item: any) => {
+    //   const startY = item.dh == 'D' ? 6 * height : data.allHeight + 9 * height
+    //   ctx.beginPath();
+    //   ctx.moveTo(item.x, startY);
+    //   ctx.lineTo(item.x + width / 2, startY + height);
+    //   ctx.lineTo(item.x + width, startY);
+    //   ctx.lineTo(item.x, startY);
+    //   ctx.closePath();
+    //   ctx.stroke();
+    //   ctx.fillStyle = '#007BFF';
+    //   ctx.fill();
+    //   ctx.font = 'lighter 18px Arial';
+    //   ctx.textAlign = 'center';
+    //   ctx.textBaseline = 'middle';
+    //   ctx.fillStyle = 'black';
+    //   ctx.fillText(
+    //     item.loadAmount,
+    //     item.x + width / 2,
+    //     startY - height
+    //   );
+    // })
+    // data.unloadInstruct.forEach((item: any) => {
+    //   const startY = item.dh == 'D' ? 2 * height : data.allHeight + 5 * height
+    //   ctx.beginPath();
+    //   ctx.moveTo(item.x, startY);
+    //   ctx.lineTo(item.x + width / 2, startY - height);
+    //   ctx.lineTo(item.x + width, startY);
+    //   ctx.lineTo(item.x, startY);
+    //   ctx.closePath();
+    //   ctx.stroke();
+    //   ctx.fillStyle = 'rgb(255, 100, 100)';
+    //   ctx.fill();
+    //   ctx.font = 'lighter 18px Arial';
+    //   ctx.textAlign = 'center';
+    //   ctx.textBaseline = 'middle';
+    //   ctx.fillStyle = 'black';
+    //   ctx.fillText(
+    //     item.unloadAmount,
+    //     item.x + width / 2,
+    //     startY + height
+    //   );
+    // })
   }
 
   renderVessel(ctx: OffscreenCanvasRenderingContext2D, data: Vessel) {
     console.log('renderVessel');
     ctx.clearRect(0, 0, this.canvasPro.viewport.nativeElement.width, this.canvasPro.viewport.nativeElement.height);
-    const width = this.config.width;
-    const height = this.config.height;
+    const width = this.config().width;
+    const height = this.config().height;
     const allHeight = data.allHeight;
-    const allWidth = data.allWidth - this.config.width;
+    const allWidth = data.allWidth - this.config().width;
     const deckHeight = data.deckHeight;
     const startX = 0;
     const startY = deckHeight - 2 * height;
@@ -497,19 +635,19 @@ export class ShipSideComponent implements AfterViewInit {
     data.vesBaySideViews.forEach((item: any) => {
       ctx.fillText(
         item.bayName,
-        item.cells[0].x + this.config.width / 2,
-        data.allHeight + this.config.height
+        item.cells[0].x + this.config().width / 2,
+        data.allHeight + this.config().height
       );
     });
     this.canvasPro.updateViewportSize(allWidth, allHeight + 150);
   }
 
-  renderVesselBay(ctx: OffscreenCanvasRenderingContext2D, data: Vessel<VesBaySideView<Cell>>) {
+  renderVesselBay(ctx: OffscreenCanvasRenderingContext2D, data: Vessel) {
     // if (!data) return;
     console.log('renderVesselBay', data);
     ctx.clearRect(0, 0, this.canvasPro.viewport.nativeElement.width, this.canvasPro.viewport.nativeElement.height);
-    const width = this.config.width;
-    const height = this.config.height;
+    const width = this.config().width;
+    const height = this.config().height;
     console.log(data);
     ctx.lineWidth = 2;
     data.vesBaySideViews.forEach((item: VesBaySideView) => {
@@ -569,9 +707,13 @@ export class ShipSideComponent implements AfterViewInit {
   // 增加组件扩展性
   addLayer(layer: BaseLayer) {
     this.canvasPro.addLayer(layer);
+    this.drawLayers()
   }
 
   drawLayers() {
+    this.canvasPro.stopDataflow();
+    this.canvasPro.stopAnimation();
+    this.canvasPro.stopListenEvent();
     this.canvasPro.startDataflow();
     this.canvasPro.startAnimation();
     this.canvasPro.startListenEvent();

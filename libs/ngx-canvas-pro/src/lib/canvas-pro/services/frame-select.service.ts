@@ -1,15 +1,12 @@
 import { Injectable } from '@angular/core';
 import { BaseLayer } from '../base-layer';
 import { CpFrameSelectEvent } from '../event';
-import { Layer } from '../layer';
 
 @Injectable()
 export class FrameSelectService {
   public frameSelectRect = { x: 0, y: 0, width: 0, height: 0 };
   public isFrameSelecting = false;
   private selectedItems: any[] = [];
-
-  constructor() {}
 
   startFrameSelect(mousePos: { x: number, y: number }): void {
     this.isFrameSelecting = true;
@@ -51,7 +48,7 @@ export class FrameSelectService {
     ctx.restore();
   }
 
-  finishFrameSelect(layers: Layer[]): CpFrameSelectEvent | null {
+  finishFrameSelect(layers: BaseLayer[]): CpFrameSelectEvent | null {
     if (!this.isFrameSelecting) return null;
     
     // 标准化选择框（处理负宽度/高度）
@@ -60,11 +57,9 @@ export class FrameSelectService {
     // 检查每个图层中的元素是否在选择框内
     this.selectedItems = [];
     for (const layer of layers) {
-      if (layer instanceof Layer) {
-        const selectedData = layer.checkSelection(selection);
-        if (selectedData && selectedData.length > 0) {
-          this.selectedItems.push(...selectedData);
-        }
+      const selectedData = layer.checkSelection(selection);
+      if (selectedData && selectedData.length > 0) {
+        this.selectedItems.push(...selectedData);
       }
     }
     

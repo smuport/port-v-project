@@ -9,8 +9,6 @@ export class TransformService {
   public scale = 1;
   public rotation = 0;
 
-  constructor() {}
-
   // 其他方法需要修改，使用ViewportService获取视口信息
   handlePan(
     event: MouseEvent, 

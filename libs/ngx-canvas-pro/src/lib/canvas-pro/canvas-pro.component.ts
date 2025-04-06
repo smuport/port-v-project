@@ -50,7 +50,7 @@ import { ViewportService } from './services/viewport.service';
 })
 export class CanvasProComponent implements OnDestroy, AfterViewInit {
   layers: BaseLayer[] = [];
-  @ViewChild('viewport', { static: true })
+  @ViewChild('canvasViewport', { static: true })
   viewport!: ElementRef<HTMLCanvasElement>;
   viewportCtx!: CanvasRenderingContext2D;
 
@@ -73,8 +73,9 @@ export class CanvasProComponent implements OnDestroy, AfterViewInit {
     },
   };
 
+  
+
   constructor(
-    private elRef: ElementRef,
     private interactionHandler: InteractionHandler,
     // private renderHandler: RenderHandler,
     private dataflowHandler: DataflowHandler,
@@ -152,9 +153,9 @@ export class CanvasProComponent implements OnDestroy, AfterViewInit {
     }
     
     // 如果是 SVG Layer，将其 SVG 元素添加到容器中
-    if (layer.type === 'svg') {
-      this.svgContainerService.addSvgLayer(layer as SvgLayer);
-    }
+    // if (layer.type === 'svg') {
+    //   this.svgContainerService.addSvgLayer(layer as SvgLayer);
+    // }
     
     this.layers.push(layer);
     this.dataflowHandler.addLayer(layer);
@@ -260,7 +261,8 @@ export class CanvasProComponent implements OnDestroy, AfterViewInit {
     // 如果正在进行框选，完成框选
     if (this.frameSelectService.isFrameSelecting) {
       const selectEvent = this.frameSelectService.finishFrameSelect(
-        this.layers.filter(layer => layer instanceof Layer) as Layer[]
+        this.layers
+        // this.layers.filter(layer => layer instanceof Layer) as Layer[]
       );
       if (selectEvent) {
         this.triggerEvent(selectEvent);
@@ -440,7 +442,9 @@ export class CanvasProComponent implements OnDestroy, AfterViewInit {
   finishFrameSelect(): void {
     if (this.frameSelectService.isFrameSelecting) {
       const selectEvent = this.frameSelectService.finishFrameSelect(
-        this.layers.filter(layer => layer instanceof Layer) as Layer[]
+        // this.layers.filter(layer => layer instanceof Layer) as Layer[]
+        this.layers
+
       );
       if (selectEvent) {
         this.triggerEvent(selectEvent);

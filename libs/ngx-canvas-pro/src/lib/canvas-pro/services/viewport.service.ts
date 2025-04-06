@@ -35,24 +35,17 @@ export class ViewportService {
     if (!parent) return;
     
     const parentRect = parent.getBoundingClientRect();
+    this.updateViewportSize(parentRect.width, parentRect.height);
+    // // 设置Canvas视口大小
+    // this.canvasViewport.nativeElement.width = parentRect.width;
+    // this.canvasViewport.nativeElement.height = parentRect.height;
     
-    // 设置Canvas视口大小
-    this.canvasViewport.nativeElement.width = parentRect.width;
-    this.canvasViewport.nativeElement.height = parentRect.height;
-    
-    // 设置SVG容器的物理尺寸
-    this.svgContainer.style.width = `${parentRect.width}px`;
-    this.svgContainer.style.height = `${parentRect.height}px`;
-    
-    // 获取SVG元素（假设svgContainer是一个包含svg元素的容器）
-    const svgElement = this.svgContainer.querySelector('svg');
-    if (svgElement) {
-      // 设置SVG的viewBox属性，使其与Canvas视口保持一致
-      svgElement.setAttribute('viewBox', `0 0 ${parentRect.width} ${parentRect.height}`);
-      
-      // 设置SVG的preserveAspectRatio属性，确保SVG内容正确缩放
-      svgElement.setAttribute('preserveAspectRatio', 'xMidYMid meet');
-    }
+    // // 设置SVG容器的物理尺寸
+    // // this.svgContainer.style.width = `${parentRect.width}px`;
+    // // this.svgContainer.style.height = `${parentRect.height}px`;
+    // this.svgContainer.setAttribute('width', parentRect.width.toString());
+    // this.svgContainer.setAttribute('height', parentRect.height.toString());
+    this.drawViewport();
   }
 
   // 更新视口大小
@@ -108,11 +101,50 @@ export class ViewportService {
     this.canvasContext.restore();
     
     // 更新SVG容器的变换
-    this.updateSvgTransform();
+    
+    const svgLayers = this.layers.filter(layer => layer instanceof SvgLayer) as SvgLayer[];
+
+    for (const layer of svgLayers) {
+      
+      this.applySvgTransform(layer.svgElement)
+      this.svgContainer?.appendChild(layer.svgElement);
+
+      
+      // this.canvasContext.drawImage(layer.canvas, 0, 0);
+    }
+    // this.updateSvgTransform();
   }
+
+    // 更新SVG容器的变换
+    private applySvgTransform(svgGroup: SVGSVGElement) {
+      // console.log('updateSvgTransform', this.svgContainer);
+      if (!this.svgContainer || !this.canvasViewport) return;
+      
+      const canvasWidth = this.canvasViewport.nativeElement.width;
+      const canvasHeight = this.canvasViewport.nativeElement.height;
+      const centerX = canvasWidth / 2;
+      const centerY = canvasHeight / 2;
+      
+      // 从TransformService获取变换状态
+      const { translatePos, scale, rotation } = this.transformService;
+      
+      // 计算旋转角度（从弧度转为度）
+      const rotationDeg = (rotation * 180) / Math.PI;
+      
+      // 构建SVG变换字符串
+      // 注意：SVG变换的顺序与Canvas相反，最先应用的变换写在最右边
+      const transform = `translate(${centerX}px, ${centerY}px) ` +
+                        `rotate(${rotationDeg}deg) ` +
+                        `scale(${scale}) ` +
+                        `translate(${-centerX + translatePos.x}px, ${-centerY + translatePos.y}px)`;
+      
+      svgGroup.style.transform = transform;
+      svgGroup.style.transformOrigin = '0 0';
+    }
 
   // 更新SVG容器的变换
   private updateSvgTransform() {
+    console.log('updateSvgTransform', this.svgContainer);
     if (!this.svgContainer || !this.canvasViewport) return;
     
     const canvasWidth = this.canvasViewport.nativeElement.width;

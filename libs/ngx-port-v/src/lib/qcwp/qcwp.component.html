@@ -4,20 +4,21 @@
     <div class="left-panel">
       <div class="section crane-selection">
         <h2>岸桥选择</h2>
-        <div class="crane-input">
+        <!-- <div class="crane-input">
           <label for="crane-count">岸桥数量:</label>
           <input type="number" id="crane-count" [(ngModel)]="craneCount" min="1" max="10">
           <button (click)="generateCranes()">生成</button>
-        </div>
+        </div> -->
         <div class="crane-list" id="crane-list">
-          <div *ngFor="let crane of cranes" 
+          <div *ngFor="let crane of cranes()" 
                class="crane-item" 
                [class.selected]="selectedCrane && selectedCrane.id === crane.id"
                [style.background-color]="getCraneColor(crane.id)"
-               [style.color]="'#fff'"
-               [style.border-color]="getCraneColor(crane.id)"
+               [style.color]="''"
+               [style.border-color]="selectedCrane && selectedCrane.id === crane.id ? getDarkerColor(getCraneColor(crane.id)) : getCraneColor(crane.id)"
+               [style.border-width]="selectedCrane && selectedCrane.id === crane.id ? '3px' : '1px'"
                (click)="selectCrane(crane)">
-            {{ crane.name }}
+            {{ crane.name }} @if (crane.count) { <span > / {{crane.count}}</span>}
           </div>
         </div>
         <div class="auto-assign">
@@ -38,10 +39,10 @@
                  [style.border-color]="getCraneColor(selectedCrane.id)"
                  [style.color]="'#fff'">
               <div>顺序: {{ i + 1 }}</div>
-              <div>贝位: {{ task.bayNumber }}</div>
-              <div>位置: {{ task.location }}</div>
-              <div>操作: {{ task.operation }}</div>
-              <div>箱量: {{ task.containerCount }}</div>
+              <div>贝位: {{ task.bay }}</div>
+              <div>位置: {{ task.dh }}</div>
+              <div>操作: {{ task.type }}</div>
+              <div>箱量: {{ task.amount }}</div>
               
               <button *ngIf="i > 0" (click)="moveTask(i, i - 1)">上移</button>
               <button *ngIf="i < assignedTasks[selectedCrane.id].length - 1" (click)="moveTask(i, i + 1)">下移</button>
@@ -53,15 +54,19 @@
     </div>
     <div class="right-panel">
       <div class="section task-selection">
-        <h2   (click)="toggleShipSide()">船舶侧面图
+        <h2>装卸作量分布</h2>
+        <!-- <h2   (click)="toggleShipSide()">船舶侧面图
           <span>{{ isShipSideCollapsed ? '+' : '-' }}</span>
-        </h2>
+        </h2> -->
         <!-- 船舶侧面图区域 -->
         @if (!isShipSideCollapsed) {
           <div class="ship-side-content">
             <app-ship-side 
+              #shipSide
               [vessel]="vessel()" 
-              (onHandlingTaskSelected)="onHandlingTaskSelected($event)">
+              [config]="shipSideConfig()"
+              (handlingTaskSelected)="onHandlingTaskSelected($event)"
+              [interactionConfig]="vesselSideViewInteractionConfig">
             </app-ship-side>
           </div>
         }
@@ -69,7 +74,7 @@
       <div class="section gantt-chart">
         <h2>甘特图</h2>
         <div id="gantt-container" style="width: 100%; height: 500px;">
-          <canvas-pro #ganttCanvas [interactionConfig]="interactionConfig"></canvas-pro>
+          <canvas-pro #ganttCanvas [interactionConfig]="ganttChartInteractionConfig"></canvas-pro>
         </div>
       </div>
     </div>

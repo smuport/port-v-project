@@ -1,11 +1,15 @@
 import { Component } from '@angular/core';
-import { QcwpComponent, Vessel } from '@smuport/ngx-port-v';
-
+import { Crane, HandlingTask, QcwpComponent, Vessel } from '@smuport/ngx-port-v';
 @Component({
   selector: 'app-qcwp-demo',
   template: `
     <div class="qcwp-demo-container">
-      <app-qcwp [vessel]="vessel"></app-qcwp>
+      <app-qcwp 
+      [vessel]="vessel" 
+      [cranes]="cranes" 
+      (qcwpChanged)="onQcwpUpdated($event)"
+      [qcwp]="initialAssignedTasks"
+      ></app-qcwp>
     </div>
   `,
   styles: [`
@@ -28,18 +32,71 @@ import { QcwpComponent, Vessel } from '@smuport/ngx-port-v';
 })
 export class QcwpDemoComponent {
   vessel!: Vessel;
+  cranes: Crane[] = [
+    {id: "QC23", name: "QC23"},
+    {id: "QC24", name: "QC24"},
+    {id: "QC25", name: "QC25"},
+    // {id: "QC26", name: "QC26"},
+    // {id: "QC27", name: "QC27"},
+  ]
+  initialAssignedTasks: {[key:string]: HandlingTask[]} = {
+    'QC23': [
+      {
+        vesselCode: "1234567890",
+        bay: "02",
+        dh: "D",
+        amount: 100,
+        type: "load",
+        sequence: 1,
+        assignedQcCode: "QC23",
+      }
+    ]
+  }
   constructor() {
     this.getVessel();
   }
 
+  onQcwpUpdated(assignedTasks: {[key:string]: HandlingTask[]}) {
+    console.log(assignedTasks);
+  }
+
     getVessel() {
         // 加载船舶数据
-        fetch('mock-data/vessel.json')
-        // fetch('mock-data/vessel-nansha.json')
+        // fetch('mock-data/vessel.json')
+        fetch('mock-data/vessel-nansha2.json')
           .then(response => response.json())
-          .then(data => {
-            // 处理船舶数据
+          .then((data: Vessel) => {
+            // // 处理船舶数据
+            // if (data.loadInstruct) {
+            //   data.loadInstruct.forEach((item: LoadInstruct) => {
+            //     if (!data.handlingTasks) {
+            //       data.handlingTasks = [];
+            //     }
+            //     data.handlingTasks.push({
+            //       vesselCode: data.vesselCode,
+            //       bay: item.bay,
+            //       dh: item.dh,
+            //       amount: item.loadAmount,
+            //       type: 'load'
+            //     })
+            //   })
+            // }
+            // if (data.unloadInstruct) {
+            //   data.unloadInstruct.forEach((item: UnloadInstruct) => {
+            //     if (!data.handlingTasks) {
+            //       data.handlingTasks = [];
+            //     }
+            //     data.handlingTasks.push({
+            //       vesselCode: data.vesselCode,
+            //       bay: item.bay,
+            //       dh: item.dh,
+            //       amount: item.unloadAmount,
+            //       type: 'unload'
+            //     })
+            //   })
+            // }
             this.vessel = data;
+            console.log(this.vessel)
           })
           .catch(error => {
             console.error('Error loading vessel data:', error);

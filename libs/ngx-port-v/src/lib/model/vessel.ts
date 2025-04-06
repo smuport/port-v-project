@@ -1,4 +1,4 @@
-export interface Vessel<T = any> {
+export interface Vessel<T = unknown> {
     vesselCode: string,
     vesselNameZh: string,
     vesselNameEn: string,
@@ -7,18 +7,20 @@ export interface Vessel<T = any> {
     deckHeight: number,
     hullWidth: number,
     vesBaySideViews: VesBaySideView<T>[],
-    loadInstruct: LoadInstruct[],
-    unloadInstruct: UnloadInstruct[],
+    loadInstruct?: LoadInstruct[],
+    unloadInstruct?: UnloadInstruct[],
+    handlingTasks?: HandlingTask[]
+
 }
 
-export interface VesBaySideView<T = any> {
+export interface VesBaySideView<T = unknown> {
     bayName: string,
     bayType: 'single' | 'front' | 'back',
     dh: string,
     cells: Cell<T>[]
 }
 
-export interface Cell<T = any> {
+export interface Cell<T = unknown> {
     tier: string,
     x: number,
     y: number,
@@ -44,6 +46,8 @@ export interface HandlingTask {
     bay: string,
     dh: string,
     type: 'load' | 'unload',
-    amount: number
+    amount: number,
+    assignedQcCode?: string,
+    sequence?: number
 }
 

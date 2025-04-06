@@ -13,8 +13,8 @@ import { BaseLayer, LayerType } from './base-layer';
 export class SvgLayer<T = any, U = any> implements BaseLayer<T, U> {
   name: string;
   type: LayerType = 'svg'; // 添加类型标识
-  w: number = 0;
-  h: number = 0;
+  w = 0;
+  h = 0;
   svgElement: SVGSVGElement; // SVG 元素
   dataSource: Observable<T> = new Observable(); // 画什么？
   trigger: Observable<U> = new Observable(); // 何时画？
@@ -36,16 +36,18 @@ export class SvgLayer<T = any, U = any> implements BaseLayer<T, U> {
   constructor(name: string, w = 15000, h = 1500) {
     this.name = name;
     // 创建 SVG 元素
-    this.svgElement = document.createElementNS(this.svgNamespace, 'svg') as SVGSVGElement;
+    this.svgElement = document.createElementNS(this.svgNamespace, 'g') as SVGSVGElement;
     // svg 宽高应该和offscreencanvas 一样大小
     //viewBox 应该和viewport大小一样
     
-    this.svgElement.setAttribute('width', w.toString());
-    this.svgElement.setAttribute('height', h.toString());
+    // this.svgElement.setAttribute('width', w.toString());
+    // this.svgElement.setAttribute('height', h.toString());
+    // this.svgElement.setAttribute('x', '0');
+    // this.svgElement.setAttribute('y', '0');
     // this.svgElement.setAttribute('viewBox', `0 0 ${w} ${h}`);
-    this.svgElement.style.position = 'absolute';
-    this.svgElement.style.top = '0';
-    this.svgElement.style.left = '0';
+    // this.svgElement.style.position = 'absolute';
+    // this.svgElement.style.top = '0';
+    // this.svgElement.style.left = '0';
     // this.svgElement.style.pointerEvents = 'none'; // 默认不接收鼠标事件
     this.w = w;
     this.h = h;
@@ -106,8 +108,8 @@ export class SvgLayer<T = any, U = any> implements BaseLayer<T, U> {
     // 该函数是调整整个SVG画布的大小，不是调整视口大小
     this.w = w;
     this.h = h;
-    this.svgElement.setAttribute('width', w.toString());
-    this.svgElement.setAttribute('height', h.toString());
+    // this.svgElement.setAttribute('width', w.toString());
+    // this.svgElement.setAttribute('height', h.toString());
     // this.svgElement.setAttribute('viewBox', `0 0 ${w} ${h}`);
   }
 

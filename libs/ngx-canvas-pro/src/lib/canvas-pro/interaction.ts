@@ -41,7 +41,7 @@ export interface ViewportInteractionConfig {
   };
   // 滚轮行为配置
   wheel?: {
-    // 默认滚轮行为
+    // 默认滚轮行为,建议将default 设为 none ,不然会对页面滚动有影响
     default?: WheelInteractionMode;
     // Shift 键 + 滚轮
     shift?: WheelInteractionMode;

@@ -3,9 +3,10 @@ import { SvgLayer } from '../svg-layer';
 
 @Injectable()
 export class SvgContainerService {
-  private svgContainer: HTMLDivElement | null = null;
+  private svgContainer: HTMLElement | null = null;
   private renderer: Renderer2;
   private eventListeners: (() => void)[] = [];
+  private svgNamespace = 'http://www.w3.org/2000/svg';
 
   constructor(rendererFactory: RendererFactory2) {
     this.renderer = rendererFactory.createRenderer(null, null);
@@ -17,37 +18,10 @@ export class SvgContainerService {
     }
 
     // 创建SVG容器
-    this.svgContainer = this.renderer.createElement('div');
-    
-    // 设置SVG容器样式，确保与Canvas完全重叠
-    this.renderer.setStyle(this.svgContainer, 'position', 'absolute');
-    this.renderer.setStyle(this.svgContainer, 'top', '0');
-    this.renderer.setStyle(this.svgContainer, 'left', '0');
-    this.renderer.setStyle(this.svgContainer, 'width', '100%');
-    this.renderer.setStyle(this.svgContainer, 'height', '100%');
-    this.renderer.setStyle(this.svgContainer, 'pointer-events', 'none');
-    this.renderer.setStyle(this.svgContainer, 'z-index', '1');
-    this.renderer.setStyle(this.svgContainer, 'transform-origin', '0 0');
+    this.svgContainer = this.getContainer()
     
     // 添加到父元素
     this.renderer.appendChild(parent, this.svgContainer);
-  }
-
-  addSvgLayer(layer: SvgLayer): void {
-    if (!this.svgContainer || !layer.svgElement) {
-      return;
-    }
-    
-    // 设置SVG元素样式
-    this.renderer.setStyle(layer.svgElement, 'position', 'absolute');
-    this.renderer.setStyle(layer.svgElement, 'top', '0');
-    this.renderer.setStyle(layer.svgElement, 'left', '0');
-    this.renderer.setStyle(layer.svgElement, 'width', '100%');
-    this.renderer.setStyle(layer.svgElement, 'height', '100%');
-    this.renderer.setStyle(layer.svgElement, 'pointer-events', 'auto');
-    
-    // 添加到SVG容器
-    this.renderer.appendChild(this.svgContainer, layer.svgElement);
   }
 
   updateViewportSize(w: number, h: number) {
@@ -68,12 +42,10 @@ export class SvgContainerService {
     
     // 设置事件转发
     const events = ['mousedown', 'mousemove', 'mouseup', 'wheel', 'click', 'dblclick'];
-    
     for (const eventName of events) {
       const unsubscribe = this.renderer.listen(this.svgContainer, eventName, (event: Event) => {
         // 阻止事件冒泡
         event.stopPropagation();
-        
         // 创建新事件并分发到Canvas
         const newEvent = new Event(eventName, {
           bubbles: true,
@@ -171,14 +143,17 @@ export class SvgContainerService {
   // 添加获取容器的方法
   getContainer(): HTMLElement {
     if (!this.svgContainer) {
-      this.svgContainer = this.renderer.createElement('div');
-      // 设置基本样式
+      this.svgContainer = this.renderer.createElement('svg', this.svgNamespace);
+    
+      // 设置SVG容器样式，确保与Canvas完全重叠
       this.renderer.setStyle(this.svgContainer, 'position', 'absolute');
       this.renderer.setStyle(this.svgContainer, 'top', '0');
       this.renderer.setStyle(this.svgContainer, 'left', '0');
       this.renderer.setStyle(this.svgContainer, 'width', '100%');
       this.renderer.setStyle(this.svgContainer, 'height', '100%');
-      this.renderer.setStyle(this.svgContainer, 'pointer-events', 'none');
+      this.renderer.setStyle(this.svgContainer, 'pointer-events', 'auto');
+      this.renderer.setStyle(this.svgContainer, 'z-index', '100');
+      this.renderer.setStyle(this.svgContainer, 'transform-origin', '0 0');
     }
     return this.svgContainer as HTMLElement;
   }
