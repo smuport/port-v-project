@@ -7,7 +7,8 @@ import { Crane, HandlingTask, QcwpComponent, Vessel } from '@smuport/ngx-port-v'
       <app-qcwp 
       [vessel]="vessel" 
       [cranes]="cranes" 
-      (qcwpChanged)="onQcwpUpdated($event)"
+      (cranesChange)="onCranesUpdated($event)"
+      (qcwpChange)="onQcwpUpdated($event)"
       [qcwp]="initialAssignedTasks"
       ></app-qcwp>
     </div>
@@ -33,12 +34,16 @@ import { Crane, HandlingTask, QcwpComponent, Vessel } from '@smuport/ngx-port-v'
 export class QcwpDemoComponent {
   vessel!: Vessel;
   cranes: Crane[] = [
+    
+  ]
+  candidateCranes: Crane[] = [
     {id: "QC23", name: "QC23"},
     {id: "QC24", name: "QC24"},
     {id: "QC25", name: "QC25"},
     // {id: "QC26", name: "QC26"},
     // {id: "QC27", name: "QC27"},
   ]
+  
   initialAssignedTasks: {[key:string]: HandlingTask[]} = {
     'QC23': [
       {
@@ -60,6 +65,15 @@ export class QcwpDemoComponent {
     console.log(assignedTasks);
   }
 
+  onCranesUpdated(cranes: Crane[]) {
+    // 随机选择3个
+    const selectedCranes = [];
+    while (selectedCranes.length < 3 && this.candidateCranes.length > 0) {
+      const randomIndex = Math.floor(Math.random() * this.candidateCranes.length);
+      selectedCranes.push(this.candidateCranes[randomIndex]);
+    }
+    this.cranes = [...selectedCranes];
+  }
     getVessel() {
         // 加载船舶数据
         // fetch('mock-data/vessel.json')

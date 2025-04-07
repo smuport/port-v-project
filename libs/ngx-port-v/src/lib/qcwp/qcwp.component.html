@@ -10,19 +10,40 @@
           <button (click)="generateCranes()">生成</button>
         </div> -->
         <div class="crane-list" id="crane-list">
-          <div *ngFor="let crane of cranes()" 
-               class="crane-item" 
-               [class.selected]="selectedCrane && selectedCrane.id === crane.id"
-               [style.background-color]="getCraneColor(crane.id)"
-               [style.color]="''"
-               [style.border-color]="selectedCrane && selectedCrane.id === crane.id ? getDarkerColor(getCraneColor(crane.id)) : getCraneColor(crane.id)"
-               [style.border-width]="selectedCrane && selectedCrane.id === crane.id ? '3px' : '1px'"
-               (click)="selectCrane(crane)">
-            {{ crane.name }} @if (crane.count) { <span > / {{crane.count}}</span>}
-          </div>
+          <button class="add-crane-btn" (click)="changeCranes()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="12" y1="5" x2="12" y2="19"></line>
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+            选择岸桥
+          </button>
+          @if (cranes() && cranes().length > 0) {
+            <div *ngFor="let crane of cranes()" 
+                class="crane-item" 
+                [class.selected]="selectedCrane && selectedCrane.id === crane.id"
+                [style.background-color]="getCraneColor(crane.id)"
+                [style.color]="''"
+                [style.border-color]="selectedCrane && selectedCrane.id === crane.id ? getDarkerColor(getCraneColor(crane.id)) : getCraneColor(crane.id)"
+                [style.border-width]="selectedCrane && selectedCrane.id === crane.id ? '3px' : '1px'"
+                (click)="selectCrane(crane)">
+              {{ crane.name }} @if (crane.count) { <span > / {{crane.count}}</span>}
+            </div>
+          } @else {
+            <div class="empty-crane-list">
+              <p>暂无岸桥数据</p>
+            </div>
+          }
         </div>
         <div class="auto-assign">
-          <button id="auto-assign-btn" (click)="autoAssignTasks()">自动分配任务</button>
+          <button id="auto-assign-btn" class="ai-button" (click)="autoAssignTasks()">
+            <span class="ai-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9v-2h2v2zm0-4H9V7h2v5zm4 4h-2v-2h2v2zm0-4h-2V7h2v5z"/>
+              </svg>
+            </span>
+            <span class="ai-text">智能分配</span>
+            <span class="ai-ripple"></span>
+          </button>
         </div>
       </div>
       <div class="section assigned-tasks">
@@ -55,19 +76,23 @@
     <div class="right-panel">
       <div class="section task-selection">
         <h2>装卸作量分布</h2>
-        <!-- <h2   (click)="toggleShipSide()">船舶侧面图
-          <span>{{ isShipSideCollapsed ? '+' : '-' }}</span>
-        </h2> -->
         <!-- 船舶侧面图区域 -->
         @if (!isShipSideCollapsed) {
           <div class="ship-side-content">
-            <app-ship-side 
-              #shipSide
-              [vessel]="vessel()" 
-              [config]="shipSideConfig()"
-              (handlingTaskSelected)="onHandlingTaskSelected($event)"
-              [interactionConfig]="vesselSideViewInteractionConfig">
-            </app-ship-side>
+            @if (vessel()) {
+              <app-ship-side 
+                #shipSide
+                [vessel]="vessel()" 
+                [config]="shipSideConfig()"
+                (handlingTaskSelected)="onHandlingTaskSelected($event)"
+                [interactionConfig]="vesselSideViewInteractionConfig">
+              </app-ship-side>
+            } @else {
+              <div class="loading-container">
+                <div class="loading-spinner"></div>
+                <p>正在加载船舶数据...</p>
+              </div>
+            }
           </div>
         }
       </div>

@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, ViewChild, AfterViewInit, Input, Output, EventEmitter, input, effect, InputOptionsWithTransform } from '@angular/core';
+import { Component, ViewChild, AfterViewInit, Input, Output, EventEmitter, input, effect, output, AfterViewChecked, AfterContentInit, AfterRenderRef } from '@angular/core';
 import { BaseLayer, CanvasProComponent, CustomRenderable, Layer, SvgLayer, SvgRenderable, ViewportInteractionConfig } from '@smuport/ngx-canvas-pro';
 import { BehaviorSubject } from 'rxjs';
 import { Cell, HandlingTask, VesBaySideView, Vessel } from '../model/vessel';
@@ -47,6 +47,7 @@ export class ShipSideComponent implements AfterViewInit {
     }
   };
 
+
   private baynoXMap = new Map<number, number>()
 
   useSvgHandlingTask = true;
@@ -76,8 +77,8 @@ export class ShipSideComponent implements AfterViewInit {
     // }
     
     this.drawLayers();
-
   }
+
 
   getBaynoX(bayno: number): number {
     return this.baynoXMap.get(bayno) || 0;

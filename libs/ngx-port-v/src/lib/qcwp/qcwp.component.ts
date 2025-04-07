@@ -15,7 +15,7 @@ import { QcwpService } from './qcwp.service';
   standalone: true,
   imports: [CommonModule, FormsModule, CanvasProComponent, ShipSideComponent]
 })
-export class QcwpComponent implements OnInit, AfterViewInit, OnDestroy {
+export class QcwpComponent implements AfterViewInit, OnDestroy {
 
   // CanvasPro 相关变量
   private ganttLayer!: SvgLayer;
@@ -31,9 +31,20 @@ export class QcwpComponent implements OnInit, AfterViewInit, OnDestroy {
   assignedTasks: { [key: string]: HandlingTask[] } = {};
   vesselDataUpdateSubject = new BehaviorSubject<Vessel>(undefined!);
   handlingTaskLayer!: SvgLayer;
-
+  private _shipSide!: ShipSideComponent;
   @ViewChild('ganttCanvas', { static: false }) ganttCanvas!: CanvasProComponent;
-  @ViewChild('shipSide', { static: false }) shipSide!: ShipSideComponent;
+  @ViewChild('shipSide', { static: false }) set shipSide(v: ShipSideComponent) {
+    this._shipSide = v;
+    if (v && !this.handlingTaskLayer) {
+      this.handlingTaskLayer = this.getSvgHandlingTaskLayer('handlingTask');
+      this.shipSide.addLayer(this.handlingTaskLayer);
+    }
+
+  } ;
+
+  get shipSide(): ShipSideComponent {
+    return this._shipSide;
+  }
   
 
   
@@ -98,8 +109,8 @@ export class QcwpComponent implements OnInit, AfterViewInit, OnDestroy {
   vessel = input.required<Vessel>();
 
   qcwp = input<{[key: string]: HandlingTask[]}>();
-  qcwpChanged = output<{[key: string]: HandlingTask[]}>();
-
+  qcwpChange = output<{[key: string]: HandlingTask[]}>();
+  cranesChange = output<Crane[]>();
   constructor(private qcwpService: QcwpService) {
     effect(() => {
       const vessel = this.vessel();
@@ -135,17 +146,19 @@ export class QcwpComponent implements OnInit, AfterViewInit, OnDestroy {
   }
   
 
-  ngOnInit(): void {
 
-  }
-  
-  ngAfterViewInit(): void {
-    this.handlingTaskLayer = this.getSvgHandlingTaskLayer('handlingTask');
-    this.shipSide.addLayer(this.handlingTaskLayer);
+
+  ngAfterViewInit() {
+    console.log('afterShipSideViewInit')
+    // this.handlingTaskLayer = this.getSvgHandlingTaskLayer('handlingTask');
+    // this.shipSide.addLayer(this.handlingTaskLayer);
     this.initGanttChart();
     this.drawGanttChart();
-    // this.updateHandlingTaskLayer();
   }
+  
+
+
+
   
   ngOnDestroy(): void {
     this.destroy$.next();
@@ -219,7 +232,7 @@ export class QcwpComponent implements OnInit, AfterViewInit, OnDestroy {
 
     // this.cranes().forEach(c => c.count = qcTotalAmount[c.id]);
 
-    this.qcwpChanged.emit(this.assignedTasks);
+    this.qcwpChange.emit(this.assignedTasks);
     // this.shipSide.canvasPro.drawVierport();
     
   }
@@ -244,7 +257,7 @@ export class QcwpComponent implements OnInit, AfterViewInit, OnDestroy {
   
   initTasks(vessel: Vessel): void {
     if (vessel.handlingTasks) {
-      this.tasks.push(...vessel.handlingTasks)
+      this.tasks = [...vessel.handlingTasks]
     }
   }
   
@@ -361,7 +374,7 @@ export class QcwpComponent implements OnInit, AfterViewInit, OnDestroy {
     this.handlingTaskLayer.render(this.vessel());
     this.updateQcTotalAmount();
     this.drawGanttChart();
-    this.qcwpChanged.emit(this.assignedTasks);
+    this.qcwpChange.emit(this.assignedTasks);
   }
   
   moveTask(fromIndex: number, toIndex: number): void {
@@ -374,7 +387,7 @@ export class QcwpComponent implements OnInit, AfterViewInit, OnDestroy {
     this.drawGanttChart();
     this.handlingTaskLayer.render(this.vessel());
     this.updateQcTotalAmount();
-    this.qcwpChanged.emit(this.assignedTasks);
+    this.qcwpChange.emit(this.assignedTasks);
   }
 
   autoAssignTasks(): void {
@@ -403,7 +416,7 @@ export class QcwpComponent implements OnInit, AfterViewInit, OnDestroy {
     this.updateQcTotalAmount();
     // this.handlingTaskLayer.render(this.vessel());
     alert(`自动安排完成！预计总完成时间: ${result.completionTime.toFixed(1)} 分钟`);
-    this.qcwpChanged.emit(this.assignedTasks);
+    this.qcwpChange.emit(this.assignedTasks);
   }
 
 
@@ -835,6 +848,16 @@ export class QcwpComponent implements OnInit, AfterViewInit, OnDestroy {
     // 默认返回原色
     return color;
   }
+
+  changeCranes(): void {
+    // 这里可以实现添加岸桥的逻辑
+    // 例如打开一个对话框让用户输入岸桥信息
+    console.log('添加岸桥');
+    this.cranesChange.emit(this.cranes());
+    // 如果你有事件发射器，可以触发一个事件通知父组件
+    // this.addCraneRequest.emit();
+  }
+
 
 }
 
