@@ -77,7 +77,7 @@ export class QcwpDemoComponent {
     getVessel() {
         // 加载船舶数据
         // fetch('mock-data/vessel.json')
-        fetch('mock-data/vessel-nansha2.json')
+        fetch('mock-data/vessel-nansha3.json')
           .then(response => response.json())
           .then((data: Vessel) => {
             // // 处理船舶数据

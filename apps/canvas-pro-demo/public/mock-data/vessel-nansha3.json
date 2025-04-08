@@ -1,0 +1,1234 @@
+{
+    "handlingTasks": [
+      {
+        "amount": 1,
+        "bay": "38",
+        "dh": "H",
+        "type": "unload",
+        "vesselCode": "ZA7"
+      },
+      {
+        "amount": 72,
+        "bay": "14",
+        "dh": "D",
+        "type": "unload",
+        "vesselCode": "ZA7"
+      },
+      {
+        "amount": 35,
+        "bay": "38",
+        "dh": "D",
+        "type": "unload",
+        "vesselCode": "ZA7"
+      },
+      {
+        "amount": 38,
+        "bay": "58",
+        "dh": "D",
+        "type": "unload",
+        "vesselCode": "ZA7"
+      },
+      {
+        "amount": 8,
+        "bay": "58",
+        "dh": "H",
+        "type": "unload",
+        "vesselCode": "ZA7"
+      },
+      {
+        "amount": 35,
+        "bay": "42",
+        "dh": "H",
+        "type": "unload",
+        "vesselCode": "ZA7"
+      },
+      {
+        "amount": 9,
+        "bay": "30",
+        "dh": "D",
+        "type": "unload",
+        "vesselCode": "ZA7"
+      },
+      {
+        "amount": 2,
+        "bay": "30",
+        "dh": "H",
+        "type": "unload",
+        "vesselCode": "ZA7"
+      },
+      {
+        "amount": 91,
+        "bay": "26",
+        "dh": "D",
+        "type": "unload",
+        "vesselCode": "ZA7"
+      },
+      {
+        "amount": 29,
+        "bay": "02",
+        "dh": "D",
+        "type": "unload",
+        "vesselCode": "ZA7"
+      },
+      {
+        "amount": 24,
+        "bay": "62",
+        "dh": "D",
+        "type": "unload",
+        "vesselCode": "ZA7"
+      },
+      {
+        "amount": 50,
+        "bay": "06",
+        "dh": "D",
+        "type": "load",
+        "vesselCode": "ZA7"
+      },
+      {
+        "amount": 10,
+        "bay": "06",
+        "dh": "H",
+        "type": "load",
+        "vesselCode": "ZA7"
+      },
+      {
+        "amount": 60,
+        "bay": "38",
+        "dh": "D",
+        "type": "load",
+        "vesselCode": "ZA7"
+      },
+      {
+        "amount": 70,
+        "bay": "38",
+        "dh": "H",
+        "type": "load",
+        "vesselCode": "ZA7"
+      },
+      {
+        "amount": 72,
+        "bay": "14",
+        "dh": "D",
+        "type": "load",
+        "vesselCode": "ZA7"
+      },
+      {
+        "amount": 52,
+        "bay": "14",
+        "dh": "H",
+        "type": "load",
+        "vesselCode": "ZA7"
+      },
+      {
+        "amount": 35,
+        "bay": "30",
+        "dh": "D",
+        "type": "load",
+        "vesselCode": "ZA7"
+      },
+      {
+        "amount": 11,
+        "bay": "30",
+        "dh": "H",
+        "type": "load",
+        "vesselCode": "ZA7"
+      }
+    ],
+    "vesBaySideViews": [
+      {
+        "bayName": "37",
+        "bayType": "front",
+        "cells": [
+          {
+            "data": null,
+            "tier": "04"
+          },
+          {
+            "data": null,
+            "tier": "12"
+          },
+          {
+            "data": null,
+            "tier": "14"
+          },
+          {
+            "data": null,
+            "tier": "06"
+          },
+          {
+            "data": null,
+            "tier": "08"
+          },
+          {
+            "data": null,
+            "tier": "10"
+          },
+          {
+            "data": null,
+            "tier": "16"
+          },
+          {
+            "data": null,
+            "tier": "02"
+          }
+        ],
+        "dh": "H"
+      },
+      {
+        "bayName": "39",
+        "bayType": "back",
+        "cells": [
+          {
+            "data": null,
+            "tier": "04"
+          },
+          {
+            "data": null,
+            "tier": "12"
+          },
+          {
+            "data": null,
+            "tier": "14"
+          },
+          {
+            "data": null,
+            "tier": "06"
+          },
+          {
+            "data": null,
+            "tier": "08"
+          },
+          {
+            "data": null,
+            "tier": "10"
+          },
+          {
+            "data": null,
+            "tier": "16"
+          },
+          {
+            "data": null,
+            "tier": "02"
+          }
+        ],
+        "dh": "H"
+      },
+      {
+        "bayName": "13",
+        "bayType": "front",
+        "cells": [
+          {
+            "data": null,
+            "tier": "76"
+          },
+          {
+            "data": null,
+            "tier": "72"
+          },
+          {
+            "data": null,
+            "tier": "84"
+          },
+          {
+            "data": null,
+            "tier": "78"
+          },
+          {
+            "data": null,
+            "tier": "80"
+          },
+          {
+            "data": null,
+            "tier": "74"
+          },
+          {
+            "data": null,
+            "tier": "82"
+          }
+        ],
+        "dh": "D"
+      },
+      {
+        "bayName": "15",
+        "bayType": "back",
+        "cells": [
+          {
+            "data": null,
+            "tier": "76"
+          },
+          {
+            "data": null,
+            "tier": "72"
+          },
+          {
+            "data": null,
+            "tier": "84"
+          },
+          {
+            "data": null,
+            "tier": "78"
+          },
+          {
+            "data": null,
+            "tier": "80"
+          },
+          {
+            "data": null,
+            "tier": "74"
+          },
+          {
+            "data": null,
+            "tier": "82"
+          }
+        ],
+        "dh": "D"
+      },
+      {
+        "bayName": "37",
+        "bayType": "front",
+        "cells": [
+          {
+            "data": null,
+            "tier": "76"
+          },
+          {
+            "data": null,
+            "tier": "72"
+          },
+          {
+            "data": null,
+            "tier": "84"
+          },
+          {
+            "data": null,
+            "tier": "78"
+          },
+          {
+            "data": null,
+            "tier": "80"
+          },
+          {
+            "data": null,
+            "tier": "74"
+          },
+          {
+            "data": null,
+            "tier": "82"
+          }
+        ],
+        "dh": "D"
+      },
+      {
+        "bayName": "39",
+        "bayType": "back",
+        "cells": [
+          {
+            "data": null,
+            "tier": "76"
+          },
+          {
+            "data": null,
+            "tier": "72"
+          },
+          {
+            "data": null,
+            "tier": "84"
+          },
+          {
+            "data": null,
+            "tier": "78"
+          },
+          {
+            "data": null,
+            "tier": "80"
+          },
+          {
+            "data": null,
+            "tier": "74"
+          },
+          {
+            "data": null,
+            "tier": "82"
+          }
+        ],
+        "dh": "D"
+      },
+      {
+        "bayName": "57",
+        "bayType": "front",
+        "cells": [
+          {
+            "data": null,
+            "tier": "76"
+          },
+          {
+            "data": null,
+            "tier": "86"
+          },
+          {
+            "data": null,
+            "tier": "72"
+          },
+          {
+            "data": null,
+            "tier": "84"
+          },
+          {
+            "data": null,
+            "tier": "78"
+          },
+          {
+            "data": null,
+            "tier": "80"
+          },
+          {
+            "data": null,
+            "tier": "74"
+          },
+          {
+            "data": null,
+            "tier": "82"
+          }
+        ],
+        "dh": "D"
+      },
+      {
+        "bayName": "59",
+        "bayType": "back",
+        "cells": [
+          {
+            "data": null,
+            "tier": "76"
+          },
+          {
+            "data": null,
+            "tier": "86"
+          },
+          {
+            "data": null,
+            "tier": "72"
+          },
+          {
+            "data": null,
+            "tier": "84"
+          },
+          {
+            "data": null,
+            "tier": "78"
+          },
+          {
+            "data": null,
+            "tier": "80"
+          },
+          {
+            "data": null,
+            "tier": "74"
+          },
+          {
+            "data": null,
+            "tier": "82"
+          }
+        ],
+        "dh": "D"
+      },
+      {
+        "bayName": "57",
+        "bayType": "front",
+        "cells": [
+          {
+            "data": null,
+            "tier": "16"
+          },
+          {
+            "data": null,
+            "tier": "12"
+          },
+          {
+            "data": null,
+            "tier": "14"
+          }
+        ],
+        "dh": "H"
+      },
+      {
+        "bayName": "59",
+        "bayType": "back",
+        "cells": [
+          {
+            "data": null,
+            "tier": "16"
+          },
+          {
+            "data": null,
+            "tier": "12"
+          },
+          {
+            "data": null,
+            "tier": "14"
+          }
+        ],
+        "dh": "H"
+      },
+      {
+        "bayName": "41",
+        "bayType": "front",
+        "cells": [
+          {
+            "data": null,
+            "tier": "04"
+          },
+          {
+            "data": null,
+            "tier": "12"
+          },
+          {
+            "data": null,
+            "tier": "14"
+          },
+          {
+            "data": null,
+            "tier": "06"
+          },
+          {
+            "data": null,
+            "tier": "08"
+          },
+          {
+            "data": null,
+            "tier": "10"
+          },
+          {
+            "data": null,
+            "tier": "16"
+          },
+          {
+            "data": null,
+            "tier": "02"
+          }
+        ],
+        "dh": "H"
+      },
+      {
+        "bayName": "43",
+        "bayType": "back",
+        "cells": [
+          {
+            "data": null,
+            "tier": "04"
+          },
+          {
+            "data": null,
+            "tier": "12"
+          },
+          {
+            "data": null,
+            "tier": "14"
+          },
+          {
+            "data": null,
+            "tier": "06"
+          },
+          {
+            "data": null,
+            "tier": "08"
+          },
+          {
+            "data": null,
+            "tier": "10"
+          },
+          {
+            "data": null,
+            "tier": "16"
+          },
+          {
+            "data": null,
+            "tier": "02"
+          }
+        ],
+        "dh": "H"
+      },
+      {
+        "bayName": "29",
+        "bayType": "front",
+        "cells": [
+          {
+            "data": null,
+            "tier": "76"
+          },
+          {
+            "data": null,
+            "tier": "72"
+          },
+          {
+            "data": null,
+            "tier": "84"
+          },
+          {
+            "data": null,
+            "tier": "78"
+          },
+          {
+            "data": null,
+            "tier": "80"
+          },
+          {
+            "data": null,
+            "tier": "74"
+          },
+          {
+            "data": null,
+            "tier": "82"
+          }
+        ],
+        "dh": "D"
+      },
+      {
+        "bayName": "31",
+        "bayType": "back",
+        "cells": [
+          {
+            "data": null,
+            "tier": "76"
+          },
+          {
+            "data": null,
+            "tier": "72"
+          },
+          {
+            "data": null,
+            "tier": "84"
+          },
+          {
+            "data": null,
+            "tier": "78"
+          },
+          {
+            "data": null,
+            "tier": "80"
+          },
+          {
+            "data": null,
+            "tier": "74"
+          },
+          {
+            "data": null,
+            "tier": "82"
+          }
+        ],
+        "dh": "D"
+      },
+      {
+        "bayName": "29",
+        "bayType": "front",
+        "cells": [
+          {
+            "data": null,
+            "tier": "04"
+          },
+          {
+            "data": null,
+            "tier": "12"
+          },
+          {
+            "data": null,
+            "tier": "10"
+          },
+          {
+            "data": null,
+            "tier": "16"
+          },
+          {
+            "data": null,
+            "tier": "02"
+          }
+        ],
+        "dh": "H"
+      },
+      {
+        "bayName": "31",
+        "bayType": "back",
+        "cells": [
+          {
+            "data": null,
+            "tier": "04"
+          },
+          {
+            "data": null,
+            "tier": "12"
+          },
+          {
+            "data": null,
+            "tier": "10"
+          },
+          {
+            "data": null,
+            "tier": "16"
+          },
+          {
+            "data": null,
+            "tier": "02"
+          }
+        ],
+        "dh": "H"
+      },
+      {
+        "bayName": "25",
+        "bayType": "front",
+        "cells": [
+          {
+            "data": null,
+            "tier": "76"
+          },
+          {
+            "data": null,
+            "tier": "86"
+          },
+          {
+            "data": null,
+            "tier": "72"
+          },
+          {
+            "data": null,
+            "tier": "84"
+          },
+          {
+            "data": null,
+            "tier": "78"
+          },
+          {
+            "data": null,
+            "tier": "80"
+          },
+          {
+            "data": null,
+            "tier": "74"
+          },
+          {
+            "data": null,
+            "tier": "82"
+          }
+        ],
+        "dh": "D"
+      },
+      {
+        "bayName": "27",
+        "bayType": "back",
+        "cells": [
+          {
+            "data": null,
+            "tier": "76"
+          },
+          {
+            "data": null,
+            "tier": "86"
+          },
+          {
+            "data": null,
+            "tier": "72"
+          },
+          {
+            "data": null,
+            "tier": "84"
+          },
+          {
+            "data": null,
+            "tier": "78"
+          },
+          {
+            "data": null,
+            "tier": "80"
+          },
+          {
+            "data": null,
+            "tier": "74"
+          },
+          {
+            "data": null,
+            "tier": "82"
+          }
+        ],
+        "dh": "D"
+      },
+      {
+        "bayName": "01",
+        "bayType": "front",
+        "cells": [
+          {
+            "data": null,
+            "tier": "76"
+          },
+          {
+            "data": null,
+            "tier": "72"
+          },
+          {
+            "data": null,
+            "tier": "78"
+          },
+          {
+            "data": null,
+            "tier": "80"
+          },
+          {
+            "data": null,
+            "tier": "74"
+          },
+          {
+            "data": null,
+            "tier": "82"
+          }
+        ],
+        "dh": "D"
+      },
+      {
+        "bayName": "03",
+        "bayType": "back",
+        "cells": [
+          {
+            "data": null,
+            "tier": "76"
+          },
+          {
+            "data": null,
+            "tier": "72"
+          },
+          {
+            "data": null,
+            "tier": "78"
+          },
+          {
+            "data": null,
+            "tier": "80"
+          },
+          {
+            "data": null,
+            "tier": "74"
+          },
+          {
+            "data": null,
+            "tier": "82"
+          }
+        ],
+        "dh": "D"
+      },
+      {
+        "bayName": "61",
+        "bayType": "front",
+        "cells": [
+          {
+            "data": null,
+            "tier": "76"
+          },
+          {
+            "data": null,
+            "tier": "72"
+          },
+          {
+            "data": null,
+            "tier": "70"
+          },
+          {
+            "data": null,
+            "tier": "78"
+          },
+          {
+            "data": null,
+            "tier": "84"
+          },
+          {
+            "data": null,
+            "tier": "80"
+          },
+          {
+            "data": null,
+            "tier": "74"
+          },
+          {
+            "data": null,
+            "tier": "82"
+          }
+        ],
+        "dh": "D"
+      },
+      {
+        "bayName": "63",
+        "bayType": "back",
+        "cells": [
+          {
+            "data": null,
+            "tier": "76"
+          },
+          {
+            "data": null,
+            "tier": "72"
+          },
+          {
+            "data": null,
+            "tier": "70"
+          },
+          {
+            "data": null,
+            "tier": "78"
+          },
+          {
+            "data": null,
+            "tier": "84"
+          },
+          {
+            "data": null,
+            "tier": "80"
+          },
+          {
+            "data": null,
+            "tier": "74"
+          },
+          {
+            "data": null,
+            "tier": "82"
+          }
+        ],
+        "dh": "D"
+      },
+      {
+        "bayName": "05",
+        "bayType": "front",
+        "cells": [
+          {
+            "data": null,
+            "tier": "76"
+          },
+          {
+            "data": null,
+            "tier": "72"
+          },
+          {
+            "data": null,
+            "tier": "78"
+          },
+          {
+            "data": null,
+            "tier": "80"
+          },
+          {
+            "data": null,
+            "tier": "74"
+          },
+          {
+            "data": null,
+            "tier": "82"
+          }
+        ],
+        "dh": "D"
+      },
+      {
+        "bayName": "07",
+        "bayType": "back",
+        "cells": [
+          {
+            "data": null,
+            "tier": "76"
+          },
+          {
+            "data": null,
+            "tier": "72"
+          },
+          {
+            "data": null,
+            "tier": "78"
+          },
+          {
+            "data": null,
+            "tier": "80"
+          },
+          {
+            "data": null,
+            "tier": "74"
+          },
+          {
+            "data": null,
+            "tier": "82"
+          }
+        ],
+        "dh": "D"
+      },
+      {
+        "bayName": "05",
+        "bayType": "front",
+        "cells": [
+          {
+            "data": null,
+            "tier": "16"
+          },
+          {
+            "data": null,
+            "tier": "12"
+          },
+          {
+            "data": null,
+            "tier": "14"
+          }
+        ],
+        "dh": "H"
+      },
+      {
+        "bayName": "07",
+        "bayType": "back",
+        "cells": [
+          {
+            "data": null,
+            "tier": "16"
+          },
+          {
+            "data": null,
+            "tier": "12"
+          },
+          {
+            "data": null,
+            "tier": "14"
+          }
+        ],
+        "dh": "H"
+      },
+      {
+        "bayName": "13",
+        "bayType": "front",
+        "cells": [
+          {
+            "data": null,
+            "tier": "04"
+          },
+          {
+            "data": null,
+            "tier": "12"
+          },
+          {
+            "data": null,
+            "tier": "14"
+          },
+          {
+            "data": null,
+            "tier": "06"
+          },
+          {
+            "data": null,
+            "tier": "08"
+          },
+          {
+            "data": null,
+            "tier": "10"
+          },
+          {
+            "data": null,
+            "tier": "16"
+          }
+        ],
+        "dh": "H"
+      },
+      {
+        "bayName": "15",
+        "bayType": "back",
+        "cells": [
+          {
+            "data": null,
+            "tier": "04"
+          },
+          {
+            "data": null,
+            "tier": "12"
+          },
+          {
+            "data": null,
+            "tier": "14"
+          },
+          {
+            "data": null,
+            "tier": "06"
+          },
+          {
+            "data": null,
+            "tier": "08"
+          },
+          {
+            "data": null,
+            "tier": "10"
+          },
+          {
+            "data": null,
+            "tier": "16"
+          }
+        ],
+        "dh": "H"
+      },
+      {
+        "bayName": "09",
+        "bayType": "single",
+        "cells": [],
+        "dh": "H"
+      },
+      {
+        "bayName": "09",
+        "bayType": "single",
+        "cells": [],
+        "dh": "D"
+      },
+      {
+        "bayName": "11",
+        "bayType": "single",
+        "cells": [],
+        "dh": "H"
+      },
+      {
+        "bayName": "11",
+        "bayType": "single",
+        "cells": [],
+        "dh": "D"
+      },
+      {
+        "bayName": "17",
+        "bayType": "single",
+        "cells": [],
+        "dh": "H"
+      },
+      {
+        "bayName": "17",
+        "bayType": "single",
+        "cells": [],
+        "dh": "D"
+      },
+      {
+        "bayName": "19",
+        "bayType": "single",
+        "cells": [],
+        "dh": "H"
+      },
+      {
+        "bayName": "19",
+        "bayType": "single",
+        "cells": [],
+        "dh": "D"
+      },
+      {
+        "bayName": "21",
+        "bayType": "single",
+        "cells": [],
+        "dh": "H"
+      },
+      {
+        "bayName": "21",
+        "bayType": "single",
+        "cells": [],
+        "dh": "D"
+      },
+      {
+        "bayName": "23",
+        "bayType": "single",
+        "cells": [],
+        "dh": "H"
+      },
+      {
+        "bayName": "23",
+        "bayType": "single",
+        "cells": [],
+        "dh": "D"
+      },
+      {
+        "bayName": "33",
+        "bayType": "single",
+        "cells": [],
+        "dh": "H"
+      },
+      {
+        "bayName": "33",
+        "bayType": "single",
+        "cells": [],
+        "dh": "D"
+      },
+      {
+        "bayName": "35",
+        "bayType": "single",
+        "cells": [],
+        "dh": "H"
+      },
+      {
+        "bayName": "35",
+        "bayType": "single",
+        "cells": [],
+        "dh": "D"
+      },
+      {
+        "bayName": "45",
+        "bayType": "single",
+        "cells": [],
+        "dh": "H"
+      },
+      {
+        "bayName": "45",
+        "bayType": "single",
+        "cells": [],
+        "dh": "D"
+      },
+      {
+        "bayName": "47",
+        "bayType": "single",
+        "cells": [],
+        "dh": "H"
+      },
+      {
+        "bayName": "47",
+        "bayType": "single",
+        "cells": [],
+        "dh": "D"
+      },
+      {
+        "bayName": "49",
+        "bayType": "single",
+        "cells": [],
+        "dh": "H"
+      },
+      {
+        "bayName": "49",
+        "bayType": "single",
+        "cells": [],
+        "dh": "D"
+      },
+      {
+        "bayName": "51",
+        "bayType": "single",
+        "cells": [],
+        "dh": "H"
+      },
+      {
+        "bayName": "51",
+        "bayType": "single",
+        "cells": [],
+        "dh": "D"
+      },
+      {
+        "bayName": "53",
+        "bayType": "single",
+        "cells": [],
+        "dh": "H"
+      },
+      {
+        "bayName": "53",
+        "bayType": "single",
+        "cells": [],
+        "dh": "D"
+      },
+      {
+        "bayName": "55",
+        "bayType": "single",
+        "cells": [],
+        "dh": "H"
+      },
+      {
+        "bayName": "55",
+        "bayType": "single",
+        "cells": [],
+        "dh": "D"
+      }
+    ],
+    "vesselCode": "ZA7",
+    "vesselNameEn": null,
+    "vesselNameZh": null
+  }

@@ -1,9 +1,9 @@
-import { Component, ElementRef, OnInit, ViewChild, AfterViewInit, HostListener, OnDestroy, Input, input, effect, signal, output } from '@angular/core';
+import { Component, ViewChild, AfterViewInit, HostListener, OnDestroy, Input, input, effect, signal, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Crane, QcwpConfig } from './qcwp.model';
 import { CanvasProComponent, CustomRenderable, Layer, SvgLayer, SvgRenderable, ViewportInteractionConfig } from '@smuport/ngx-canvas-pro';
-import { BehaviorSubject, Observable, of, Subject } from 'rxjs';
+import { BehaviorSubject, of, Subject } from 'rxjs';
 import { ShipSideComponent } from '../ship-side/ship-side.component';
 import { HandlingTask, Vessel } from '../model/vessel';
 import { QcwpService } from './qcwp.service';
@@ -120,9 +120,7 @@ export class QcwpComponent implements AfterViewInit, OnDestroy {
         this.vesselDataUpdateSubject.next(vessel)
         this.initTasks(vessel);
       }
-      // if (qcwp) {
-      //   this.assignedTasks = qcwp;
-      // }
+
       if (vessel && qcwp) {
         const allQcwpTasks: HandlingTask[] = []
         Object.values(qcwp).forEach(tasks => allQcwpTasks.push(...tasks))
@@ -140,6 +138,7 @@ export class QcwpComponent implements AfterViewInit, OnDestroy {
         
         
       } 
+      this.drawGanttChart();
       this.updateQcTotalAmount();
     });
 

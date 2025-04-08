@@ -633,10 +633,10 @@ export class ShipSideComponent implements AfterViewInit {
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillStyle = 'black';
-    data.vesBaySideViews.forEach((item: any) => {
+    data.vesBaySideViews.forEach((item: VesBaySideView) => {
       ctx.fillText(
         item.bayName,
-        item.cells[0].x + this.config().width / 2,
+        this.getBaynoX(+item.bayName) + this.config().width / 2,
         data.allHeight + this.config().height
       );
     });
