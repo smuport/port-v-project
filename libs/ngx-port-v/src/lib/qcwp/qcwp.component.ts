@@ -126,6 +126,9 @@ export class QcwpComponent implements AfterViewInit, OnDestroy {
         Object.values(qcwp).forEach(tasks => allQcwpTasks.push(...tasks))
         this.mergeTasks(vessel, allQcwpTasks);
         if (vessel.handlingTasks) {
+          vessel.handlingTasks.sort((a, b) => {
+            return (a.sequence || 0) - (b.sequence || 0);
+          })
           for (const task of vessel.handlingTasks) {
             if (task.assignedQcCode) {
               if (!this.assignedTasks[task.assignedQcCode]) {
@@ -378,9 +381,13 @@ export class QcwpComponent implements AfterViewInit, OnDestroy {
   
   moveTask(fromIndex: number, toIndex: number): void {
     if (!this.selectedCrane || !this.assignedTasks[this.selectedCrane.id]) return;
-    
+    if (fromIndex < 0 || toIndex < 0) return;
     const tasks = this.assignedTasks[this.selectedCrane.id];
     const task = tasks.splice(fromIndex, 1)[0];
+    const toTask = tasks[toIndex];
+    const toTaskSeq = toTask.sequence;
+    toTask.sequence = task.sequence;
+    task.sequence = toTaskSeq;
     tasks.splice(toIndex, 0, task);
     // this.handlingTaskLayer.render(this.vessel());
     this.drawGanttChart();

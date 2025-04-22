@@ -1,6 +1,17 @@
 import { Injectable } from '@angular/core';
 import { Crane } from './qcwp.model';
 import { HandlingTask } from '../model/vessel';
+export interface Container {
+  ctnno: string;
+  block: string;
+  seq: number;
+  bay: string;
+  dh: string;
+  type: 'load' | 'unload';
+  qcCode?: string;
+  conflict?: boolean;
+  estimatedTime?: number; // 预计作业时间点（分钟）
+}
 
 @Injectable({
   providedIn: 'root'
@@ -46,7 +57,8 @@ export class QcwpService {
     tasks.sort((a, b) => {
         // 1. 首先按贝位号排序（降序）
         if (+a.bay !== +b.bay) {
-        return +b.bay - +a.bay;
+        return 0;
+        // return +b.bay - +a.bay;
         }
         
         // 2. 同贝位，先卸后装
@@ -456,4 +468,161 @@ export class QcwpService {
     
     return false;
   }
+
+
+  // 岸桥分路计划已指定完成，知道每个岸桥作业哪些贝位以及具体的作业顺序，
+// 现在给定n个集装箱个集装箱已经它所属的装卸任务块，以及作业顺序；
+// 判断按照这个顺序执行，是否会发生作业冲突，
+// 作业冲突定义，以1个小时为周期，计算1小时能不同的岸桥是否从同一个箱区取箱，
+// 将发生冲突的箱子打上冲突标记 conflict = true
+// 示例集装箱数据
+// [
+// {ctnno: "TESU11111111", block: "Q2A", "qcCode": "QC01", "seq": 1},
+// [{ctnno: "TESU11111111", block: "Q2A", "qcCode": "QC01", "seq": 2},
+// {ctnno: "TESU11111111", block: "Q2A", "qcCode": "QC01", "seq": 3},
+// {ctnno: "TESU11111111", block: "Q2A", "qcCode": "QC02", "seq": 1},
+//]
+// 编写一个函数去完成上述功能
+
+
+
+/**
+ * 检测集装箱作业冲突
+ * @param qcwp 岸桥作业任务数组
+ * @param containers 集装箱数组
+ * @param containerPerHour 每小时处理的集装箱数量
+ * @returns 标记了冲突的集装箱数组
+ */
+detectContainerConflicts(qcwp: HandlingTask[], containers: Container[], containerPerHour = 30): Container[] {
+  if (!containers || containers.length === 0 || !qcwp || qcwp.length === 0) {
+    return [];
+  }
+
+  console.log(`开始检测集装箱作业冲突，共 ${containers.length} 个集装箱，${qcwp.length} 个作业任务`);
+  
+  // 按岸桥和序列号组织任务
+  const qcTasks: { [qcCode: string]: HandlingTask[] } = {};
+  qcwp.forEach(task => {
+    if (task.assignedQcCode) {
+      if (!qcTasks[task.assignedQcCode]) {
+        qcTasks[task.assignedQcCode] = [];
+      }
+      qcTasks[task.assignedQcCode].push(task);
+    }
+  });
+  
+  // 对每个岸桥的任务按序列号排序
+  Object.keys(qcTasks).forEach(qcCode => {
+    qcTasks[qcCode].sort((a, b) => (a.sequence || 0) - (b.sequence || 0));
+  });
+  
+  // 计算每个任务块的开始时间
+  const taskStartTimes: { [key: string]: number } = {};
+  const minutesPerContainer = 60 / containerPerHour;
+  
+  Object.entries(qcTasks).forEach(([qcCode, tasks]) => {
+    let currentTime = 0;
+    
+    tasks.forEach(task => {
+      // 创建任务唯一标识
+      const taskKey = `${qcCode}_${task.bay}_${task.dh}_${task.type}`;
+      taskStartTimes[taskKey] = currentTime;
+      
+      // 更新时间（根据任务箱量计算）
+      currentTime += task.amount * minutesPerContainer;
+    });
+  });
+  
+  // 为每个集装箱分配时间
+  containers.forEach(container => {
+    // 找到集装箱对应的任务，不使用qcCode进行匹配
+    let matchedTask: HandlingTask | undefined;
+    let matchedQcCode: string | undefined;
+    
+    // 遍历所有岸桥任务，查找匹配的任务
+    Object.entries(qcTasks).forEach(([qcCode, tasks]) => {
+      const task = tasks.find(t => 
+        t.bay === container.bay && 
+        t.dh === container.dh && 
+        t.type === container.type
+      );
+      
+      if (task) {
+        matchedTask = task;
+        matchedQcCode = qcCode;
+      }
+    });
+    
+    if (matchedTask && matchedQcCode) {
+      // 找到匹配的任务，计算时间并分配岸桥
+      const taskKey = `${matchedQcCode}_${container.bay}_${container.dh}_${container.type}`;
+      const taskStartTime = taskStartTimes[taskKey];
+      
+      container.estimatedTime = taskStartTime + (container.seq - 1) * minutesPerContainer;
+      // container.qcCode = matchedQcCode; // 设置集装箱的岸桥编号
+    } else {
+      console.warn(`无法找到集装箱 ${container.ctnno} 对应的任务 (bay: ${container.bay}, dh: ${container.dh}, type: ${container.type})`);
+      container.estimatedTime = 0;
+    }
+    
+    // 初始化冲突标记
+    container.conflict = false;
+  });
+  
+  // 按时间段检测冲突
+  const timeWindowSize = 60; // 1小时时间窗口（分钟）
+  const blockConflicts: { [timeWindow: string]: { [block: string]: string[] } } = {};
+  
+  // 按估计时间排序集装箱
+  const sortedContainers = [...containers].sort((a, b) => 
+    (a.estimatedTime || 0) - (b.estimatedTime || 0)
+  );
+  
+  // 检测冲突
+  sortedContainers.forEach(container => {
+    // 计算时间窗口
+    const timeWindow = Math.floor((container.estimatedTime || 0) / timeWindowSize);
+    const timeWindowKey = `window_${timeWindow}`;
+    
+    // 初始化时间窗口
+    if (!blockConflicts[timeWindowKey]) {
+      blockConflicts[timeWindowKey] = {};
+    }
+    
+    // 初始化箱区
+    if (!blockConflicts[timeWindowKey][container.block]) {
+      blockConflicts[timeWindowKey][container.block] = [];
+    }
+    
+    // 检查是否有其他岸桥在同一时间窗口操作同一箱区
+    const qcCodesForBlock = blockConflicts[timeWindowKey][container.block];
+    
+    if (qcCodesForBlock.length > 0 && container.qcCode && !qcCodesForBlock.includes(container.qcCode)) {
+      // 存在冲突
+      container.conflict = true;
+      
+      // 标记同一时间窗口同一箱区的其他集装箱为冲突
+      sortedContainers.forEach(otherContainer => {
+        if (
+          otherContainer.block === container.block &&
+          Math.floor((otherContainer.estimatedTime || 0) / timeWindowSize) === timeWindow &&
+          otherContainer.qcCode !== container.qcCode
+        ) {
+          otherContainer.conflict = true;
+        }
+      });
+    }
+    
+    // 添加当前岸桥到箱区记录
+    if (container.qcCode && !qcCodesForBlock.includes(container.qcCode)) {
+      qcCodesForBlock.push(container.qcCode);
+    }
+  });
+  
+  // 统计冲突数量
+  const conflictCount = sortedContainers.filter(c => c.conflict).length;
+  console.log(`检测完成，发现 ${conflictCount} 个冲突集装箱`);
+  
+  return sortedContainers;
+}
 }
