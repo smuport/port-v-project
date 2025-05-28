@@ -1,0 +1,11 @@
+<div *ngIf="bayDatas"
+	class="bay-container">
+	<ng-container *ngFor="let bayData of bayDatas">
+		<div #bayGroup
+			class="bay-group">
+			<ng-container *ngFor="let bay of bayData">
+				<app-vessel-bay [vesselBayData]="bay"></app-vessel-bay>
+			</ng-container>
+		</div>
+	</ng-container>
+</div>
