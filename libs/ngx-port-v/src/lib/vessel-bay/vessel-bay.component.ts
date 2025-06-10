@@ -6,8 +6,8 @@ import {
   ViewChild,
 } from '@angular/core';
 import { CanvasProComponent, CpDbClickEvent, Layer, ViewportInteractionConfig } from '@smuport/ngx-canvas-pro';
-import { Vescell, VesselBay } from '@smuport/ngx-port-v';
-import { BehaviorSubject } from 'rxjs';
+import { interval, Observable, of, startWith } from 'rxjs';
+import { Vescell, VesselBay } from '../model/vessel-bay';
 
 
 @Component({

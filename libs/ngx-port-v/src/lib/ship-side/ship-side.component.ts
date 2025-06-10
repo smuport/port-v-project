@@ -296,23 +296,26 @@ export class ShipSideComponent implements AfterViewInit {
     renderable.setSelectionChecker((selection) => {
       const rect = selection;
       const vessel = renderable.getData();
-      const selectedBays: string[] = [];
+      const selectedBays: Set<string> = new Set();
       vessel.vesBaySideViews.forEach((item: VesBaySideView) => {
         item.cells.forEach((cell: Cell) => {
-          const bayX = cell.x;
-          if (
-            (bayX >= rect.x &&
-              bayX + this.config().width <= rect.x + rect.w) || (bayX + this.config().width <= rect.x && bayX >= rect.x + rect.w)
-          ) {
-            if (item.bayName && !selectedBays.includes(item.bayName)) {
-              selectedBays.push(item.bayName);
-  
-            }
+          const cellWidth = this.config().width;
+          // 仅判断cell 和 rect 在x方向上是否intersection，不需要完全重叠，只要有1点点重叠就添加贝位
+    
+          const cellLeft = cell.x;
+          const cellRight = cellLeft + cellWidth;
+          const rectLeft = rect.x;
+          const rectRight = rect.x + rect.w;
+          
+          // 检查x方向上的重叠
+          if (cellLeft < rectRight && cellRight > rectLeft) {
+            selectedBays.add(item.bayName);
+            return;
           }
         })
       });
-      this.vesselBaySelected.emit(selectedBays);
-      return selectedBays
+      this.vesselBaySelected.emit(Array.from(selectedBays));
+      return Array.from(selectedBays)
     })
 
     const layer = new Layer(layerName);
