@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
-import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
-import { VesselBay, VesselBayComponent } from '@smuport/ngx-port-v';
+import { Component, ElementRef, OnInit, signal, ViewChild } from '@angular/core';
+import { Vescell, VesselBay, VesselBayComponent } from '@smuport/ngx-port-v';
 import { FormsModule } from '@angular/forms';
 
 @Component({
@@ -48,9 +48,10 @@ export class VesselBayDemoComponent implements OnInit {
     "G": { name: '20英尺挂衣箱', color: 'blue' },
   };
 
-  colorMode: string = 'containerType';
+  colorMode = 'containerType';
+  textMode = 'type';
 
-  fillVesselBayContainer = (item: any) => {
+  fillVesselBayContainer = (item: Vescell<any>) => {
     let color = 'white'
     if (this.colorMode == "unloadPort") {
       const key = item.data.containerID.slice(0, 1);
@@ -62,9 +63,8 @@ export class VesselBayDemoComponent implements OnInit {
     return color
   };
 
-  textMode: string = 'type';
 
-  textVesselBayContainer = (item: any) => {
+  textVesselBayContainer = (item: Vescell<any>) => {
     let text = ''
     if (this.textMode == "type") {
       text = item.data.equipType
@@ -83,9 +83,24 @@ export class VesselBayDemoComponent implements OnInit {
   }
 
   switchMode() {
-    this.http.get<VesselBay[][]>('mock-data/vessel-bay.json').subscribe(data => {
-      this.bayDatas = data;
-    });
+    const newBayDatas = this.bayDatas.map(bayData => bayData.map(bay => {
+      return {...bay}
+    }))
+    this.bayDatas = newBayDatas;
+  }
+
+  onColorModeChange($event: string) {
+    this.colorMode = $event;
+    this.switchMode();
+  }
+
+  onTextModeChange($event: string) {
+    this.textMode = $event;
+    this.switchMode();
+  }
+
+  onVesselBayDbClick($event: Vescell<any>) {
+    alert(JSON.stringify($event.data))
   }
 
 

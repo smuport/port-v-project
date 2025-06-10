@@ -1,4 +1,4 @@
-export interface VesselBay<T = any> {
+export interface VesselBay<T = unknown> {
     bayName: string,
     bayWidth: number,
     bayHeight: number,
@@ -6,7 +6,7 @@ export interface VesselBay<T = any> {
     vescells: Vescell<T>[]
 }
 
-export interface Vescell<T> {
+export interface Vescell<T = unknown> {
     vescell: string,
     dh: 'D' | 'H',
     col: string,

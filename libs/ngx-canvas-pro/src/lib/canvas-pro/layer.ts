@@ -17,8 +17,8 @@ export type DataMode = 'pull' | 'push';
 
 export class Layer<T = any, U = any> implements BaseLayer<T, U> {
   name: string;
-  w: number = 0;
-  h: number = 0;
+  w = 0;
+  h = 0;
   type: LayerType = 'canvas'; // 添加类型标识
   canvas: OffscreenCanvas; // 画在哪里？
   ctx: OffscreenCanvasRenderingContext2D | null;
@@ -41,7 +41,7 @@ export class Layer<T = any, U = any> implements BaseLayer<T, U> {
   constructor(name: string, w = 15000, h = 1500) {
     this.name = name;
     this.canvas = new OffscreenCanvas(w, h);
-    this.ctx = this.canvas.getContext('2d');
+    this.ctx = this.canvas.getContext('2d', { willReadFrequently: true });
     this.w = w;
     this.h = h;
   }

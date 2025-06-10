@@ -1,31 +1,41 @@
 <div class="control-panel">
 	<p>颜色：</p>
-	<select [(ngModel)]="colorMode"
+	<select [ngModel]="colorMode"
+		(ngModelChange)="onColorModeChange($event)"
 		class="form-select">
 		<option value="unloadPort">卸货港</option>
 		<option value="containerType">箱型</option>
 	</select>
 	<p>文字：</p>
-	<select [(ngModel)]="textMode"
+	<select [ngModel]="textMode"
+		(ngModelChange)="onTextModeChange($event)"
 		class="form-select">
 		<option value="type">箱类型</option>
 		<option value="containerId">箱ID</option>
 	</select>
-	<button (click)="switchMode()"
+	<!-- <button (click)="switchMode()"
 		class="apply-button">
 		更换样式
-	</button>
+	</button> -->
 </div>
 <div *ngIf="bayDatas"
 	class="bay-container">
-	<ng-container *ngFor="let bayData of bayDatas">
+	@for (bays of bayDatas; track $index) {
 		<div #bayGroup
-			class="bay-group">
-			<ng-container *ngFor="let bay of bayData">
-				<app-vessel-bay [vesselBayData]="bay"
-					[fillContainer]="fillVesselBayContainer"
-					[textContainer]="textVesselBayContainer"></app-vessel-bay>
-			</ng-container>
-		</div>
-	</ng-container>
+		class="bay-group">
+		@for (bay of bays; track $index) {
+			<app-vessel-bay [vesselBayData]="bay"
+				[fillContainer]="fillVesselBayContainer"
+				[textContainer]="textVesselBayContainer"
+				(vescellDbClick)="onVesselBayDbClick($event)"
+				></app-vessel-bay>
+		}
+		<!-- <ng-container *ngFor="let bay of bays">
+
+		</ng-container> -->
+	</div>
+	}
+	<!-- <ng-container *ngFor="let bayData of bayDatas">
+		
+	</ng-container> -->
 </div>

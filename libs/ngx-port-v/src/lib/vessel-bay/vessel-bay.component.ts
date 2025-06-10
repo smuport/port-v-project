@@ -2,11 +2,13 @@ import {
   AfterViewInit,
   Component,
   ElementRef,
+  EventEmitter,
   Input,
+  Output,
   ViewChild,
 } from '@angular/core';
 import { CanvasProComponent, CpDbClickEvent, Layer, ViewportInteractionConfig } from '@smuport/ngx-canvas-pro';
-import { interval, Observable, of, startWith } from 'rxjs';
+import { BehaviorSubject } from 'rxjs';
 import { Vescell, VesselBay } from '../model/vessel-bay';
 
 
@@ -20,8 +22,8 @@ import { Vescell, VesselBay } from '../model/vessel-bay';
   ]
 })
 export class VesselBayComponent implements AfterViewInit {
-  private _vesselBayData!: VesselBay<any>
-  @Input() set vesselBayData(data: VesselBay<any>
+  private _vesselBayData!: VesselBay
+  @Input() set vesselBayData(data: VesselBay
   ) {
     this._vesselBayData = data;
     this.vesselBayData$.next(data);
@@ -34,17 +36,18 @@ export class VesselBayComponent implements AfterViewInit {
     width: 24,
     height: 12,
   };
-  @Input() fillContainer: (data: any) => string = (data: any) => 'white';
-  @Input() textContainer: (data: any) => string = (data: any) => '';
+  @Input() fillContainer: (data: Vescell<unknown>) => string = (data: Vescell<unknown>) => 'white';
+  @Input() textContainer: (data: Vescell<unknown>) => string = (data: Vescell<unknown>) => '';
   @ViewChild('canvasContainer') canvasContainer!: ElementRef;
-  @ViewChild('canvasPro', { static: true })
+  @ViewChild('canvasPro', { static: true }) canvasPro!: CanvasProComponent;
 
-  canvasPro!: CanvasProComponent;
-  vesselBayData$ = new BehaviorSubject<VesselBay<any>>(undefined!);
-  positionData: any;
-  isVisible: boolean = false;
+  @Output() vescellDbClick= new EventEmitter<Vescell<unknown>>();
 
-  containerStyles: any = {
+
+  vesselBayData$ = new BehaviorSubject<VesselBay>(undefined!);
+
+
+  containerStyles = {
     "22G": { name: '20英尺干货箱', color: 'green' },
     "25G": { name: '20英尺干活高箱', color: 'red' },
     "22V": { name: '20英尺挂衣箱', color: 'blue' },
@@ -87,7 +90,6 @@ export class VesselBayComponent implements AfterViewInit {
     }
   };
 
-  constructor() { }
 
   ngAfterViewInit(): void {
     if (this.canvasContainer) {
@@ -105,19 +107,19 @@ export class VesselBayComponent implements AfterViewInit {
     this.drawLayers();
   }
 
-  updateData(vesselbayData: VesselBay<any>) {
+  updateData(vesselbayData: VesselBay) {
     this.vesselBayData$.next(vesselbayData);
 
   }
 
   getVesselBayLayer(layerName: string) {
-    const insLayer = new Layer<any>(layerName);
+    const insLayer = new Layer(layerName);
     const insSource = this.vesselBayData$;
     insLayer.setPushMode();
     insLayer.setTrigger(insSource);
-    insLayer.addEventListener('dbclick', (evt: CpDbClickEvent, data: any) => {
+    insLayer.addEventListener('dbclick', (evt: CpDbClickEvent, data: VesselBay) => {
       const axis = evt.getAxis();
-      const qcClick = data.vescells.find((item: any) => {
+      const qcClick = data.vescells.find((item) => {
         const startX = item.x
         const startY = item.y;
         return (
@@ -126,17 +128,16 @@ export class VesselBayComponent implements AfterViewInit {
           axis.y >= startY &&
           axis.y <= startY + this.config.height
         )
-      })
-      if (qcClick && qcClick.data.equipType != '') {
-        this.positionData = qcClick
-        this.isVisible = true
-        evt.stopPropagation();
+      });
+      if (qcClick) {
+        this.vescellDbClick.emit(qcClick);
       }
+
     })
-    insLayer.updateCanvasSize(this.vesselBayData.bayWidth, this.vesselBayData.bayHeight);
-    this.canvasPro.updateViewportSize(this.vesselBayData.bayWidth, this.vesselBayData.bayHeight);
-    this.canvasPro.drawVierport();
+    // this.canvasPro.drawVierport();
     insLayer.setRenderer((ctx, data) => {
+      insLayer.updateCanvasSize(data.bayWidth, data.bayHeight);
+      this.canvasPro.updateViewportSize(data.bayWidth, data.bayHeight);  
       this.renderVesselBay(ctx, data);
     });
     return insLayer;
@@ -144,7 +145,7 @@ export class VesselBayComponent implements AfterViewInit {
 
   renderVesselBay(
     ctx: OffscreenCanvasRenderingContext2D,
-    data: VesselBay<any>
+    data: VesselBay
   ) {
     const mid = this.finmid(data.vescells, '01')
     ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
@@ -155,8 +156,8 @@ export class VesselBayComponent implements AfterViewInit {
     ctx.lineWidth = 2;
     data.vescells.forEach((item: Vescell<any>) => {
       ctx.beginPath();
-      const ifOnly = item.data.ifOnly;
-      const ifX = item.data.ifX;
+      const ifOnly = item.data['ifOnly'];
+      const ifX = item.data['ifX'];
       const containerStyle = this.fillContainer(item)
       if (containerStyle) {
         ctx.fillStyle = containerStyle;
@@ -173,7 +174,7 @@ export class VesselBayComponent implements AfterViewInit {
       ctx.closePath();
     });
 
-    data.vescells.forEach((item: Vescell<any>) => {
+    data.vescells.forEach((item: Vescell) => {
       const containerText = this.textContainer(item)
       if (containerText) {
         ctx.fillStyle = this.isDarkColor(ctx, item.x + this.config.width / 2, item.y + this.config.height / 4) ? "#FFFFFF" : "#000000";
@@ -188,36 +189,36 @@ export class VesselBayComponent implements AfterViewInit {
     ctx.fillStyle = 'black'
 
     const colOuterList = data.vescells
-      .filter((item: Vescell<any>) => {
+      .filter((item: Vescell) => {
         return item.dh == 'D';
       })
-      .filter((item: Vescell<any>, index: any, self: any[]) => {
+      .filter((item: Vescell, index, self) => {
         const identifier = item.col + '_' + item.x;
         return (
           index ===
           self.findIndex(
-            (item: Vescell<any>) => item.col + '_' + item.x === identifier
+            (item: Vescell) => item.col + '_' + item.x === identifier
           )
         );
       });
 
     const colInterList = data.vescells
-      .filter((item: Vescell<any>) => {
+      .filter((item: Vescell) => {
         return item.dh == 'H';
       })
-      .filter((item: Vescell<any>, index: any, self: any[]) => {
+      .filter((item: Vescell, index, self) => {
         const identifier = item.col + '_' + item.x;
         return (
           index ===
           self.findIndex(
-            (item: Vescell<any>) => item.col + '_' + item.x === identifier
+            (item: Vescell) => item.col + '_' + item.x === identifier
           )
         );
       });
 
     const colList = [...colOuterList, ...colInterList];
 
-    colList.forEach((item: Vescell<any>) => {
+    colList.forEach((item: Vescell) => {
       ctx.fillText(
         item.col,
         item.x + this.config.width / 2,
@@ -225,7 +226,7 @@ export class VesselBayComponent implements AfterViewInit {
       );
     });
     const tierList = data.vescells.filter(
-      (item: { tier: string; y: number }, index: any, self: any[]) => {
+      (item: { tier: string; y: number }, index, self: any[]) => {
         const identifier = item.tier + '_' + item.y;
         return (
           index ===
@@ -237,26 +238,26 @@ export class VesselBayComponent implements AfterViewInit {
       }
     );
     const maxObj = data.vescells.reduce(
-      (max: Vescell<any>, current: Vescell<any>) => {
+      (max: Vescell, current: Vescell) => {
         return current.col > max.col ? current : max;
       },
       data.vescells[0]
     );
 
-    tierList.forEach((item: Vescell<any>) => {
+    tierList.forEach((item: Vescell) => {
       ctx.fillText(item.tier, maxObj.x - 20, item.y + this.config.height / 2);
     });
     ctx.font = 'lighter 20px Arial';
     ctx.fillText('Bay  ' + data.bayName, mid, 10);
   }
 
-  finmid(arr: any, value: string) {
-    for (const item of arr) {
+  finmid(vescells: Vescell[], value: string) {
+    for (const item of vescells) {
       if (item.col === value) {
         return item.x;
       }
     }
-    return null;
+    return 0;
   }
 
   drawLayers() {
@@ -265,9 +266,6 @@ export class VesselBayComponent implements AfterViewInit {
     this.canvasPro.startListenEvent();
   }
 
-  handleCancel() {
-    this.isVisible = false;
-  }
 
   isDarkColor(ctx: OffscreenCanvasRenderingContext2D, x: number, y: number) {
     const pixel = ctx.getImageData(x, y, 1, 1).data;
