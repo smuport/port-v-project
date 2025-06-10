@@ -1,10 +1,30 @@
+<div class="control-panel">
+	<p>颜色：</p>
+	<select [(ngModel)]="colorMode"
+		class="form-select">
+		<option value="unloadPort">卸货港</option>
+		<option value="containerType">箱型</option>
+	</select>
+	<p>文字：</p>
+	<select [(ngModel)]="textMode"
+		class="form-select">
+		<option value="type">箱类型</option>
+		<option value="containerId">箱ID</option>
+	</select>
+	<button (click)="switchMode()"
+		class="apply-button">
+		更换样式
+	</button>
+</div>
 <div *ngIf="bayDatas"
 	class="bay-container">
 	<ng-container *ngFor="let bayData of bayDatas">
 		<div #bayGroup
 			class="bay-group">
 			<ng-container *ngFor="let bay of bayData">
-				<app-vessel-bay [vesselBayData]="bay"></app-vessel-bay>
+				<app-vessel-bay [vesselBayData]="bay"
+					[fillContainer]="fillVesselBayContainer"
+					[textContainer]="textVesselBayContainer"></app-vessel-bay>
 			</ng-container>
 		</div>
 	</ng-container>
