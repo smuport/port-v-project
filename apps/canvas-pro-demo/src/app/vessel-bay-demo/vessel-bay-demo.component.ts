@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
-import { Component, ElementRef, OnInit, signal, ViewChild } from '@angular/core';
+import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { Vescell, VesselBay, VesselBayComponent } from '@smuport/ngx-port-v';
 import { FormsModule } from '@angular/forms';
 
@@ -14,6 +14,18 @@ import { FormsModule } from '@angular/forms';
 export class VesselBayDemoComponent implements OnInit {
   @ViewChild('vesselBay') vesselBay!: ElementRef;
   bayDatas: VesselBay[][] = [];
+
+
+
+  containerIdStyles: Record<string, { name: string; color: string }> = {
+    "C": { name: '20英尺干货箱', color: 'green' },
+    "Z": { name: '20英尺干活高箱', color: 'red' },
+    "G": { name: '20英尺挂衣箱', color: 'blue' },
+  };
+
+
+  textMode = 'type';
+
 
   containerTypeStyles: Record<string, { name: string; color: string }> = {
     "22G": { name: '20英尺干货箱', color: 'green' },
@@ -41,16 +53,7 @@ export class VesselBayDemoComponent implements OnInit {
     "L2T": { name: '45英尺油罐箱', color: 'tan' },
     "L2P": { name: '45英尺框架箱', color: 'navy' }
   };
-
-  containerIdStyles: Record<string, { name: string; color: string }> = {
-    "C": { name: '20英尺干货箱', color: 'green' },
-    "Z": { name: '20英尺干活高箱', color: 'red' },
-    "G": { name: '20英尺挂衣箱', color: 'blue' },
-  };
-
   colorMode = 'containerType';
-  textMode = 'type';
-
   fillVesselBayContainer = (item: Vescell<any>) => {
     let color = 'white'
     if (this.colorMode == "unloadPort") {
@@ -78,13 +81,17 @@ export class VesselBayDemoComponent implements OnInit {
   ngOnInit(): void {
     // 加载船贝图数据
     this.http.get<VesselBay[][]>('mock-data/vessel-bay.json').subscribe(data => {
+      console.log(data);
+
       this.bayDatas = data;
+
+
     });
   }
 
   switchMode() {
     const newBayDatas = this.bayDatas.map(bayData => bayData.map(bay => {
-      return {...bay}
+      return { ...bay }
     }))
     this.bayDatas = newBayDatas;
   }

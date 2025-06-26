@@ -8,7 +8,7 @@ import {
   ViewChild,
 } from '@angular/core';
 import { CanvasProComponent, CpDbClickEvent, Layer, ViewportInteractionConfig } from '@smuport/ngx-canvas-pro';
-import { BehaviorSubject } from 'rxjs';
+import { BehaviorSubject, of } from 'rxjs';
 import { Vescell, VesselBay } from '../model/vessel-bay';
 
 
@@ -41,11 +41,13 @@ export class VesselBayComponent implements AfterViewInit {
   @ViewChild('canvasContainer') canvasContainer!: ElementRef;
   @ViewChild('canvasPro', { static: true }) canvasPro!: CanvasProComponent;
 
-  @Output() vescellDbClick= new EventEmitter<Vescell<unknown>>();
+  @Output() vescellDbClick = new EventEmitter<Vescell<unknown>>();
 
 
   vesselBayData$ = new BehaviorSubject<VesselBay>(undefined!);
 
+
+  vesselBayBackgroungData!: VesselBay;
 
   containerStyles = {
     "22G": { name: '20英尺干货箱', color: 'green' },
@@ -97,6 +99,7 @@ export class VesselBayComponent implements AfterViewInit {
       divElement.style.height = `${this.vesselBayData.bayHeight}px`;
       divElement.style.width = `${this.vesselBayData.bayWidth}px`;
     }
+    this.vesselBayBackgroungData = this.vesselBayData
     this.draw();
   }
 
@@ -104,12 +107,26 @@ export class VesselBayComponent implements AfterViewInit {
     this.updateData(this.vesselBayData);
     const vesselBayLayer = this.getVesselBayLayer('vesselBay');
     this.canvasPro.addLayer(vesselBayLayer);
+    const vesselBayBackgroundLayer = this.getVesselBayBackgroundLayer('vesselBayBackground');
+    this.canvasPro.addLayer(vesselBayBackgroundLayer);
     this.drawLayers();
   }
 
   updateData(vesselbayData: VesselBay) {
     this.vesselBayData$.next(vesselbayData);
+  }
 
+  getVesselBayBackgroundLayer(layerName: string) {
+    const insLayer = new Layer(layerName);
+    const insSource = of(this.vesselBayBackgroungData);
+    insLayer.setPushMode();
+    insLayer.setTrigger(insSource);
+    insLayer.setRenderer((ctx, data) => {
+      insLayer.updateCanvasSize(data.bayWidth, data.bayHeight);
+      this.canvasPro.updateViewportSize(data.bayWidth, data.bayHeight);
+      this.renderVesselBayBackground(ctx, data);
+    });
+    return insLayer;
   }
 
   getVesselBayLayer(layerName: string) {
@@ -137,13 +154,13 @@ export class VesselBayComponent implements AfterViewInit {
     // this.canvasPro.drawVierport();
     insLayer.setRenderer((ctx, data) => {
       insLayer.updateCanvasSize(data.bayWidth, data.bayHeight);
-      this.canvasPro.updateViewportSize(data.bayWidth, data.bayHeight);  
+      this.canvasPro.updateViewportSize(data.bayWidth, data.bayHeight);
       this.renderVesselBay(ctx, data);
     });
     return insLayer;
   }
 
-  renderVesselBay(
+  renderVesselBayBackground(
     ctx: OffscreenCanvasRenderingContext2D,
     data: VesselBay
   ) {
@@ -158,11 +175,6 @@ export class VesselBayComponent implements AfterViewInit {
       ctx.beginPath();
       const ifOnly = item.data['ifOnly'];
       const ifX = item.data['ifX'];
-      const containerStyle = this.fillContainer(item)
-      if (containerStyle) {
-        ctx.fillStyle = containerStyle;
-        ctx.fillRect(item.x, item.y, this.config.width, this.config.height);
-      }
       if (ifX) {
         ctx.strokeStyle = "black";
         ctx.moveTo(item.x, item.y);
@@ -172,18 +184,6 @@ export class VesselBayComponent implements AfterViewInit {
       ctx.strokeStyle = ifOnly ? 'red' : 'black';
       ctx.strokeRect(item.x, item.y, this.config.width, this.config.height);
       ctx.closePath();
-    });
-
-    data.vescells.forEach((item: Vescell) => {
-      const containerText = this.textContainer(item)
-      if (containerText) {
-        ctx.fillStyle = this.isDarkColor(ctx, item.x + this.config.width / 2, item.y + this.config.height / 4) ? "#FFFFFF" : "#000000";
-        ctx.fillText(
-          containerText,
-          item.x + this.config.width / 2,
-          item.y + this.config.height / 2
-        );
-      }
     });
 
     ctx.fillStyle = 'black'
@@ -249,6 +249,40 @@ export class VesselBayComponent implements AfterViewInit {
     });
     ctx.font = 'lighter 20px Arial';
     ctx.fillText('Bay  ' + data.bayName, mid, 10);
+  }
+
+  renderVesselBay(
+    ctx: OffscreenCanvasRenderingContext2D,
+    data: VesselBay
+  ) {
+    const mid = this.finmid(data.vescells, '01')
+    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+    ctx.font = 'lighter 8px Arial';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.strokeStyle = "black";
+    ctx.lineWidth = 2;
+    data.vescells.forEach((item: Vescell<any>) => {
+      ctx.beginPath();
+      const containerStyle = this.fillContainer(item)
+      if (containerStyle) {
+        ctx.fillStyle = containerStyle;
+        ctx.fillRect(item.x, item.y, this.config.width, this.config.height);
+      }
+      ctx.closePath();
+    });
+
+    data.vescells.forEach((item: Vescell) => {
+      const containerText = this.textContainer(item)
+      if (containerText) {
+        ctx.fillStyle = this.isDarkColor(ctx, item.x + this.config.width / 2, item.y + this.config.height / 4) ? "#FFFFFF" : "#000000";
+        ctx.fillText(
+          containerText,
+          item.x + this.config.width / 2,
+          item.y + this.config.height / 2
+        );
+      }
+    });
   }
 
   finmid(vescells: Vescell[], value: string) {
