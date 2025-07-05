@@ -9,7 +9,7 @@ import {
 } from '@angular/core';
 import { CanvasProComponent, CpDbClickEvent, Layer, ViewportInteractionConfig } from '@smuport/ngx-canvas-pro';
 import { BehaviorSubject, of } from 'rxjs';
-import { Vescell, VesselBay } from '../model/vessel-bay';
+import { Vescell, VescellMarkerConfig, VesselBay } from '../model/vessel-bay';
 
 
 @Component({
@@ -23,6 +23,14 @@ import { Vescell, VesselBay } from '../model/vessel-bay';
 })
 export class VesselBayComponent implements AfterViewInit {
   private _vesselBayData!: VesselBay
+  private _defaultVescellMarkerConfig: VescellMarkerConfig = {
+    cross: false,
+    dj: false,
+    ref: false,
+    danger: '',
+    jobModel:  'single',
+    height: false,
+  }
   @Input() set vesselBayData(data: VesselBay
   ) {
     this._vesselBayData = data;
@@ -38,6 +46,16 @@ export class VesselBayComponent implements AfterViewInit {
   };
   @Input() fillContainer: (data: Vescell<unknown>) => string = (data: Vescell<unknown>) => 'white';
   @Input() textContainer: (data: Vescell<unknown>) => string = (data: Vescell<unknown>) => '';
+  @Input() set vescellMarkerConfig(vescellMarkerConfig: Partial<VescellMarkerConfig>) {
+    this._defaultVescellMarkerConfig = {
+      ...this._defaultVescellMarkerConfig,
+      ...vescellMarkerConfig,
+    }
+  }
+  get vescellMarkerConfig(): VescellMarkerConfig {
+    return this._defaultVescellMarkerConfig;
+  }
+
   @ViewChild('canvasContainer') canvasContainer!: ElementRef;
   @ViewChild('canvasPro', { static: true }) canvasPro!: CanvasProComponent;
 
@@ -173,9 +191,8 @@ export class VesselBayComponent implements AfterViewInit {
     ctx.lineWidth = 2;
     data.vescells.forEach((item: Vescell<any>) => {
       ctx.beginPath();
-      const ifOnly = item.data['ifOnly'];
-      const ifX = item.data['ifX'];
-      if (ifX) {
+      const ifOnly = this.getMarkerValue(this.vescellMarkerConfig.dj, item, data);
+      if (this.getMarkerValue(this.vescellMarkerConfig.cross, item, data)) {
         ctx.strokeStyle = "black";
         ctx.moveTo(item.x, item.y);
         ctx.lineTo(item.x + this.config.width, item.y + this.config.height);
@@ -305,5 +322,15 @@ export class VesselBayComponent implements AfterViewInit {
     const pixel = ctx.getImageData(x, y, 1, 1).data;
     const luminance = 0.299 * pixel[0] + 0.587 * pixel[1] + 0.114 * pixel[2];
     return luminance < 128;
+  }
+
+  // 在类中添加一个辅助方法
+  private getMarkerValue<T>(
+    marker: T | ((vescell: Vescell<unknown>, vesselBay: VesselBay<unknown>) => T),
+     vescell: Vescell<unknown>,
+    vesselBay: VesselBay<unknown>): T {
+    return typeof marker === 'function' 
+      ? (marker as ((vescell: Vescell<unknown>, vesselBay: VesselBay<unknown>) => T))(vescell, vesselBay) 
+      : marker;
   }
 }

@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
-import { Vescell, VesselBay, VesselBayComponent } from '@smuport/ngx-port-v';
+import { Vescell, VescellMarkerConfig, VesselBay, VesselBayComponent } from '@smuport/ngx-port-v';
 import { FormsModule } from '@angular/forms';
 
 @Component({
@@ -14,6 +14,19 @@ import { FormsModule } from '@angular/forms';
 export class VesselBayDemoComponent implements OnInit {
   @ViewChild('vesselBay') vesselBay!: ElementRef;
   bayDatas: VesselBay[][] = [];
+
+  vescellMarkerConfig: Partial<VescellMarkerConfig> = {
+    cross: (vescell: Vescell<any>, vesselBay: VesselBay<any>) => {
+      if (vescell.data.equipType[0] === '4' && vesselBay.bayType == 'back') {
+        return true;
+      } else {
+        return false;
+      }
+    },
+    dj: (vescell: Vescell<any>, vesselBay: VesselBay<any>) => {
+      return vescell.data.ifOnly;
+    },
+  };
 
 
 
