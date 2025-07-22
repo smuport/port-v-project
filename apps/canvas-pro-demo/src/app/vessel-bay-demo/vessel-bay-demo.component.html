@@ -1,42 +1,63 @@
 <div class="control-panel">
-	<p>颜色：</p>
-	<select [ngModel]="colorMode"
-		(ngModelChange)="onColorModeChange($event)"
-		class="form-select">
-		<option value="unloadPort">卸货港</option>
-		<option value="containerType">箱型</option>
-	</select>
-	<p>文字：</p>
-	<select [ngModel]="textMode"
-		(ngModelChange)="onTextModeChange($event)"
-		class="form-select">
-		<option value="type">箱类型</option>
-		<option value="containerId">箱ID</option>
-	</select>
-	<!-- <button (click)="switchMode()"
+  <p>颜色：</p>
+  <select
+    [ngModel]="colorMode"
+    (ngModelChange)="onColorModeChange($event)"
+    class="form-select"
+  >
+    <option value="unloadPort">卸货港</option>
+    <option value="containerType">箱型</option>
+  </select>
+  <p>文字：</p>
+  <select
+    [ngModel]="textMode"
+    (ngModelChange)="onTextModeChange($event)"
+    class="form-select"
+  >
+    <option value="type">箱类型</option>
+    <option value="containerId">箱ID</option>
+  </select>
+  <ul>
+    <li>
+      <button (click)="selectVescell('130074')" class="apply-button">
+        130074
+      </button>
+    </li>
+    <li>
+      <button (click)="selectVescell('141282')" class="apply-button">
+        141282
+      </button>
+    </li>
+    <li>
+      <button (click)="selectVescell('150172')" class="apply-button">
+        150172
+      </button>
+    </li>
+  </ul>
+
+  <!-- <button (click)="switchMode()"
 		class="apply-button">
 		更换样式
 	</button> -->
 </div>
-<div *ngIf="bayDatas"
-	class="bay-container">
-	@for (bays of bayDatas; track $index) {
-		<div #bayGroup
-		class="bay-group">
-		@for (bay of bays; track $index) {
-			<app-vessel-bay [vesselBayData]="bay"
-				[fillContainer]="fillVesselBayContainer"
-				[textContainer]="textVesselBayContainer"
-				(vescellDbClick)="onVesselBayDbClick($event)"
-				[vescellMarkerConfig]="vescellMarkerConfig"
-				></app-vessel-bay>
-		}
-		<!-- <ng-container *ngFor="let bay of bays">
+<div *ngIf="bayDatas" class="bay-container">
+  @for (bays of bayDatas; track $index) {
+  <div #bayGroup class="bay-group">
+    @for (bay of bays; track $index) {
+    <app-vessel-bay
+      [vesselBayData]="bay"
+      [fillContainer]="fillVesselBayContainer"
+      [textContainer]="textVesselBayContainer"
+      (vescellDbClick)="onVesselBayDbClick($event)"
+      [vescellMarkerConfig]="vescellMarkerConfig"
+    ></app-vessel-bay>
+    }
+    <!-- <ng-container *ngFor="let bay of bays">
 
 		</ng-container> -->
-	</div>
-	}
-	<!-- <ng-container *ngFor="let bayData of bayDatas">
+  </div>
+  }
+  <!-- <ng-container *ngFor="let bayData of bayDatas">
 		
 	</ng-container> -->
 </div>
