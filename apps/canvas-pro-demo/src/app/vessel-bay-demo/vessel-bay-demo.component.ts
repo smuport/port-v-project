@@ -2,10 +2,9 @@ import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import {
   Component,
-  ElementRef,
+  HostListener,
   OnInit,
   QueryList,
-  ViewChild,
   ViewChildren,
 } from '@angular/core';
 import {
@@ -102,6 +101,13 @@ export class VesselBayDemoComponent implements OnInit {
 
   allVescellMap = new Map<string, Vescell<any>>();
   allVescellList: Vescell<any>[] = [];
+
+  //shif及commandt多选
+  lastCmdSelectedVescell: string | null = null;
+  lastShiftSelectedRange: { start: number; end: number } | null = null;
+  shiftKeyPressed = false;
+  searchVescell: string = '';
+  endIndex!: number;
   constructor(private http: HttpClient) {}
   ngOnInit(): void {
     // 加载船贝图数据
@@ -115,7 +121,7 @@ export class VesselBayDemoComponent implements OnInit {
             });
           });
         });
-        console.log(data);
+        this.allVescellList = Array.from(this.allVescellMap.values());
         this.bayDatas = data;
       });
   }
@@ -143,33 +149,140 @@ export class VesselBayDemoComponent implements OnInit {
     alert(JSON.stringify($event.data));
   }
 
-  selectVescell(selectedVescell: string = '130074') {
+  //shift及command多选
+  @HostListener('window:keydown', ['$event'])
+  onKeyDown(event: KeyboardEvent) {
+    this.shiftKeyPressed = event.shiftKey;
+  }
+
+  @HostListener('window:keyup', ['$event'])
+  onKeyUp(event: KeyboardEvent) {
+    this.shiftKeyPressed = event.shiftKey;
+  }
+  selectVescell(selectedVescell: string, event?: MouseEvent) {
     const bay = +selectedVescell.slice(0, 2);
     const colTier = selectedVescell.slice(2, 6);
-    let patchVescells = [];
-    if (bay % 2 == 0) {
-      const frontVescell = `${(bay + 1).toString().padStart(2, '0')}${colTier}`;
-      const backVescell = `${(bay - 1).toString().padStart(2, '0')}${colTier}`;
-      const fVescell = this.allVescellMap.get(frontVescell);
-      const bVescell = this.allVescellMap.get(backVescell);
-      if (fVescell) {
-        fVescell.data['ifSelected'] = !fVescell.data['ifSelected'];
-        patchVescells.push(fVescell);
-      }
-      if (bVescell) {
-        bVescell.data['ifSelected'] = !bVescell.data['ifSelected'];
-        patchVescells.push(bVescell);
-      }
-    } else {
-      const vescell = this.allVescellMap.get(selectedVescell);
-      if (vescell) {
-        vescell.data['ifSelected'] = !vescell.data['ifSelected'];
-        patchVescells.push(vescell);
+    let patchVescells: Vescell<any>[] = [];
+    const currentIndex = this.allVescellList.findIndex(
+      (v) => v.vescell === selectedVescell
+    );
+    // Shift多选逻辑
+    if (event?.shiftKey && this.lastCmdSelectedVescell) {
+      const anchorIndex = this.allVescellList.findIndex(
+        (v) => v.vescell === this.lastCmdSelectedVescell
+      );
+      if (anchorIndex !== -1 && currentIndex !== -1) {
+        if (this.lastShiftSelectedRange) {
+          const { start, end } = this.lastShiftSelectedRange;
+          for (let i = start; i <= end; i++) {
+            if (!this.isPersistentSelected(this.allVescellList[i])) {
+              this.allVescellList[i].data['ifSelected'] = false;
+              patchVescells.push(this.allVescellList[i]);
+            }
+          }
+        }
+
+        const newStart = Math.min(anchorIndex, currentIndex);
+        const newEnd = Math.max(anchorIndex, currentIndex);
+        this.lastShiftSelectedRange = { start: newStart, end: newEnd };
+
+        for (let i = newStart; i <= newEnd; i++) {
+          this.allVescellList[i].data['ifSelected'] = true;
+          patchVescells.push(this.allVescellList[i]);
+        }
       }
     }
+    // Cmd/Ctrl多选逻辑
+    else if (event?.ctrlKey || event?.metaKey) {
+      const currentState =
+        !this.allVescellMap.get(selectedVescell)?.data['ifSelected'];
+      this.allVescellMap.get(selectedVescell)!.data['ifSelected'] =
+        currentState;
+      patchVescells.push(this.allVescellMap.get(selectedVescell)!);
 
-    this.vesselBays.forEach((vesselBay: VesselBayComponent) => {
-      vesselBay.patchVescells(patchVescells);
-    });
+      if (currentState) {
+        this.lastCmdSelectedVescell = selectedVescell;
+        this.lastShiftSelectedRange = null;
+      }
+    }
+    // 普通单选逻辑
+    else {
+      this.allVescellList.forEach((v) => {
+        if (v.data['ifSelected']) {
+          v.data['ifSelected'] = false;
+          patchVescells.push(v);
+        }
+      });
+      if (bay % 2 === 0) {
+        const frontVescell = `${(bay + 1)
+          .toString()
+          .padStart(2, '0')}${colTier}`;
+        const backVescell = `${(bay - 1)
+          .toString()
+          .padStart(2, '0')}${colTier}`;
+        [frontVescell, backVescell].forEach((vescellKey) => {
+          const vescell = this.allVescellMap.get(vescellKey);
+          if (vescell) {
+            vescell.data['ifSelected'] = true;
+            patchVescells.push(vescell);
+          }
+        });
+      } else {
+        this.allVescellMap.get(selectedVescell)!.data['ifSelected'] = true;
+        patchVescells.push(this.allVescellMap.get(selectedVescell)!);
+      }
+      this.lastCmdSelectedVescell = selectedVescell;
+      this.lastShiftSelectedRange = null;
+    }
+    this.applyPatch(patchVescells);
+  }
+
+  // 判断是否是被Cmd持久选中的项目
+  isPersistentSelected(vescell: Vescell<any>): boolean {
+    return (
+      vescell.data['ifSelected'] &&
+      vescell.vescell !== this.lastCmdSelectedVescell &&
+      (!this.lastShiftSelectedRange ||
+        !this.isInRange(vescell, this.lastShiftSelectedRange))
+    );
+  }
+
+  // 判断是否在指定范围内
+  isInRange(
+    vescell: Vescell<any>,
+    range: { start: number; end: number }
+  ): boolean {
+    const index = this.allVescellList.findIndex(
+      (v) => v.vescell === vescell.vescell
+    );
+    return index >= range.start && index <= range.end;
+  }
+
+  applyPatch(patchVescells: Vescell<any>[]) {
+    if (patchVescells.length > 0) {
+      const uniquePatches = [
+        ...new Map(patchVescells.map((v) => [v.vescell, v])).values(),
+      ];
+      this.vesselBays.forEach((vesselBay) => {
+        vesselBay.patchVescells(uniquePatches);
+      });
+    }
+  }
+
+  scrollToVescell() {
+    if (!this.searchVescell) return;
+    const foundItem = this.allVescellList.find(
+      (item) => item.vescell === this.searchVescell
+    );
+    if (foundItem) {
+      const element = document.getElementById(`vescell-${foundItem.vescell}`);
+      if (element) {
+        element.scrollIntoView({
+          behavior: 'smooth',
+          block: 'center',
+        });
+        this.selectVescell(this.searchVescell);
+      }
+    }
   }
 }

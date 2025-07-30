@@ -1,18 +1,38 @@
-import { AfterViewInit, Component, ElementRef, EventEmitter, Input, Output, SimpleChanges, ViewChild } from '@angular/core';
+import {
+  AfterViewInit,
+  Component,
+  ElementRef,
+  EventEmitter,
+  Input,
+  Output,
+  SimpleChanges,
+  ViewChild,
+} from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
-import { CanvasProComponent, CpDbClickEvent, CustomRenderable, Layer, ViewportInteractionConfig } from '@smuport/ngx-canvas-pro';
-import { VisualYardBay, VisualYardPos, YardBay } from '../model/yard-bay';
+import {
+  CanvasProComponent,
+  CpDbClickEvent,
+  CustomRenderable,
+  Layer,
+  ViewportInteractionConfig,
+} from '@smuport/ngx-canvas-pro';
+import {
+  VisualYardBay,
+  VisualYardPos,
+  YardBay,
+  YardPos,
+} from '../model/yard-bay';
 
 @Component({
   selector: 'app-yard-bay',
   standalone: true,
   imports: [CanvasProComponent],
   templateUrl: './yard-bay.component.html',
-  styleUrl: './yard-bay.component.scss'
+  styleUrl: './yard-bay.component.scss',
 })
 export class YardBayComponent implements AfterViewInit {
   @ViewChild('canvasContainer', { static: true })
-  canvasContainer!: ElementRef
+  canvasContainer!: ElementRef;
   @ViewChild('canvasPro', { static: true })
   canvasPro!: CanvasProComponent;
   private _yardBayData: YardBay[] = [];
@@ -22,10 +42,13 @@ export class YardBayComponent implements AfterViewInit {
   }
   set yardBayData(value: any[]) {
     this._yardBayData = value;
-    this.updateData()
+    this.updateData();
   }
-  @Input() fillYardPoses: (yardPos: VisualYardPos<unknown>) => string | CanvasGradient = () => 'white';
-  @Input() textYardPoses: (yardPos: VisualYardPos<unknown>) => string[] = () => [];
+  @Input() fillYardPoses: (
+    yardPos: VisualYardPos<unknown>
+  ) => string | CanvasGradient = () => 'white';
+  @Input() textYardPoses: (yardPos: VisualYardPos<unknown>) => string[] =
+    () => [];
   @Input() groupBy: (bay: YardBay) => string | null = () => null;
   @Input() orderBy: (a: YardBay, b: YardBay) => number = () => 0;
   @Output() heightCalculated = new EventEmitter<number>();
@@ -45,17 +68,17 @@ export class YardBayComponent implements AfterViewInit {
   // 添加交互配置
   @Input() interactionConfig: ViewportInteractionConfig = {
     drag: {
-      default: 'none',     // 默认禁用平移
-      shift: 'frame-select',        // 按住 shift 键可以平移
+      default: 'none', // 默认禁用平移
+      shift: 'frame-select', // 按住 shift 键可以平移
       ctrl: 'zoom',
-      alt: 'pan'
+      alt: 'pan',
     },
     wheel: {
-      default: 'none',     // 默认禁用缩放
-      shift: 'pan-horizontal',        // 按住 shift 键可以水平缩放
+      default: 'none', // 默认禁用缩放
+      shift: 'pan-horizontal', // 按住 shift 键可以水平缩放
       ctrl: 'zoom',
-      alt: 'pan-vertical'
-    }
+      alt: 'pan-vertical',
+    },
   };
 
   getWidth() {
@@ -68,7 +91,7 @@ export class YardBayComponent implements AfterViewInit {
 
   ngOnChanges(changes: SimpleChanges): void {
     const affectedProps = ['orderBy', 'groupBy'];
-    const shouldRecalculate = affectedProps.some(prop => {
+    const shouldRecalculate = affectedProps.some((prop) => {
       return changes[prop] && !changes[prop].isFirstChange();
     });
     if (shouldRecalculate) {
@@ -77,7 +100,11 @@ export class YardBayComponent implements AfterViewInit {
   }
 
   calculateLayout() {
-    if (!this.yardBayData || this.yardBayData.length === 0 || this.containerWidth <= 0) {
+    if (
+      !this.yardBayData ||
+      this.yardBayData.length === 0 ||
+      this.containerWidth <= 0
+    ) {
       return;
     }
     this.applyGroupAndSort();
@@ -98,7 +125,10 @@ export class YardBayComponent implements AfterViewInit {
     const container = this.canvasContainer.nativeElement;
     container.style.width = `${this.containerWidth}px`;
     container.style.height = `${this.containerHeight}px`;
-    this.canvasPro.updateViewportSize(this.containerWidth, this.containerHeight);
+    this.canvasPro.updateViewportSize(
+      this.containerWidth,
+      this.containerHeight
+    );
   }
 
   // 分组和排序
@@ -127,7 +157,6 @@ export class YardBayComponent implements AfterViewInit {
     this.transformYardBaysData();
   }
 
-  // 计算坐标生成标准数据
   transformYardBaysData(): void {
     this.containerHeight = 0;
     let currentX = 40;
@@ -161,7 +190,7 @@ export class YardBayComponent implements AfterViewInit {
           height: 0,
           maxCol: bay.maxCol,
           maxTier: bay.maxTier,
-          yardPoses: []
+          yardPoses: [],
         };
         const allPositions: { [key: string]: VisualYardPos<any> } = {};
         // 已有数据格子
@@ -174,7 +203,7 @@ export class YardBayComponent implements AfterViewInit {
               y: currentY + (bay.maxTier - yardPose.tier) * this.cellHeight,
               height: this.cellHeight,
               width: this.cellWidth,
-              data: yardPose.data || null
+              data: yardPose.data || null,
             };
           }
         }
@@ -184,14 +213,16 @@ export class YardBayComponent implements AfterViewInit {
             const posKey = `${col}-${tier}`;
             if (!allPositions[posKey]) {
               allPositions[posKey] = {
-                yardPos: `${bay.yardBay}${col}${tier}`,
+                yardPos: `${bay.yardBay}${col
+                  .toString()
+                  .padStart(2, '0')}${tier}`,
                 x: currentX + (col - 1) * this.cellWidth,
                 y: currentY + (bay.maxTier - tier) * this.cellHeight,
                 height: this.cellHeight,
                 width: this.cellWidth,
                 col,
                 tier,
-                data: null
+                data: null,
               };
             }
           }
@@ -217,35 +248,64 @@ export class YardBayComponent implements AfterViewInit {
     this.containerHeight += this.rowMarginY;
     this.yardBayData$.next(this.processedData);
   }
+  patchYardPoses(
+    selectedYardPoses: Partial<YardPos<unknown>>[],
+    keyFn?: (yardPos: Partial<YardPos<unknown>>) => string
+  ) {
+    const selectedYardPosesMap = new Map<string, Partial<YardPos<unknown>>>();
+    const getKey =
+      keyFn || ((yardPos: Partial<YardPos<unknown>>) => yardPos.yardPos || '');
+    selectedYardPoses.forEach((selectedYardPos) => {
+      selectedYardPosesMap.set(getKey(selectedYardPos), selectedYardPos);
+    });
+    this.processedData.forEach((yardBay) => {
+      yardBay.yardPoses = yardBay.yardPoses.map((yardPos) => {
+        const key = getKey(yardPos);
+        if (selectedYardPosesMap.has(key)) {
+          yardPos = Object.assign(yardPos, selectedYardPosesMap.get(key));
+        }
+        return yardPos;
+      });
+    });
+    this.yardBayData$.next(this.processedData);
+  }
 
   getYardBayLayer() {
     console.log('创建layer');
     const yardBaysLayer = new Layer<VisualYardBay<unknown>[]>('yardBaysLayer');
     yardBaysLayer.setPushMode();
     yardBaysLayer.setTrigger(this.yardBayData$);
-    yardBaysLayer.addEventListener('dbclick', (evt: CpDbClickEvent, data: VisualYardBay<unknown>[]) => {
-      const axis = evt.getAxis();
-      data.forEach((yardBay: VisualYardBay<unknown>) => {
-        const qcClick = yardBay.yardPoses.find((item) => {
-          const startX = item.x
-          const startY = item.y;
-          return (
-            axis.x >= startX &&
-            axis.x <= startX + item.width &&
-            axis.y >= startY &&
-            axis.y <= startY + item.height
-          )
+    yardBaysLayer.addEventListener(
+      'dbclick',
+      (evt: CpDbClickEvent, data: VisualYardBay<unknown>[]) => {
+        const axis = evt.getAxis();
+        data.forEach((yardBay: VisualYardBay<unknown>) => {
+          const qcClick = yardBay.yardPoses.find((item) => {
+            const startX = item.x;
+            const startY = item.y;
+            return (
+              axis.x >= startX &&
+              axis.x <= startX + item.width &&
+              axis.y >= startY &&
+              axis.y <= startY + item.height
+            );
+          });
+          if (qcClick) {
+            this.yardPosDbClick.emit(qcClick);
+            return;
+          }
         });
-        if (qcClick) {
-          this.yardPosDbClick.emit(qcClick);
-          return
-        }
+      }
+    );
+    yardBaysLayer.addRenderable(
+      new CustomRenderable<VisualYardBay<unknown>[]>((ctx, data) => {
+        yardBaysLayer.updateCanvasSize(
+          this.containerWidth,
+          this.containerHeight
+        );
+        this.renderYardBay(ctx, data);
       })
-    })
-    yardBaysLayer.addRenderable(new CustomRenderable<VisualYardBay<unknown>[]>((ctx, data) => {
-      yardBaysLayer.updateCanvasSize(this.containerWidth, this.containerHeight);
-      this.renderYardBay(ctx, data);
-    }))
+    );
     return yardBaysLayer;
   }
 
@@ -286,25 +346,19 @@ export class YardBayComponent implements AfterViewInit {
 
     for (const bay of yardBays) {
       const currentGroup = this.groupBy ? this.groupBy(bay) : null;
-      const isNewGroup = currentGroup !== null && currentGroup !== '' && currentGroup !== lastGroup;
+      const isNewGroup =
+        currentGroup !== null &&
+        currentGroup !== '' &&
+        currentGroup !== lastGroup;
       if (isNewGroup) {
         if (!isFirstGroup) {
-          this.drawGroupSeparator(
-            ctx,
-            bay.y - 50,
-            this.containerWidth,
-          );
+          this.drawGroupSeparator(ctx, bay.y - 50, this.containerWidth);
         }
-        this.drawGroupHeader(
-          ctx,
-          currentGroup!,
-          bay.x,
-          bay.y - 30
-        );
+        this.drawGroupHeader(ctx, currentGroup!, bay.x, bay.y - 30);
         lastGroup = currentGroup;
         isFirstGroup = false;
       }
-      const bayBottomY = bay.y + (bay.maxTier * bay.yardPoses[0].height);
+      const bayBottomY = bay.y + bay.maxTier * bay.yardPoses[0].height;
       if (bayBottomY > groupMaxY) {
         groupMaxY = bayBottomY;
       }
@@ -342,7 +396,7 @@ export class YardBayComponent implements AfterViewInit {
   drawGroupSeparator(
     ctx: OffscreenCanvasRenderingContext2D,
     y: number,
-    width: number,
+    width: number
   ) {
     ctx.setLineDash([5, 3]);
     ctx.beginPath();
@@ -374,12 +428,20 @@ export class YardBayComponent implements AfterViewInit {
     // 在第一列绘制层号
     if (yardPos.col === 1) {
       ctx.textAlign = 'right';
-      ctx.fillText(yardPos.tier.toString(), yardPos.x - 10, yardPos.y + yardPos.height / 2);
+      ctx.fillText(
+        yardPos.tier.toString(),
+        yardPos.x - 10,
+        yardPos.y + yardPos.height / 2
+      );
     }
     // 在第一层绘制列号
     if (yardPos.tier === 1) {
       ctx.textAlign = 'center';
-      ctx.fillText(yardPos.col.toString(), yardPos.x + yardPos.width / 2, yardPos.y + yardPos.height + 15);
+      ctx.fillText(
+        yardPos.col.toString(),
+        yardPos.x + yardPos.width / 2,
+        yardPos.y + yardPos.height + 15
+      );
     }
   }
 
@@ -389,7 +451,7 @@ export class YardBayComponent implements AfterViewInit {
     textList: string[]
   ) {
     const maxFontSize = yardPos.height * 0.2;
-    const fontSize = Math.max(maxFontSize, 10)
+    const fontSize = Math.max(maxFontSize, 10);
     const textHeight = fontSize * 1.2 * textList.length;
     const startY = yardPos.y + (yardPos.height - textHeight) / 2 + fontSize / 2;
     ctx.fillStyle = 'black';
