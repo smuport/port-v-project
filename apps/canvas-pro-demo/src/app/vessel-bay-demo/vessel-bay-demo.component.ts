@@ -2,9 +2,9 @@ import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import {
   Component,
-  HostListener,
   OnInit,
   QueryList,
+  ViewChild,
   ViewChildren,
 } from '@angular/core';
 import {
@@ -14,16 +14,18 @@ import {
   VesselBayComponent,
 } from '@smuport/ngx-port-v';
 import { FormsModule } from '@angular/forms';
+import { MultiSelectDirective } from '../directives/multi-select.directive';
 
 @Component({
   selector: 'app-vessel-bay-demo',
-  imports: [CommonModule, VesselBayComponent, FormsModule],
+  imports: [CommonModule, VesselBayComponent, FormsModule, MultiSelectDirective],
   templateUrl: './vessel-bay-demo.component.html',
   styleUrl: './vessel-bay-demo.component.css',
   standalone: true,
 })
 export class VesselBayDemoComponent implements OnInit {
   @ViewChildren(VesselBayComponent) vesselBays!: QueryList<VesselBayComponent>;
+  @ViewChild(MultiSelectDirective) multiSelect!: MultiSelectDirective<Vescell<any>>;
   bayDatas: VesselBay[][] = [];
 
   vescellMarkerConfig: Partial<VescellMarkerConfig> = {
@@ -106,9 +108,10 @@ export class VesselBayDemoComponent implements OnInit {
   lastCmdSelectedVescell: string | null = null;
   lastShiftSelectedRange: { start: number; end: number } | null = null;
   shiftKeyPressed = false;
-  searchVescell: string = '';
+  searchVescell = '';
   endIndex!: number;
   constructor(private http: HttpClient) {}
+  
   ngOnInit(): void {
     // 加载船贝图数据
     this.http
@@ -149,116 +152,60 @@ export class VesselBayDemoComponent implements OnInit {
     alert(JSON.stringify($event.data));
   }
 
-  //shift及command多选
-  @HostListener('window:keydown', ['$event'])
-  onKeyDown(event: KeyboardEvent) {
-    this.shiftKeyPressed = event.shiftKey;
-  }
+  // //shift及command多选
+  // @HostListener('window:keydown', ['$event'])
+  // onKeyDown(event: KeyboardEvent) {
+  //   this.shiftKeyPressed = event.shiftKey;
+  // }
 
-  @HostListener('window:keyup', ['$event'])
-  onKeyUp(event: KeyboardEvent) {
-    this.shiftKeyPressed = event.shiftKey;
-  }
-  selectVescell(selectedVescell: string, event?: MouseEvent) {
-    const bay = +selectedVescell.slice(0, 2);
-    const colTier = selectedVescell.slice(2, 6);
-    let patchVescells: Vescell<any>[] = [];
-    const currentIndex = this.allVescellList.findIndex(
-      (v) => v.vescell === selectedVescell
-    );
-    // Shift多选逻辑
-    if (event?.shiftKey && this.lastCmdSelectedVescell) {
-      const anchorIndex = this.allVescellList.findIndex(
-        (v) => v.vescell === this.lastCmdSelectedVescell
-      );
-      if (anchorIndex !== -1 && currentIndex !== -1) {
-        if (this.lastShiftSelectedRange) {
-          const { start, end } = this.lastShiftSelectedRange;
-          for (let i = start; i <= end; i++) {
-            if (!this.isPersistentSelected(this.allVescellList[i])) {
-              this.allVescellList[i].data['ifSelected'] = false;
-              patchVescells.push(this.allVescellList[i]);
-            }
-          }
-        }
+  // @HostListener('window:keyup', ['$event'])
+  // onKeyUp(event: KeyboardEvent) {
+  //   this.shiftKeyPressed = event.shiftKey;
+  // }
+  // 处理选择变更事件
+  onSelectionChange(changedItems: Vescell<any>[]) {
+    console.log('changedItems', changedItems)
+    const visualChangedVescell: Array<[string, boolean]> = [];
+    const visualChangedItems: Vescell[] = [];
 
-        const newStart = Math.min(anchorIndex, currentIndex);
-        const newEnd = Math.max(anchorIndex, currentIndex);
-        this.lastShiftSelectedRange = { start: newStart, end: newEnd };
-
-        for (let i = newStart; i <= newEnd; i++) {
-          this.allVescellList[i].data['ifSelected'] = true;
-          patchVescells.push(this.allVescellList[i]);
-        }
-      }
-    }
-    // Cmd/Ctrl多选逻辑
-    else if (event?.ctrlKey || event?.metaKey) {
-      const currentState =
-        !this.allVescellMap.get(selectedVescell)?.data['ifSelected'];
-      this.allVescellMap.get(selectedVescell)!.data['ifSelected'] =
-        currentState;
-      patchVescells.push(this.allVescellMap.get(selectedVescell)!);
-
-      if (currentState) {
-        this.lastCmdSelectedVescell = selectedVescell;
-        this.lastShiftSelectedRange = null;
-      }
-    }
-    // 普通单选逻辑
-    else {
-      this.allVescellList.forEach((v) => {
-        if (v.data['ifSelected']) {
-          v.data['ifSelected'] = false;
-          patchVescells.push(v);
-        }
-      });
+    changedItems.forEach((item) => {
+      const selectedVescell = item.vescell
+      const bay = +selectedVescell.slice(0, 2);
+      const colTier = selectedVescell.slice(2, 6);
+      // 如果是普通单选且bay是偶数，需要特殊处理前后贝位
       if (bay % 2 === 0) {
-        const frontVescell = `${(bay + 1)
-          .toString()
-          .padStart(2, '0')}${colTier}`;
-        const backVescell = `${(bay - 1)
-          .toString()
-          .padStart(2, '0')}${colTier}`;
-        [frontVescell, backVescell].forEach((vescellKey) => {
-          const vescell = this.allVescellMap.get(vescellKey);
-          if (vescell) {
-            vescell.data['ifSelected'] = true;
-            patchVescells.push(vescell);
-          }
-        });
+        const frontVescell = `${(bay + 1).toString().padStart(2, '0')}${colTier}`;
+        const backVescell = `${(bay - 1).toString().padStart(2, '0')}${colTier}`;
+        visualChangedVescell.push(
+          [frontVescell, item.data['ifSelected']], 
+          [backVescell, item.data['ifSelected']]);
       } else {
-        this.allVescellMap.get(selectedVescell)!.data['ifSelected'] = true;
-        patchVescells.push(this.allVescellMap.get(selectedVescell)!);
+        visualChangedVescell.push([selectedVescell, item.data['ifSelected']]);
       }
-      this.lastCmdSelectedVescell = selectedVescell;
-      this.lastShiftSelectedRange = null;
+    })
+    visualChangedVescell.forEach(([vescellKey, selected]) => {
+      const vescell = this.allVescellMap.get(vescellKey);
+      if (vescell) {
+        vescell.data['ifSelected'] = selected;
+        visualChangedItems.push(vescell);
+      }
+    });
+    if (visualChangedItems.length > 0) {
+      this.applyPatch(visualChangedItems);
     }
-    this.applyPatch(patchVescells);
+    
   }
+  // 选择vescell的方法现在调用指令的方法
+  selectVescell(selectedVescell: string, event?: KeyboardEvent | MouseEvent) {
 
-  // 判断是否是被Cmd持久选中的项目
-  isPersistentSelected(vescell: Vescell<any>): boolean {
-    return (
-      vescell.data['ifSelected'] &&
-      vescell.vescell !== this.lastCmdSelectedVescell &&
-      (!this.lastShiftSelectedRange ||
-        !this.isInRange(vescell, this.lastShiftSelectedRange))
-    );
-  }
-
-  // 判断是否在指定范围内
-  isInRange(
-    vescell: Vescell<any>,
-    range: { start: number; end: number }
-  ): boolean {
-    const index = this.allVescellList.findIndex(
-      (v) => v.vescell === vescell.vescell
-    );
-    return index >= range.start && index <= range.end;
+    
+    // 使用指令的selectItem方法
+    this.multiSelect.selectItem(selectedVescell, event);
+  
   }
 
   applyPatch(patchVescells: Vescell<any>[]) {
+    console.log(patchVescells);
     if (patchVescells.length > 0) {
       const uniquePatches = [
         ...new Map(patchVescells.map((v) => [v.vescell, v])).values(),

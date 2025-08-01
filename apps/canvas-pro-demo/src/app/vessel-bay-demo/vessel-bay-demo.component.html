@@ -18,9 +18,11 @@
         <i class="search-icon">🔍</i>
       </button>
     </div>
-    <div class="scrollable-list">
+    <div class="scrollable-list" appMultiSelect [items]="allVescellList" itemIdField="vescell" selectedField="data.ifSelected" (selectionChange)="onSelectionChange($event)">
       <div *ngFor="let item of allVescellList; let i = index" class="list-item"
-        (click)="selectVescell(item.vescell, $event)" [class.selected]="item.data?.ifSelected"
+        style="user-select: none;"
+        [class.selected]="item.data?.ifSelected"
+        (click)="selectVescell(item.vescell, $event)" 
         [id]="'vescell-' + item.vescell">
         {{ item.vescell }}
       </div>
