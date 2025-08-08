@@ -29,7 +29,7 @@ export class YardBayDemoComponent implements OnInit {
         '2d'
       ) as OffscreenCanvasRenderingContext2D;
       if (this.isResultMode && yardPos.data.vesselBay) {
-        let fillStyle = this.bayColorDict[yardPos.data.vesselBay] || '#FFFFFF';
+        const fillStyle = this.bayColorDict[yardPos.data.vesselBay] || '#FFFFFF';
         if (yardPos.data.ifIncorrect) {
           const gradient = ctx.createLinearGradient(
             yardPos.x,
@@ -90,12 +90,12 @@ export class YardBayDemoComponent implements OnInit {
     });
   }
   bayColorDict: { [key: string]: string } = {};
-  isResultMode: boolean = false;
-  containerHeight: number = 0;
+  isResultMode = false;
+  containerHeight = 0;
   rawData: YardBay[] = [];
   filteredData: YardBay[] = [];
-  searchText: string = '';
-  sortDirection: string = 'asc';
+  searchText = '';
+  sortDirection = 'asc';
 
   groupMode: string | null = null;
   @ViewChild(YardBayComponent) yardBayComponent!: YardBayComponent;
@@ -225,6 +225,8 @@ export class YardBayDemoComponent implements OnInit {
     );
   }
 
+  
+
   //框选
   selectYardPoses(event: CpFrameSelectEvent) {
     this.selectedYardPoses = event.selectedItems;
@@ -240,3 +242,8 @@ export class YardBayDemoComponent implements OnInit {
     }
   }
 }
+
+
+
+
+

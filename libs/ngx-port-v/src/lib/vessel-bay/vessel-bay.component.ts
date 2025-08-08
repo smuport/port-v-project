@@ -152,7 +152,7 @@ export class VesselBayComponent implements AfterViewInit {
     insLayer.setPushMode();
     insLayer.setTrigger(insSource);
     insLayer.setRenderer((ctx, data) => {
-      insLayer.updateCanvasSize(data.bayWidth, data.bayHeight);
+      insLayer.updateSize(data.bayWidth, data.bayHeight);
       this.canvasPro.updateViewportSize(data.bayWidth, data.bayHeight);
       this.renderVesselBayBackground(ctx, data);
     });
@@ -194,7 +194,7 @@ export class VesselBayComponent implements AfterViewInit {
     );
     const renderable = new CustomRenderable(
       (ctx: OffscreenCanvasRenderingContext2D, data: VesselBay) => {
-        insLayer.updateCanvasSize(data.bayWidth, data.bayHeight);
+        insLayer.updateSize(data.bayWidth, data.bayHeight);
         this.canvasPro.updateViewportSize(data.bayWidth, data.bayHeight);
         this.renderVesselBay(ctx, data);
       }
@@ -413,7 +413,7 @@ export class VesselBayComponent implements AfterViewInit {
 
   //框选
   vescellsInRect(rect: { x: number; y: number; w: number; h: number }) {
-    let selectedVescells: Vescell[] = [];
+    const selectedVescells: Vescell[] = [];
     const width = this.config.width;
     const height = this.config.height;
     this.vesselBayData.vescells.forEach((item: Vescell) => {

@@ -68,7 +68,7 @@ export class TransformService {
         maxLayerHeight = Math.max(maxLayerHeight, layer.h);
       }
     }
-    
+
     // 计算允许的最大垂直平移范围
     const minY = Math.min(0, viewportHeight - maxLayerHeight * this.scale);
     

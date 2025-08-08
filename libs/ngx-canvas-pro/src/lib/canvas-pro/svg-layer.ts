@@ -166,6 +166,7 @@ export class SvgLayer<T = any, U = any> implements BaseLayer<T, U> {
   
   // 实现 BaseLayer 接口的 updateSize 方法
   updateSize(w: number, h: number): void {
+    
     this.updateSvgSize(w, h);
   }
 }

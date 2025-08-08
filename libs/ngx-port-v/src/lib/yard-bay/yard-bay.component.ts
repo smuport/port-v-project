@@ -53,32 +53,30 @@ export class YardBayComponent implements AfterViewInit {
     () => [];
   @Input() groupBy: (bay: YardBay) => string | null = () => null;
   @Input() orderBy: (a: YardBay, b: YardBay) => number = () => 0;
-  @Output() heightCalculated = new EventEmitter<number>();
   @Output() yardPosDbClick = new EventEmitter<VisualYardPos<any>>();
 
   yardBayData$ = new BehaviorSubject<YardBay[]>(undefined!);
-  // processedData: YardBay[] = [];
-  cellWidth: number = 50;
-  cellHeight: number = 50;
-  bayMarginX: number = 80;
-  bayMarginY: number = 80;
-  rowMarginY: number = 80;
+  @Input() cellWidth = 50;
+  @Input() cellHeight = 50;
+  @Input() bayMarginX = 80;
+  @Input() bayMarginY = 80;
+  @Input() rowMarginY = 80;
   yardBayGroupMap: { [key: string]: YardBay[] } = {};
-  containerWidth: number = 0;
-  containerHeight: number = 0;
+  containerWidth = 0;
+  containerHeight = 0;
 
   // 添加交互配置
   @Input() interactionConfig: ViewportInteractionConfig = {
     drag: {
-      default: 'none', // 默认禁用平移
+      default: 'pan', // 默认平移
       shift: 'frame-select', // 按住 shift 键可以平移
-      ctrl: 'zoom',
+      ctrl: 'none',
       alt: 'pan',
     },
     wheel: {
-      default: 'none', // 默认禁用缩放
-      shift: 'pan-horizontal', // 按住 shift 键可以水平缩放
-      ctrl: 'zoom',
+      default: 'pan-vertical', // 默认禁用缩放
+      shift: 'pan-vertical', // 按住 shift 键可以水平缩放
+      ctrl: 'none',
       alt: 'pan-vertical',
     },
   };
@@ -115,7 +113,7 @@ export class YardBayComponent implements AfterViewInit {
     }
     this.applyGroupAndSort();
     this.updateCanvas();
-    this.heightCalculated.emit(this.containerHeight);
+    // this.heightCalculated.emit(this.containerHeight);
   }
 
   getCalculatedHeight(): number {
@@ -127,14 +125,9 @@ export class YardBayComponent implements AfterViewInit {
   }
 
   private updateCanvas() {
-    if (!this.canvasContainer?.nativeElement || !this.canvasPro) return;
-    const container = this.canvasContainer.nativeElement;
-    container.style.width = `${this.containerWidth}px`;
-    container.style.height = `${this.containerHeight}px`;
-    this.canvasPro.updateViewportSize(
-      this.containerWidth,
-      this.containerHeight
-    );
+    this.canvasPro.fitViewportToParent();
+    this.canvasPro.layers.forEach(layer => layer.updateSize(this.containerWidth, this.containerHeight));
+
   }
 
   // 分组和排序
@@ -315,7 +308,7 @@ export class YardBayComponent implements AfterViewInit {
         ctx: OffscreenCanvasRenderingContext2D,
         data: VisualYardBay<unknown>[]
       ) => {
-        yardBaysLayer.updateCanvasSize(
+        yardBaysLayer.updateSize(
           this.containerWidth,
           this.containerHeight
         );
@@ -331,7 +324,7 @@ export class YardBayComponent implements AfterViewInit {
   }
 
   yardPosesInRect(rect: { x: number; y: number; w: number; h: number }) {
-    let selectedYardPoses: VisualYardPos<unknown>[] = [];
+    const selectedYardPoses: VisualYardPos<unknown>[] = [];
     this.processedData.forEach((yardBay: VisualYardBay<unknown>) => {
       yardBay.yardPoses.forEach((yardPos: VisualYardPos) => {
         const cellLeftX = yardPos.x;

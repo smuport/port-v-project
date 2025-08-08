@@ -102,7 +102,7 @@ export class Layer<T = any, U = any, E extends CpBaseEvent = CpBaseEvent>
     return this;
   }
 
-  updateCanvasSize(w: number, h: number) {
+  private updateCanvasSize(w: number, h: number) {
     // 该函数是调整整个OffScreenCanvas画布的大小，不是调整视口大小
     this.canvas.width = w;
     this.canvas.height = h;
@@ -166,6 +166,8 @@ export class Layer<T = any, U = any, E extends CpBaseEvent = CpBaseEvent>
 
   // 实现 BaseLayer 接口的 updateSize 方法
   updateSize(w: number, h: number): void {
+    this.w = w;
+    this.h = h;
     this.updateCanvasSize(w, h);
   }
 }
