@@ -385,19 +385,7 @@ export class VesselBayComponent implements AfterViewInit {
     const vescellsMap = new Map<string, Vescell>();
     let needRedraw = false;
     vescells.forEach((vescell: Vescell) => {
-      const bay = +vescell.vescell.slice(0, 2);
-      if (bay % 2 == 0) {
-        const frontVescell = `${(bay + 1).toString().padStart(2, '0')}${
-          vescell.col
-        }${vescell.tier}`;
-        const backVescell = `${(bay - 1).toString().padStart(2, '0')}${
-          vescell.col
-        }${vescell.tier}`;
-        vescellsMap.set(frontVescell, vescell);
-        vescellsMap.set(backVescell, vescell);
-      } else {
-        vescellsMap.set(vescell.vescell, vescell);
-      }
+      vescellsMap.set(vescell.vescell, vescell);
     });
     this.vesselBayData.vescells.forEach((vescell: Vescell) => {
       const patchVescell = vescellsMap.get(vescell.vescell);
