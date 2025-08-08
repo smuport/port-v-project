@@ -34,8 +34,9 @@
 
 
 <div class="visualization-wrapper">
-	<div #container [style.height.px]="containerHeight" class="visualization-container">
-		<app-yard-bay [yardBayData]="filteredData" [fillYardPoses]="fillYardPoses" [textYardPoses]="textYardPoses"
+	<div #container class="visualization-container">
+		<app-yard-bay 
+		[yardBayData]="filteredData" [fillYardPoses]="fillYardPoses" [textYardPoses]="textYardPoses"
 			[groupBy]="groupBy" [orderBy]="orderBy" [interactionConfig]="interactionConfig"
 			(yardPosDbClick)="onYardPosDbClick($event)"
 			(yardPosFrameSelect)="selectYardPoses($event)">

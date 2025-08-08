@@ -115,10 +115,10 @@ export class YardBayDemoComponent implements OnInit {
       alt: 'pan',
     },
     wheel: {
-      default: 'none', // 默认禁用缩放
-      shift: 'pan-horizontal', // 按住 shift 键可以水平缩放
+      default: 'pan-vertical', // 默认禁用缩放
+      shift: 'none', // 按住 shift 键可以水平缩放
       ctrl: 'none',
-      alt: 'pan-vertical',
+      alt: 'none',
     },
   };
   allYardPosMap = new Map<string, YardPos<any>>();
