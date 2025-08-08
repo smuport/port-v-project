@@ -112,7 +112,14 @@ export class YardBayComponent implements AfterViewInit {
       return;
     }
     this.applyGroupAndSort();
+    console.log('group and sort applied')
     this.updateCanvas();
+    console.log('canvas size updated')
+    this.yardBayData$.next(this.processedData);
+    console.log('processed data updated')
+
+
+
     // this.heightCalculated.emit(this.containerHeight);
   }
 
@@ -245,7 +252,6 @@ export class YardBayComponent implements AfterViewInit {
     }
     this.processedData = result;
     this.containerHeight += this.rowMarginY;
-    this.yardBayData$.next(this.processedData);
   }
   patchYardPoses(
     selectedYardPoses: Partial<YardPos<unknown>>[],
