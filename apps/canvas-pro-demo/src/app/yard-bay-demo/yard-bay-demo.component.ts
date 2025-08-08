@@ -29,7 +29,8 @@ export class YardBayDemoComponent implements OnInit {
         '2d'
       ) as OffscreenCanvasRenderingContext2D;
       if (this.isResultMode && yardPos.data.vesselBay) {
-        const fillStyle = this.bayColorDict[yardPos.data.vesselBay] || '#FFFFFF';
+        const fillStyle =
+          this.bayColorDict[yardPos.data.vesselBay] || '#FFFFFF';
         if (yardPos.data.ifIncorrect) {
           const gradient = ctx.createLinearGradient(
             yardPos.x,
@@ -182,10 +183,14 @@ export class YardBayDemoComponent implements OnInit {
     alert(JSON.stringify($event.data));
   }
 
-  selectYardPos() {
+  selectYardPos(event?: CpFrameSelectEvent) {
     const completeSelectedData: Partial<YardPos<unknown>>[] = [];
     this.selectedYardPoses.forEach((selectedYardPos) => {
-      selectedYardPos.isSelected = selectedYardPos.isSelected === 1 ? 0 : 1;
+      if (event?.mouseEvent.shiftKey) {
+        selectedYardPos.isSelected = 1;
+      } else {
+        selectedYardPos.isSelected = selectedYardPos.isSelected === 1 ? 0 : 1;
+      }
       let found = false;
       this.filteredData.forEach((yardBay: YardBay) => {
         yardBay.yardPoses.forEach((yardPos: YardPos<any>) => {
@@ -225,12 +230,10 @@ export class YardBayDemoComponent implements OnInit {
     );
   }
 
-  
-
   //框选
   selectYardPoses(event: CpFrameSelectEvent) {
     this.selectedYardPoses = event.selectedItems;
-    this.selectYardPos();
+    this.selectYardPos(event);
   }
 
   deleteItem(items: any[], itemToDelete: any): void {
@@ -242,8 +245,3 @@ export class YardBayDemoComponent implements OnInit {
     }
   }
 }
-
-
-
-
-
