@@ -18,11 +18,10 @@
         <i class="search-icon">🔍</i>
       </button>
     </div>
-    <div class="scrollable-list" appMultiSelect [items]="allVescellList" itemIdField="vescell" selectedField="data.ifSelected" (selectionChange)="onSelectionChange($event)">
-      <div *ngFor="let item of allVescellList; let i = index" class="list-item"
-        style="user-select: none;"
-        [class.selected]="item.data?.ifSelected"
-        (click)="selectVescell(item.vescell, $event)" 
+    <div class="scrollable-list" appMultiSelect [items]="allVescellList" itemIdField="vescell"
+      selectedField="data.ifSelected" (selectionChange)="onSelectionChange($event)">
+      <div *ngFor="let item of allVescellList; let i = index" class="list-item" style="user-select: none;"
+        [class.selected]="item.data?.ifSelected" (click)="selectVescell(item.vescell, $event)"
         [id]="'vescell-' + item.vescell">
         {{ item.vescell }}
       </div>
@@ -34,7 +33,8 @@
       @for (bay of bays; track $index) {
       <app-vessel-bay [vesselBayData]="bay" [fillContainer]="fillVesselBayContainer"
         [textContainer]="textVesselBayContainer" (vescellDbClick)="onVesselBayDbClick($event)"
-        [vescellMarkerConfig]="vescellMarkerConfig"></app-vessel-bay>
+        [vescellMarkerConfig]="vescellMarkerConfig" [interactionConfig]="interactionConfig"
+        (vescellFrameSelect)="selectVescells($event)"></app-vessel-bay>
       }
     </div>
     }

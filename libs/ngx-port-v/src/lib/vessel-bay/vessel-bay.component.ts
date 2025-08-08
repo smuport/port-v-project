@@ -9,7 +9,10 @@ import {
 } from '@angular/core';
 import {
   CanvasProComponent,
+  CpBaseEvent,
   CpDbClickEvent,
+  CpFrameSelectEvent,
+  CustomRenderable,
   Layer,
   ViewportInteractionConfig,
 } from '@smuport/ngx-canvas-pro';
@@ -99,6 +102,9 @@ export class VesselBayComponent implements AfterViewInit {
     L2P: { name: '45英尺框架箱', color: 'navy' },
   };
 
+  //绘制矩形
+  @Output() vescellFrameSelect = new EventEmitter<CpFrameSelectEvent>();
+
   // 添加交互配置
   @Input() interactionConfig: ViewportInteractionConfig = {
     drag: {
@@ -177,13 +183,32 @@ export class VesselBayComponent implements AfterViewInit {
         }
       }
     );
-    // this.canvasPro.drawVierport();
-    insLayer.setRenderer((ctx, data) => {
-      insLayer.updateCanvasSize(data.bayWidth, data.bayHeight);
-      this.canvasPro.updateViewportSize(data.bayWidth, data.bayHeight);
-      this.renderVesselBay(ctx, data);
+    insLayer.addEventListener(
+      'frameselect',
+      (evt: CpBaseEvent, data: VesselBay) => {
+        if (this.isFrameSelectEvent(evt)) {
+          console.log(evt);
+          this.vescellFrameSelect.emit(evt);
+        }
+      }
+    );
+    const renderable = new CustomRenderable(
+      (ctx: OffscreenCanvasRenderingContext2D, data: VesselBay) => {
+        insLayer.updateCanvasSize(data.bayWidth, data.bayHeight);
+        this.canvasPro.updateViewportSize(data.bayWidth, data.bayHeight);
+        this.renderVesselBay(ctx, data);
+      }
+    );
+    renderable.setSelectionChecker((selection) => {
+      const rect = selection;
+      return this.vescellsInRect(rect);
     });
+    insLayer.addRenderable(renderable);
     return insLayer;
+  }
+
+  isFrameSelectEvent(evt: CpBaseEvent): evt is CpFrameSelectEvent {
+    return 'selectedItems' in evt && 'mouseEvent' in evt;
   }
 
   renderVesselBayBackground(
@@ -384,5 +409,31 @@ export class VesselBayComponent implements AfterViewInit {
     if (needRedraw) {
       this.vesselBayData$.next(this.vesselBayData);
     }
+  }
+
+  //框选
+  vescellsInRect(rect: { x: number; y: number; w: number; h: number }) {
+    let selectedVescells: Vescell[] = [];
+    const width = this.config.width;
+    const height = this.config.height;
+    this.vesselBayData.vescells.forEach((item: Vescell) => {
+      const cellLeftX = item.x;
+      const cellRightX = cellLeftX + width;
+      const rectLeftX = rect.x;
+      const rectRightX = rect.x + rect.w;
+      const cellTopY = item.y;
+      const cellBottomY = cellTopY + height;
+      const rectTopY = rect.y;
+      const rectBottomY = rect.y + rect.h;
+      if (
+        cellLeftX < rectRightX &&
+        cellRightX > rectLeftX &&
+        cellTopY < rectBottomY &&
+        cellBottomY > rectTopY
+      ) {
+        selectedVescells.push(item);
+      }
+    });
+    return selectedVescells;
   }
 }

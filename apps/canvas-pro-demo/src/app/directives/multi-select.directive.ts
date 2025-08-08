@@ -7,18 +7,18 @@ import {
   Output,
 } from '@angular/core';
 
-
-
 @Directive({
   selector: '[appMultiSelect]',
   standalone: true,
 })
-export class MultiSelectDirective<T=unknown> {
+export class MultiSelectDirective<T = unknown> {
   @Input() items: T[] = [];
   @Input() itemIdField = 'id';
   @Input() selectedField = 'selected';
-  @Input() customSelectionLogic: ((item: T, event?: KeyboardEvent | MouseEvent) => boolean) | null = null;
-  
+  @Input() customSelectionLogic:
+    | ((item: T, event?: KeyboardEvent | MouseEvent) => boolean)
+    | null = null;
+
   @Output() selectionChange = new EventEmitter<T[]>();
 
   private lastSelectedItemId: string | null = null;
@@ -51,7 +51,9 @@ export class MultiSelectDirective<T=unknown> {
     // Shift多选逻辑
     if (event?.shiftKey && this.lastSelectedItemId) {
       const anchorIndex = this.items.findIndex(
-        (item) => this.getPropertyValue(item, this.itemIdField) === this.lastSelectedItemId
+        (item) =>
+          this.getPropertyValue(item, this.itemIdField) ===
+          this.lastSelectedItemId
       );
       if (this.lastShiftSelectedRange) {
         const [s, e] = this.lastShiftSelectedRange;
@@ -66,14 +68,15 @@ export class MultiSelectDirective<T=unknown> {
       const newStart = Math.min(anchorIndex, currentIndex);
       const newEnd = Math.max(anchorIndex, currentIndex);
       for (let i = newStart; i <= newEnd; i++) {
-          this.setPropertyValue(this.items[i], this.selectedField, true);
-            changedItems.push(this.items[i]);
-        }
+        this.setPropertyValue(this.items[i], this.selectedField, true);
+        changedItems.push(this.items[i]);
+      }
       this.lastShiftSelectedRange = [newStart, newEnd];
-
     }
     // Cmd/Ctrl多选逻辑
     else if (event?.ctrlKey || event?.metaKey) {
+      console.log(event);
+
       const item = this.items[currentIndex];
       const currentState = !this.getPropertyValue(item, this.selectedField);
       this.setPropertyValue(item, this.selectedField, currentState);
@@ -111,7 +114,9 @@ export class MultiSelectDirective<T=unknown> {
    * 获取所有选中的项目
    */
   getSelectedItems(): T[] {
-    return this.items.filter((item) => this.getPropertyValue(item, this.selectedField));
+    return this.items.filter((item) =>
+      this.getPropertyValue(item, this.selectedField)
+    );
   }
 
   /**
@@ -140,15 +145,15 @@ export class MultiSelectDirective<T=unknown> {
    */
   private getPropertyValue(obj: any, path: string): any {
     if (!obj || !path) return undefined;
-    
+
     const pathParts = path.split('.');
     let value = obj;
-    
+
     for (const part of pathParts) {
       if (value === null || value === undefined) return undefined;
       value = value[part];
     }
-    
+
     return value;
   }
 
@@ -158,14 +163,14 @@ export class MultiSelectDirective<T=unknown> {
    */
   private setPropertyValue(obj: any, path: string, value: any): void {
     if (!obj || !path) return;
-    
+
     const pathParts = path.split('.');
     const lastPart = pathParts.pop();
-    
+
     if (!lastPart) return;
-    
+
     let current = obj;
-    
+
     // 遍历路径直到倒数第二层
     for (const part of pathParts) {
       if (current[part] === undefined) {
@@ -173,7 +178,7 @@ export class MultiSelectDirective<T=unknown> {
       }
       current = current[part];
     }
-    
+
     // 设置最后一层的属性值
     current[lastPart] = value;
   }

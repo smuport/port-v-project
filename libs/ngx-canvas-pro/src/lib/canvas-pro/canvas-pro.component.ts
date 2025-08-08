@@ -38,14 +38,14 @@ import { ViewportService } from './services/viewport.service';
   styleUrls: ['./canvas-pro.component.css'],
   standalone: true,
   providers: [
-    InteractionHandler, 
-    // RenderHandler, 
+    InteractionHandler,
+    // RenderHandler,
     DataflowHandler,
     SvgContainerService,
     EventManagerService,
     FrameSelectService,
     TransformService,
-    ViewportService
+    ViewportService,
   ],
 })
 export class CanvasProComponent implements OnDestroy, AfterViewInit {
@@ -73,8 +73,6 @@ export class CanvasProComponent implements OnDestroy, AfterViewInit {
     },
   };
 
-  
-
   constructor(
     private interactionHandler: InteractionHandler,
     // private renderHandler: RenderHandler,
@@ -92,8 +90,10 @@ export class CanvasProComponent implements OnDestroy, AfterViewInit {
     ) as CanvasRenderingContext2D;
 
     // 添加 SVG 容器到 DOM
-    this.svgContainerService.attachToParent(this.viewport.nativeElement.parentElement!);
-    
+    this.svgContainerService.attachToParent(
+      this.viewport.nativeElement.parentElement!
+    );
+
     // 为 SVG 容器添加事件监听，将事件传递给 Canvas
     this.svgContainerService.setupEventForwarding(this.viewport.nativeElement);
 
@@ -119,20 +119,17 @@ export class CanvasProComponent implements OnDestroy, AfterViewInit {
 
   setupEvents(): void {
     // 设置 Canvas 事件
-    this.eventManagerService.setupCanvasEvents(
-      this.viewport.nativeElement,
-      {
-        onMouseDown: (event) => this.onMouseDown(event),
-        onMouseMove: (event) => this.onMouseMove(event),
-        onMouseUp: (event) => this.onMouseUp(event),
-        onBlur: (event) => this.onBlur(event),
-        onWheel: (event) => this.onWheel(event)
-      }
-    );
-    
+    this.eventManagerService.setupCanvasEvents(this.viewport.nativeElement, {
+      onMouseDown: (event) => this.onMouseDown(event),
+      onMouseMove: (event) => this.onMouseMove(event),
+      onMouseUp: (event) => this.onMouseUp(event),
+      onBlur: (event) => this.onBlur(event),
+      onWheel: (event) => this.onWheel(event),
+    });
+
     // 设置全局事件
     this.eventManagerService.setupGlobalEvents({
-      onGlobalMouseUp: (event) => this.onGlobalMouseUp(event)
+      onGlobalMouseUp: (event) => this.onGlobalMouseUp(event),
     });
   }
 
@@ -141,7 +138,7 @@ export class CanvasProComponent implements OnDestroy, AfterViewInit {
   //   this.renderHandler.updateViewportSize(w, h);
   //   this.svgContainerService.updateViewportSize(w, h);
   // }
-    // 使用视口服务更新视口大小
+  // 使用视口服务更新视口大小
   updateViewportSize(w: number, h: number) {
     this.viewportService.updateViewportSize(w, h);
   }
@@ -151,12 +148,12 @@ export class CanvasProComponent implements OnDestroy, AfterViewInit {
       console.error(`${layer.name} is not valid`);
       return;
     }
-    
+
     // 如果是 SVG Layer，将其 SVG 元素添加到容器中
     // if (layer.type === 'svg') {
     //   this.svgContainerService.addSvgLayer(layer as SvgLayer);
     // }
-    
+
     this.layers.push(layer);
     this.dataflowHandler.addLayer(layer);
   }
@@ -172,7 +169,7 @@ export class CanvasProComponent implements OnDestroy, AfterViewInit {
   //     this.transformService.scale,
   //     this.transformService.rotation
   //   );
-    
+
   //   // 更新 SVG Layers 的变换
   //   this.svgContainerService.updateTransform(
   //     this.transformService.translatePos.x,
@@ -180,7 +177,7 @@ export class CanvasProComponent implements OnDestroy, AfterViewInit {
   //     this.transformService.scale,
   //     this.transformService.rotation
   //   );
-    
+
   //   // 绘制框选矩形
   //   this.frameSelectService.drawFrameSelectRect(this.viewportCtx);
   // }
@@ -235,40 +232,32 @@ export class CanvasProComponent implements OnDestroy, AfterViewInit {
 
   onBlur(event: FocusEvent): void {
     // 如果正在框选，完成框选
-    // if (this.frameSelectService.isFrameSelecting) {
-    //   const selectEvent = this.frameSelectService.finishFrameSelect(
-    //     this.layers.filter(layer => layer instanceof Layer) as Layer[]
-    //   );
-    //   if (selectEvent) {
-    //     this.triggerEvent(selectEvent);
-    //   }
-    // }
-    this.finishFrameSelect();
-    this.onMouseUp(event);
+    // this.finishFrameSelect();
+    // this.onMouseUp(event);
   }
 
   onGlobalMouseUp(event: MouseEvent): void {
-    
     // 如果鼠标在画布外松开，但仍在框选状态，则完成框选
-    this.finishFrameSelect();
+    this.finishFrameSelect(event);
     // 重置拖拽状态
     if (this.interactionHandler.dragState.isDragging) {
       this.interactionHandler.dragState.isDragging = false;
     }
   }
 
-  onMouseUp(event?: MouseEvent | FocusEvent) {
+  onMouseUp(event: MouseEvent) {
     // 如果正在进行框选，完成框选
     if (this.frameSelectService.isFrameSelecting) {
       const selectEvent = this.frameSelectService.finishFrameSelect(
-        this.layers
+        this.layers,
+        event
         // this.layers.filter(layer => layer instanceof Layer) as Layer[]
       );
       if (selectEvent) {
         this.triggerEvent(selectEvent);
       }
     }
-    
+
     this.interactionHandler.handleMouseUp(event as MouseEvent);
   }
 
@@ -277,11 +266,11 @@ export class CanvasProComponent implements OnDestroy, AfterViewInit {
   }
 
   // 交互操作方法，供处理器调用
-  handlePan(event: MouseEvent, startPos: { x: number, y: number }) {
+  handlePan(event: MouseEvent, startPos: { x: number; y: number }) {
     const viewportSize = this.viewportService.getViewportSize();
     this.transformService.handlePan(
-      event, 
-      startPos, 
+      event,
+      startPos,
       viewportSize.width,
       viewportSize.height,
       this.layers
@@ -312,7 +301,7 @@ export class CanvasProComponent implements OnDestroy, AfterViewInit {
   }
 
   // 在handleRotate方法中
-  handleRotate(event: MouseEvent, startPos: { x: number, y: number }) {
+  handleRotate(event: MouseEvent, startPos: { x: number; y: number }) {
     this.viewportCtx.canvas.style.cursor = 'grabbing';
     const mousePos = this.viewportService.getMousePos(event);
     const viewportSize = this.viewportService.getViewportSize();
@@ -352,18 +341,15 @@ export class CanvasProComponent implements OnDestroy, AfterViewInit {
   // }
 
   handleWheelZoom(event: WheelEvent) {
-    this.transformService.handleWheelZoom(
-      event,
-      this.getMousePos(event)
-    );
+    this.transformService.handleWheelZoom(event, this.getMousePos(event));
     this.drawVierport();
   }
 
-   // 使用视口服务绘制视口
-   drawVierport(): void {
+  // 使用视口服务绘制视口
+  drawVierport(): void {
     // 绘制视口
     this.viewportService.drawViewport();
-    
+
     // 绘制框选矩形
     this.frameSelectService.drawFrameSelectRect(this.viewportCtx);
   }
@@ -424,7 +410,7 @@ export class CanvasProComponent implements OnDestroy, AfterViewInit {
   // 添加处理框选的方法
   handleFrameSelect(event: MouseEvent) {
     this.viewportCtx.canvas.style.cursor = 'crosshair';
-    
+
     if (!this.frameSelectService.isFrameSelecting) {
       // 开始框选
       const mousePos = this.getMousePos(event);
@@ -434,22 +420,21 @@ export class CanvasProComponent implements OnDestroy, AfterViewInit {
       const mousePos = this.getMousePos(event);
       this.frameSelectService.updateFrameSelect(mousePos);
     }
-    
+
     // 重绘视图
     this.drawVierport();
   }
   // 添加代理方法，供 InteractionHandler 调用
-  finishFrameSelect(): void {
+  finishFrameSelect(event: MouseEvent): void {
     if (this.frameSelectService.isFrameSelecting) {
       const selectEvent = this.frameSelectService.finishFrameSelect(
         // this.layers.filter(layer => layer instanceof Layer) as Layer[]
-        this.layers
-
+        this.layers,
+        event
       );
       if (selectEvent) {
         this.triggerEvent(selectEvent);
       }
-      
     }
     this.drawVierport();
   }

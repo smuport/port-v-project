@@ -76,12 +76,12 @@ export class InteractionHandler {
     interactionConfig: ViewportInteractionConfig
   ) {
     if (!this.dragState.isDragging) return;
-  
+
     // 更新拖拽状态
     this.dragState.currentPos = { x: event.clientX, y: event.clientY };
     this.dragState.deltaX = event.clientX - this.dragState.startPos.x;
     this.dragState.deltaY = event.clientY - this.dragState.startPos.y;
-  
+
     // 检查移动距离是否超过点击阈值
     const dx = Math.abs(event.clientX - this.clickState.startPos.x);
     const dy = Math.abs(event.clientY - this.clickState.startPos.y);
@@ -91,10 +91,10 @@ export class InteractionHandler {
     ) {
       this.clickState.isClick = false;
     }
-  
+
     // 确定当前使用的交互模式
     let interactionMode = interactionConfig.drag?.default || 'pan';
-  
+
     if (this.modifierKeys.shift && interactionConfig.drag?.shift) {
       interactionMode = interactionConfig.drag.shift;
     } else if (this.modifierKeys.ctrl && interactionConfig.drag?.ctrl) {
@@ -102,7 +102,7 @@ export class InteractionHandler {
     } else if (this.modifierKeys.alt && interactionConfig.drag?.alt) {
       interactionMode = interactionConfig.drag.alt;
     }
-  
+
     // 根据交互模式执行相应操作
     switch (interactionMode) {
       case 'pan':
@@ -131,17 +131,17 @@ export class InteractionHandler {
         // 不执行任何操作
         break;
     }
-  
+
     // 更新起始位置为当前位置，用于计算下一帧的增量
     this.dragState.startPos = { x: event.clientX, y: event.clientY };
   }
 
   // 鼠标松开事件处理
-  handleMouseUp(event: MouseEvent | FocusEvent) {
+  handleMouseUp(event: MouseEvent) {
     this.setDragging(false);
 
     // 通知组件可能需要结束框选
-    this.component.finishFrameSelect();
+    this.component.finishFrameSelect(event);
 
     if (event && 'button' in event) {
       if (event.button === 0) {
@@ -278,7 +278,7 @@ export class InteractionHandler {
   isDragging(): boolean {
     return this.dragState.isDragging;
   }
-  
+
   // 添加设置拖拽状态的方法
   setDragging(dragging: boolean): void {
     this.dragState.isDragging = dragging;

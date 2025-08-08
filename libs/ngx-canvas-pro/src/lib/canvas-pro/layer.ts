@@ -15,7 +15,9 @@ import { CustomRenderable } from './renderable/custom-renderable';
 
 export type DataMode = 'pull' | 'push';
 
-export class Layer<T = any, U = any> implements BaseLayer<T, U> {
+export class Layer<T = any, U = any, E extends CpBaseEvent = CpBaseEvent>
+  implements BaseLayer<T, U, E>
+{
   name: string;
   w = 0;
   h = 0;
@@ -25,11 +27,11 @@ export class Layer<T = any, U = any> implements BaseLayer<T, U> {
   dataSource: Observable<T> = new Observable<T>(); // 画什么？
   trigger: Observable<U> = of(); // 何时画？
   animation: AnimationObject<T> = new NoopAnimation();
-  event$ = new Subject<CpBaseEvent>();
+  event$ = new Subject<E>();
   eventObservable?: Observable<
-    [callback: (evt: CpBaseEvent, data: T) => void, evt: CpBaseEvent, data: T]
+    [callback: (evt: E, data: T) => void, evt: E, data: T]
   >;
-  eventMap = new Map<string, (evt: CpBaseEvent, data: T) => void>();
+  eventMap = new Map<string, (evt: E, data: T) => void>();
   private renderables: Renderable[] = [];
 
   // 数据模式
@@ -62,14 +64,11 @@ export class Layer<T = any, U = any> implements BaseLayer<T, U> {
     return this;
   }
 
-  addEventListener(
-    evtName: string,
-    callback: (evt: CpBaseEvent, data: T) => void
-  ) {
+  addEventListener(evtName: string, callback: (evt: E, data: T) => void) {
     this.eventMap.set(evtName, callback);
   }
 
-  triggerEvent<A extends CpBaseEvent>(evt: A) {
+  triggerEvent(evt: E) {
     this.event$.next(evt);
   }
 
@@ -86,9 +85,11 @@ export class Layer<T = any, U = any> implements BaseLayer<T, U> {
     return this;
   }
 
-  setRenderer(renderer: (ctx: OffscreenCanvasRenderingContext2D, data: T) => void) {
+  setRenderer(
+    renderer: (ctx: OffscreenCanvasRenderingContext2D, data: T) => void
+  ) {
     this.renderables.push(new CustomRenderable(renderer));
-    return this;   
+    return this;
   }
 
   addRenderable(renderable: Renderable) {
@@ -96,7 +97,7 @@ export class Layer<T = any, U = any> implements BaseLayer<T, U> {
     return this;
   }
 
-  setAnimation(ao: AnimationObject<T>): Layer {
+  setAnimation(ao: AnimationObject<T>): Layer<T, U, E> {
     this.animation = ao;
     return this;
   }

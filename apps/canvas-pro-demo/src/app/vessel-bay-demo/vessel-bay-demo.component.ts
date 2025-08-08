@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import {
+  AfterViewInit,
   Component,
   OnInit,
   QueryList,
@@ -15,17 +16,30 @@ import {
 } from '@smuport/ngx-port-v';
 import { FormsModule } from '@angular/forms';
 import { MultiSelectDirective } from '../directives/multi-select.directive';
+import {
+  CpFrameSelectEvent,
+  ViewportInteractionConfig,
+} from '@smuport/ngx-canvas-pro';
 
 @Component({
   selector: 'app-vessel-bay-demo',
-  imports: [CommonModule, VesselBayComponent, FormsModule, MultiSelectDirective],
+  imports: [
+    CommonModule,
+    VesselBayComponent,
+    FormsModule,
+    MultiSelectDirective,
+  ],
   templateUrl: './vessel-bay-demo.component.html',
   styleUrl: './vessel-bay-demo.component.css',
   standalone: true,
+  providers: [MultiSelectDirective],
 })
-export class VesselBayDemoComponent implements OnInit {
+export class VesselBayDemoComponent implements OnInit, AfterViewInit {
   @ViewChildren(VesselBayComponent) vesselBays!: QueryList<VesselBayComponent>;
-  @ViewChild(MultiSelectDirective) multiSelect!: MultiSelectDirective<Vescell<any>>;
+  @ViewChild(MultiSelectDirective) multiSelect!: MultiSelectDirective<
+    Vescell<any>
+  >;
+
   bayDatas: VesselBay[][] = [];
 
   vescellMarkerConfig: Partial<VescellMarkerConfig> = {
@@ -105,13 +119,23 @@ export class VesselBayDemoComponent implements OnInit {
   allVescellList: Vescell<any>[] = [];
 
   //shif及commandt多选
-  lastCmdSelectedVescell: string | null = null;
-  lastShiftSelectedRange: { start: number; end: number } | null = null;
-  shiftKeyPressed = false;
   searchVescell = '';
-  endIndex!: number;
+  interactionConfig: ViewportInteractionConfig = {
+    drag: {
+      default: 'none', // 默认禁用平移
+      shift: 'frame-select', // 按住 shift 键可以框选
+      ctrl: 'frame-select',
+      alt: 'pan',
+    },
+    wheel: {
+      default: 'none', // 默认禁用缩放
+      shift: 'pan-horizontal', // 按住 shift 键可以水平缩放
+      ctrl: 'none',
+      alt: 'pan-vertical',
+    },
+  };
   constructor(private http: HttpClient) {}
-  
+
   ngOnInit(): void {
     // 加载船贝图数据
     this.http
@@ -127,6 +151,10 @@ export class VesselBayDemoComponent implements OnInit {
         this.allVescellList = Array.from(this.allVescellMap.values());
         this.bayDatas = data;
       });
+  }
+
+  ngAfterViewInit(): void {
+    this.multiSelect.customSelectionLogic = this.customSelectionLogic;
   }
 
   switchMode() {
@@ -152,37 +180,31 @@ export class VesselBayDemoComponent implements OnInit {
     alert(JSON.stringify($event.data));
   }
 
-  // //shift及command多选
-  // @HostListener('window:keydown', ['$event'])
-  // onKeyDown(event: KeyboardEvent) {
-  //   this.shiftKeyPressed = event.shiftKey;
-  // }
-
-  // @HostListener('window:keyup', ['$event'])
-  // onKeyUp(event: KeyboardEvent) {
-  //   this.shiftKeyPressed = event.shiftKey;
-  // }
   // 处理选择变更事件
   onSelectionChange(changedItems: Vescell<any>[]) {
-    console.log('changedItems', changedItems)
     const visualChangedVescell: Array<[string, boolean]> = [];
     const visualChangedItems: Vescell[] = [];
 
     changedItems.forEach((item) => {
-      const selectedVescell = item.vescell
+      const selectedVescell = item.vescell;
       const bay = +selectedVescell.slice(0, 2);
       const colTier = selectedVescell.slice(2, 6);
       // 如果是普通单选且bay是偶数，需要特殊处理前后贝位
       if (bay % 2 === 0) {
-        const frontVescell = `${(bay + 1).toString().padStart(2, '0')}${colTier}`;
-        const backVescell = `${(bay - 1).toString().padStart(2, '0')}${colTier}`;
+        const frontVescell = `${(bay + 1)
+          .toString()
+          .padStart(2, '0')}${colTier}`;
+        const backVescell = `${(bay - 1)
+          .toString()
+          .padStart(2, '0')}${colTier}`;
         visualChangedVescell.push(
-          [frontVescell, item.data['ifSelected']], 
-          [backVescell, item.data['ifSelected']]);
+          [frontVescell, item.data['ifSelected']],
+          [backVescell, item.data['ifSelected']]
+        );
       } else {
         visualChangedVescell.push([selectedVescell, item.data['ifSelected']]);
       }
-    })
+    });
     visualChangedVescell.forEach(([vescellKey, selected]) => {
       const vescell = this.allVescellMap.get(vescellKey);
       if (vescell) {
@@ -193,19 +215,44 @@ export class VesselBayDemoComponent implements OnInit {
     if (visualChangedItems.length > 0) {
       this.applyPatch(visualChangedItems);
     }
-    
   }
   // 选择vescell的方法现在调用指令的方法
   selectVescell(selectedVescell: string, event?: KeyboardEvent | MouseEvent) {
-
-    
     // 使用指令的selectItem方法
     this.multiSelect.selectItem(selectedVescell, event);
-  
+  }
+
+  //框选自定义逻辑
+  customSelectionLogic = (
+    item: Vescell<any>,
+    event?: KeyboardEvent | MouseEvent
+  ): boolean => {
+    const vescell = this.allVescellMap.get(item.vescell);
+    if (event?.shiftKey) {
+      return true;
+    } else if (event?.ctrlKey || event?.metaKey) {
+      if (vescell?.data.ifSelected === undefined) {
+        return true;
+      } else {
+        return !vescell?.data.ifSelected;
+      }
+    } else {
+      return false;
+    }
+  };
+
+  selectVescells(event: CpFrameSelectEvent) {
+    const selectedVescells = event.selectedItems;
+    const mouseEvent = event.mouseEvent;
+    this.multiSelect.customSelectionLogic = this.customSelectionLogic;
+    if (!this.multiSelect?.customSelectionLogic) return;
+    selectedVescells.forEach((item: Vescell) => {
+      this.multiSelect.selectItem(item.vescell, mouseEvent);
+    });
+    this.multiSelect.customSelectionLogic = null;
   }
 
   applyPatch(patchVescells: Vescell<any>[]) {
-    console.log(patchVescells);
     if (patchVescells.length > 0) {
       const uniquePatches = [
         ...new Map(patchVescells.map((v) => [v.vescell, v])).values(),

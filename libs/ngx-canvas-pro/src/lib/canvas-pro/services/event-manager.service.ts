@@ -11,8 +11,8 @@ export class EventManagerService {
   }
 
   addManagedEventListener(
-    target: any, 
-    eventName: string, 
+    target: any,
+    eventName: string,
     callback: (event: any) => void
   ): void {
     const unsubscribe = this.renderer.listen(target, eventName, callback);
@@ -24,56 +24,42 @@ export class EventManagerService {
     handlers: {
       onMouseDown: (event: MouseEvent) => void;
       onMouseMove: (event: MouseEvent) => void;
-      onMouseUp: (event: MouseEvent | FocusEvent) => void;
+      onMouseUp: (event: MouseEvent) => void;
       onBlur: (event: FocusEvent) => void;
       onWheel: (event: WheelEvent) => void;
     }
   ): void {
-    this.addManagedEventListener(
-      canvasElement, 
-      'mousedown', 
-      (event) => handlers.onMouseDown(event)
+    this.addManagedEventListener(canvasElement, 'mousedown', (event) =>
+      handlers.onMouseDown(event)
     );
-    
-    this.addManagedEventListener(
-      canvasElement, 
-      'mousemove', 
-      (event) => handlers.onMouseMove(event)
+
+    this.addManagedEventListener(canvasElement, 'mousemove', (event) =>
+      handlers.onMouseMove(event)
     );
-    
-    this.addManagedEventListener(
-      canvasElement, 
-      'mouseup', 
-      (event) => handlers.onMouseUp(event)
+
+    this.addManagedEventListener(canvasElement, 'mouseup', (event) =>
+      handlers.onMouseUp(event)
     );
-    
-    this.addManagedEventListener(
-      canvasElement, 
-      'blur', 
-      (event) => handlers.onBlur(event)
+
+    this.addManagedEventListener(canvasElement, 'blur', (event) =>
+      handlers.onBlur(event)
     );
-    
-    this.addManagedEventListener(
-      canvasElement,
-      'wheel',
-      (event) => handlers.onWheel(event)
+
+    this.addManagedEventListener(canvasElement, 'wheel', (event) =>
+      handlers.onWheel(event)
     );
   }
 
-  setupGlobalEvents(
-    handlers: {
-      onGlobalMouseUp: (event: MouseEvent) => void;
-    }
-  ): void {
-    this.addManagedEventListener(
-      window, 
-      'mouseup', 
-      (event) => handlers.onGlobalMouseUp(event)
+  setupGlobalEvents(handlers: {
+    onGlobalMouseUp: (event: MouseEvent) => void;
+  }): void {
+    this.addManagedEventListener(window, 'mouseup', (event) =>
+      handlers.onGlobalMouseUp(event)
     );
   }
 
   destroy(): void {
-    this.eventListeners.forEach(unsubscribe => unsubscribe());
+    this.eventListeners.forEach((unsubscribe) => unsubscribe());
     this.eventListeners = [];
   }
 }

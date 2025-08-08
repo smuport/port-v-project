@@ -77,11 +77,17 @@ export class CpRightClickUpEvent extends CpBaseEvent {
 }
 
 export class CpFrameSelectEvent extends CpBaseEvent {
-  selection: { x: number; y: number; w: number; h: number } = { x: 0, y: 0, w: 0, h: 0 };
+  selection: { x: number; y: number; w: number; h: number } = {
+    x: 0,
+    y: 0,
+    w: 0,
+    h: 0,
+  };
   selectedItems: any[] = [];
-  
-  constructor() {
+  mouseEvent: MouseEvent;
+  constructor(event: MouseEvent) {
     super();
+    this.mouseEvent = event;
     this.name = 'frameselect';
   }
 }

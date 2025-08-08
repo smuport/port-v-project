@@ -5,7 +5,11 @@ import { Renderable } from './renderable/renderable';
 
 export type LayerType = 'canvas' | 'svg';
 
-export interface BaseLayer<T = any, U = any> {
+export interface BaseLayer<
+  T = any,
+  U = any,
+  E extends CpBaseEvent = CpBaseEvent
+> {
   name: string;
   w: number;
   h: number;
@@ -13,14 +17,14 @@ export interface BaseLayer<T = any, U = any> {
   dataSource: Observable<T>;
   trigger: Observable<U>;
   animation: AnimationObject<T>;
-  event$: Subject<CpBaseEvent>;
-  eventMap: Map<string, (evt: CpBaseEvent, data: T) => void>;
+  event$: Subject<E>;
+  eventMap: Map<string, (evt: E, data: T) => void>;
   get dataMode(): 'push' | 'pull';
-  
+
   setPushMode(): this;
   setPullMode(): this;
-  addEventListener(evtName: string, callback: (evt: CpBaseEvent, data: T) => void): void;
-  triggerEvent<A extends CpBaseEvent>(evt: A): void;
+  addEventListener(evtName: string, callback: (evt: E, data: T) => void): void;
+  triggerEvent(evt: E): void;
   setDataSource(dataSource: Observable<T>): void;
   setTrigger(trigger: Observable<U>): void;
   addRenderable(renderable: Renderable): void;
@@ -28,5 +32,10 @@ export interface BaseLayer<T = any, U = any> {
   updateSize(w: number, h: number): void;
   isValid(): boolean;
   render(data: T): void;
-  checkSelection(selection: { x: number; y: number; w: number; h: number }): any[];
+  checkSelection(selection: {
+    x: number;
+    y: number;
+    w: number;
+    h: number;
+  }): any[];
 }
