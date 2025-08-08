@@ -1,13 +1,9 @@
 <div class="toolbar">
 	<div class="left-controls">
 		<div class="search-container">
-			<input [(ngModel)]="searchText"
-				(keyup.enter)="searchYardBay()"
-				type="text"
-				placeholder="搜索场地贝"
+			<input [(ngModel)]="searchText" (keyup.enter)="searchYardBay()" type="text" placeholder="搜索场地贝"
 				class="search-input">
-			<button (click)="searchYardBay()"
-				class="search-button">
+			<button (click)="searchYardBay()" class="search-button">
 				<span class="search-icon">🔍</span>
 			</button>
 		</div>
@@ -15,41 +11,42 @@
 
 	<div class="right-controls">
 		<div class="control-group">
-			<select [ngModel]="groupMode"
-				(ngModelChange)="onGroupByChange($event)"
-				class="form-select">
+			<select [ngModel]="groupMode" (ngModelChange)="onGroupByChange($event)" class="form-select">
 				<option value="yardBay">按箱组分组</option>
 				<option value=null>不分组</option>
 			</select>
 
-			<select [ngModel]="sortDirection"
-				(ngModelChange)="onSortDirectionChange($event)"
-				class="form-select">
+			<select [ngModel]="sortDirection" (ngModelChange)="onSortDirectionChange($event)" class="form-select">
 				<option value="asc">升序</option>
 				<option value="desc">降序</option>
 			</select>
 
-			<button (click)="resetControls()"
-				class="reset-button">
+			<button (click)="resetControls()" class="reset-button">
 				<span class="reset-icon">🔄</span>
 				重置
 			</button>
-			<button (click)="selectYardPoses()"
-				style="margin-right: 10px;">
+			<button (click)="selectYardPos()" style="margin-right: 10px;">
 				选中场箱位
 			</button>
 		</div>
 	</div>
 </div>
-<div #container
-	[style.height.px]="containerHeight"
-	class="visualization-container">
-	<app-yard-bay [yardBayData]="filteredData"
-		[fillYardPoses]="fillYardPoses"
-		[textYardPoses]="textYardPoses"
-		[groupBy]="groupBy"
-		[orderBy]="orderBy"
-		(heightCalculated)="onHeightCalculated($event)"
-		(yardPosDbClick)="onYardPosDbClick($event)">
-	</app-yard-bay>
+
+
+<div class="visualization-wrapper">
+	<div #container [style.height.px]="containerHeight" class="visualization-container">
+		<app-yard-bay [yardBayData]="filteredData" [fillYardPoses]="fillYardPoses" [textYardPoses]="textYardPoses"
+			[groupBy]="groupBy" [orderBy]="orderBy" [interactionConfig]="interactionConfig"
+			(heightCalculated)="onHeightCalculated($event)" (yardPosDbClick)="onYardPosDbClick($event)"
+			(yardPosFrameSelect)="selectYardPoses($event)">
+		</app-yard-bay>
+	</div>
+
+	<div class="floating-list-container" *ngIf="allYardPosedlList.length !==0">
+		<div class="scrollable-list">
+			<div *ngFor="let item of allYardPosedlList; let i = index" class="list-item" style="user-select: none;">
+				{{ item.yardPos }}
+			</div>
+		</div>
+	</div>
 </div>

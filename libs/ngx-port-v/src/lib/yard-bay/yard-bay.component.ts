@@ -11,7 +11,9 @@ import {
 import { BehaviorSubject } from 'rxjs';
 import {
   CanvasProComponent,
+  CpBaseEvent,
   CpDbClickEvent,
+  CpFrameSelectEvent,
   CustomRenderable,
   Layer,
   ViewportInteractionConfig,
@@ -55,7 +57,7 @@ export class YardBayComponent implements AfterViewInit {
   @Output() yardPosDbClick = new EventEmitter<VisualYardPos<any>>();
 
   yardBayData$ = new BehaviorSubject<YardBay[]>(undefined!);
-  processedData: YardBay[] = [];
+  // processedData: YardBay[] = [];
   cellWidth: number = 50;
   cellHeight: number = 50;
   bayMarginX: number = 80;
@@ -80,6 +82,10 @@ export class YardBayComponent implements AfterViewInit {
       alt: 'pan-vertical',
     },
   };
+
+  //框选
+  @Output() yardPosFrameSelect = new EventEmitter<CpFrameSelectEvent>();
+  processedData: VisualYardBay<unknown>[] = [];
 
   getWidth() {
     this.containerWidth = this.canvasContainer.nativeElement.clientWidth;
@@ -162,7 +168,7 @@ export class YardBayComponent implements AfterViewInit {
     let currentX = 40;
     let currentY = 40;
     let maxRowHeight = 0;
-    const result: YardBay[] = [];
+    const result: VisualYardBay<unknown>[] = [];
     const groupKeys = Object.keys(this.yardBayGroupMap);
     const hasGroups = groupKeys.length > 1;
 
@@ -271,7 +277,6 @@ export class YardBayComponent implements AfterViewInit {
   }
 
   getYardBayLayer() {
-    console.log('创建layer');
     const yardBaysLayer = new Layer<VisualYardBay<unknown>[]>('yardBaysLayer');
     yardBaysLayer.setPushMode();
     yardBaysLayer.setTrigger(this.yardBayData$);
@@ -297,16 +302,61 @@ export class YardBayComponent implements AfterViewInit {
         });
       }
     );
-    yardBaysLayer.addRenderable(
-      new CustomRenderable<VisualYardBay<unknown>[]>((ctx, data) => {
+    yardBaysLayer.addEventListener(
+      'frameselect',
+      (evt: CpBaseEvent, data: VisualYardBay<unknown>[]) => {
+        if (this.isFrameSelectEvent(evt)) {
+          this.yardPosFrameSelect.emit(evt);
+        }
+      }
+    );
+    const renderable = new CustomRenderable(
+      (
+        ctx: OffscreenCanvasRenderingContext2D,
+        data: VisualYardBay<unknown>[]
+      ) => {
         yardBaysLayer.updateCanvasSize(
           this.containerWidth,
           this.containerHeight
         );
         this.renderYardBay(ctx, data);
-      })
+      }
     );
+    renderable.setSelectionChecker((selection) => {
+      const rect = selection;
+      return this.yardPosesInRect(rect);
+    });
+    yardBaysLayer.addRenderable(renderable);
     return yardBaysLayer;
+  }
+
+  yardPosesInRect(rect: { x: number; y: number; w: number; h: number }) {
+    let selectedYardPoses: VisualYardPos<unknown>[] = [];
+    this.processedData.forEach((yardBay: VisualYardBay<unknown>) => {
+      yardBay.yardPoses.forEach((yardPos: VisualYardPos) => {
+        const cellLeftX = yardPos.x;
+        const cellRightX = yardPos.x + this.cellWidth;
+        const rectLeftX = rect.x;
+        const rectRightX = rect.x + rect.w;
+        const cellTopY = yardPos.y;
+        const cellBottomY = yardPos.y + this.cellHeight;
+        const rectTopY = rect.y;
+        const rectBottomY = rect.y + rect.h;
+        if (
+          cellLeftX < rectRightX &&
+          cellRightX > rectLeftX &&
+          cellTopY < rectBottomY &&
+          cellBottomY > rectTopY
+        ) {
+          selectedYardPoses.push(yardPos);
+        }
+      });
+    });
+    return selectedYardPoses;
+  }
+
+  isFrameSelectEvent(evt: CpBaseEvent): evt is CpFrameSelectEvent {
+    return 'selectedItems' in evt && 'mouseEvent' in evt;
   }
 
   updateData() {

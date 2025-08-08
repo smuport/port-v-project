@@ -219,6 +219,8 @@ export class VesselBayDemoComponent implements OnInit, AfterViewInit {
   // 选择vescell的方法现在调用指令的方法
   selectVescell(selectedVescell: string, event?: KeyboardEvent | MouseEvent) {
     // 使用指令的selectItem方法
+    this.multiSelect.customSelectionLogic = null;
+
     this.multiSelect.selectItem(selectedVescell, event);
   }
 
@@ -249,7 +251,6 @@ export class VesselBayDemoComponent implements OnInit, AfterViewInit {
     selectedVescells.forEach((item: Vescell) => {
       this.multiSelect.selectItem(item.vescell, mouseEvent);
     });
-    this.multiSelect.customSelectionLogic = null;
   }
 
   applyPatch(patchVescells: Vescell<any>[]) {

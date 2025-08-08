@@ -94,3 +94,68 @@ padding-left: 100px;
 .reset-icon {
   font-size: 14px;
 }
+
+.visualization-wrapper {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex; /* 启用 Flex 布局隔离 */
+}
+
+.visualization-container {
+  flex: 1; /* 占据剩余空间 */
+  min-width: 0; /* 防止内容溢出 */
+  position: relative; /* 为内部 Canvas 提供定位基准 */
+}
+
+.floating-list-container {
+  width: 240px;
+  height: 75%;
+  flex-shrink: 0; /* 禁止宽度压缩 */
+  position: sticky; /* 粘性定位 */
+  top: 0;
+  right: 0;
+  z-index: 100;
+  background: white;
+  box-shadow: -2px 0 10px rgba(0,0,0,0.1);
+  overscroll-behavior: contain; /* 阻止滚动传播 */
+}
+
+.scrollable-list {
+  height: 100%;
+  overflow-y: auto;
+  padding: 10px;
+  border: 1px solid #eee;
+  border-radius: 6px;
+  /* 新增以下属性 */
+  pointer-events: auto; /* 确保能接收鼠标事件 */
+  will-change: transform; /* 提升滚动性能 */
+}
+
+
+.list-item {
+  padding: 12px;
+  margin-bottom: 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: #f9f9f9;
+}
+
+.list-item:hover {
+  background: #f0f0f0;
+}
+
+.list-item.selected {
+  background: #e3f2fd;
+  font-weight: bold;
+}
+
+.scrollable-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.scrollable-list::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 3px;
+}

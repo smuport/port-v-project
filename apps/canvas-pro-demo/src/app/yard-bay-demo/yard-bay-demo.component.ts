@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, OnInit, ViewChild } from '@angular/core';
 import {
   VisualYardPos,
   YardBay,
@@ -8,6 +8,10 @@ import {
   YardPos,
 } from '@smuport/ngx-port-v';
 import { FormsModule } from '@angular/forms';
+import {
+  CpFrameSelectEvent,
+  ViewportInteractionConfig,
+} from '@smuport/ngx-canvas-pro';
 
 @Component({
   selector: 'app-yard-bay-demo',
@@ -73,7 +77,112 @@ export class YardBayDemoComponent implements OnInit {
     }
     return text;
   };
-  selectYardPoses() {
+
+  groupBy: (bay: YardBay) => string | null = () => null;
+  orderBy: (a: YardBay, b: YardBay) => number = (a, b) =>
+    a.yardBay.localeCompare(b.yardBay);
+
+  onHeightCalculated(height: number) {
+    setTimeout(() => {
+      if (height > 0 && height !== this.containerHeight) {
+        this.containerHeight = height;
+      }
+    });
+  }
+  bayColorDict: { [key: string]: string } = {};
+  isResultMode: boolean = false;
+  containerHeight: number = 0;
+  rawData: YardBay[] = [];
+  filteredData: YardBay[] = [];
+  searchText: string = '';
+  sortDirection: string = 'asc';
+
+  groupMode: string | null = null;
+  @ViewChild(YardBayComponent) yardBayComponent!: YardBayComponent;
+
+  selectedYardPoses = [
+    { yardPos: 'Q1411031', isSelected: 0 },
+    { yardPos: 'Q1809011', isSelected: 0 },
+    { yardPos: 'Q1A09035', isSelected: 0 },
+  ];
+
+  //框选
+  interactionConfig: ViewportInteractionConfig = {
+    drag: {
+      default: 'none', // 默认禁用平移
+      shift: 'frame-select', // 按住 shift 键可以框选
+      ctrl: 'frame-select',
+      alt: 'pan',
+    },
+    wheel: {
+      default: 'none', // 默认禁用缩放
+      shift: 'pan-horizontal', // 按住 shift 键可以水平缩放
+      ctrl: 'none',
+      alt: 'pan-vertical',
+    },
+  };
+  allYardPosMap = new Map<string, YardPos<any>>();
+  allYardPosedlList: Partial<YardPos<any>>[] = [];
+
+  constructor(private http: HttpClient) {}
+  ngOnInit(): void {
+    // 加载船贝图数据
+    this.http.get<YardBay[]>('mock-data/yard-bay.json').subscribe((data) => {
+      console.log(data);
+      this.rawData = data;
+      this.filteredData = this.rawData;
+      data.forEach((yardBayData: YardBay) => {
+        yardBayData.yardPoses.forEach((yardPosData: YardPos<unknown>) => {
+          this.allYardPosMap.set(yardPosData.yardPos, yardPosData);
+        });
+      });
+      console.log(this.allYardPosMap);
+    });
+  }
+
+  searchYardBay() {
+    if (!this.searchText) {
+      this.filteredData = [...this.rawData];
+      return;
+    }
+    const searchTerm = this.searchText.toLowerCase();
+    this.filteredData = this.rawData.filter((bay: any) =>
+      bay.yardBay.toLowerCase().includes(searchTerm)
+    );
+  }
+
+  // 排序方向变化处理
+  onSortDirectionChange(direction: string) {
+    this.sortDirection = direction;
+    // 更新排序函数
+    this.orderBy =
+      direction === 'asc'
+        ? (a, b) => a.yardBay.localeCompare(b.yardBay)
+        : (a, b) => b.yardBay.localeCompare(a.yardBay);
+  }
+
+  // 分组规则变化处理
+  onGroupByChange(type: string) {
+    if (type === 'yardBay') {
+      this.groupBy = (bay: YardBay) => bay.yardBay.substring(0, 3);
+    } else {
+      this.groupBy = () => null;
+    }
+  }
+
+  resetControls() {
+    this.searchText = '';
+    this.groupBy = () => null;
+    this.sortDirection = 'asc';
+    this.onSortDirectionChange(this.sortDirection);
+    this.filteredData = [...this.rawData];
+  }
+
+  onYardPosDbClick($event: VisualYardPos<any>) {
+    alert(JSON.stringify($event.data));
+  }
+
+  selectYardPos() {
     const completeSelectedData: Partial<YardPos<unknown>>[] = [];
     this.selectedYardPoses.forEach((selectedYardPos) => {
       selectedYardPos.isSelected = selectedYardPos.isSelected === 1 ? 0 : 1;
@@ -104,85 +213,30 @@ export class YardBayDemoComponent implements OnInit {
       }
       this.yardBayComponent.patchYardPoses(completeSelectedData);
     });
-  }
-
-  groupBy: (bay: YardBay) => string | null = () => null;
-  orderBy: (a: YardBay, b: YardBay) => number = (a, b) =>
-    a.yardBay.localeCompare(b.yardBay);
-
-  onHeightCalculated(height: number) {
-    setTimeout(() => {
-      if (height > 0 && height !== this.containerHeight) {
-        this.containerHeight = height;
+    completeSelectedData.forEach((item: Partial<YardPos<any>>) => {
+      if (item.data.isSelected === 1) {
+        this.allYardPosedlList.push(item);
+      } else {
+        this.deleteItem(this.allYardPosedlList, item);
       }
     });
-  }
-  bayColorDict: { [key: string]: string } = {};
-  isResultMode: boolean = false;
-  containerHeight: number = 0;
-  rawData: YardBay[] = [];
-  filteredData: YardBay[] = [];
-  searchText: string = '';
-  sortDirection: string = 'asc';
-
-  groupMode: string | null = null;
-  @ViewChild(YardBayComponent) yardBayComponent!: YardBayComponent;
-
-  selectedYardPoses = [
-    { yardPos: 'Q1411031', isSelected: 0 },
-    { yardPos: 'Q1809011', isSelected: 0 },
-    { yardPos: 'Q1A09035', isSelected: 0 },
-  ];
-  constructor(private http: HttpClient) {}
-  ngOnInit(): void {
-    // 加载船贝图数据
-    this.http.get<YardBay[]>('mock-data/yard-bay.json').subscribe((data) => {
-      console.log(data);
-      this.rawData = data;
-      this.filteredData = this.rawData;
-    });
-  }
-
-  searchYardBay() {
-    if (!this.searchText) {
-      this.filteredData = [...this.rawData];
-      return;
-    }
-    const searchTerm = this.searchText.toLowerCase();
-    this.filteredData = this.rawData.filter((bay: any) =>
-      bay.yardBay.toLowerCase().includes(searchTerm)
+    this.allYardPosedlList.sort((a: any, b: any) =>
+      a.yardPos.localeCompare(b.yardPos)
     );
   }
 
-  // 排序方向变化处理
-  onSortDirectionChange(direction: string) {
-    this.sortDirection = direction;
-
-    // 更新排序函数
-    this.orderBy =
-      direction === 'asc'
-        ? (a, b) => a.yardBay.localeCompare(b.yardBay)
-        : (a, b) => b.yardBay.localeCompare(a.yardBay);
+  //框选
+  selectYardPoses(event: CpFrameSelectEvent) {
+    this.selectedYardPoses = event.selectedItems;
+    this.selectYardPos();
   }
 
-  // 分组规则变化处理
-  onGroupByChange(type: string) {
-    if (type === 'yardBay') {
-      this.groupBy = (bay: YardBay) => bay.yardBay.substring(0, 3);
-    } else {
-      this.groupBy = () => null;
+  deleteItem(items: any[], itemToDelete: any): void {
+    const index = items.findIndex(
+      (item) => item.yardPos === itemToDelete.yardPos
+    );
+    if (index !== -1) {
+      items.splice(index, 1);
     }
-  }
-
-  resetControls() {
-    this.searchText = '';
-    this.groupBy = () => null;
-    this.sortDirection = 'asc';
-    this.onSortDirectionChange(this.sortDirection);
-    this.filteredData = [...this.rawData];
-  }
-
-  onYardPosDbClick($event: VisualYardPos<any>) {
-    alert(JSON.stringify($event.data));
   }
 }
