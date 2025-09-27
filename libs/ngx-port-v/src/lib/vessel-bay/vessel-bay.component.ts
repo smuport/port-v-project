@@ -66,6 +66,8 @@ export class VesselBayComponent implements AfterViewInit {
     return this._defaultVescellMarkerConfig;
   }
 
+  @Input() isFrontendCalculate: boolean = false;
+
   @ViewChild('canvasContainer') canvasContainer!: ElementRef;
   @ViewChild('canvasPro', { static: true }) canvasPro!: CanvasProComponent;
 
@@ -122,13 +124,88 @@ export class VesselBayComponent implements AfterViewInit {
   };
 
   ngAfterViewInit(): void {
+    if (this.isFrontendCalculate) {
+      this.calculateFrontendCoordinates();
+    }
     if (this.canvasContainer) {
       const divElement: HTMLElement = this.canvasContainer.nativeElement;
       divElement.style.height = `${this.vesselBayData.bayHeight}px`;
       divElement.style.width = `${this.vesselBayData.bayWidth}px`;
     }
+
     this.vesselBayBackgroungData = this.vesselBayData;
     this.draw();
+  }
+
+  calculateFrontendCoordinates() {
+    let maxLength = 0;
+    let isZero = false;
+    let maxDTier = 0;
+    let minDTier = Infinity;
+    let maxHTier = 0;
+    const width = this.config.width;
+    const height = this.config.height;
+    this.vesselBayData.vescells.forEach((vescell) => {
+      const str = vescell.vescell;
+      if (str.length >= 6) {
+        const middleTwo = str.substring(2, 4);
+        const middleNum = parseInt(middleTwo, 10);
+        if (!isNaN(middleNum)) {
+          if (middleNum > maxLength) {
+            maxLength = middleNum;
+          }
+          if (middleTwo === '00') {
+            isZero = true;
+          }
+        }
+        const lastTwo = str.substring(4, 6);
+        const lastNum = parseInt(lastTwo, 10);
+        if (vescell.dh === 'D') {
+          if (!isNaN(lastNum)) {
+            if (lastNum > maxDTier) {
+              maxDTier = lastNum;
+            }
+            if (lastNum < minDTier) {
+              minDTier = lastNum;
+            }
+          }
+        } else if (vescell.dh === 'H') {
+          if (!isNaN(lastNum)) {
+            if (lastNum > maxHTier) {
+              maxHTier = lastNum;
+            }
+          }
+        }
+      }
+    });
+    if (isZero) {
+      maxLength += 1;
+    }
+    this.vesselBayData.bayWidth = maxLength * width + 50;
+    const dHeight = ((maxDTier - minDTier) * height) / 2 + 35;
+    const hHeight = (maxHTier * height) / 2 + 30;
+    this.vesselBayData.bayHeight = dHeight + hHeight + 50;
+    this.vesselBayData.vescells.forEach((vescell) => {
+      const col = Number(vescell.col);
+      const ifZero = col === 0;
+
+      if (col % 2 === 0 && ifZero) {
+        vescell.x = ((maxLength - col - 1) * width) / 2 + 50;
+      } else if (col % 2 !== 0 && ifZero) {
+        vescell.x = ((maxLength + col) * width) / 2 + 50;
+      } else if (col % 2 === 0 && !ifZero) {
+        vescell.x = ((maxLength - col - 1) * width) / 2 + 50;
+      } else {
+        vescell.x = ((maxLength + col) * width) / 2 + 50;
+      }
+      if (vescell.dh === 'D') {
+        const tier = Number(vescell.tier);
+        vescell.y = dHeight - (height * (tier - minDTier)) / 2;
+      } else {
+        const tier = Number(vescell.tier) / 2;
+        vescell.y = dHeight + hHeight - height * (tier - 1);
+      }
+    });
   }
 
   draw() {

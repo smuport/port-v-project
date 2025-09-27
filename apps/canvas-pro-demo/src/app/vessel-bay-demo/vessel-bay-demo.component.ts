@@ -134,22 +134,43 @@ export class VesselBayDemoComponent implements OnInit, AfterViewInit {
       alt: 'pan-vertical',
     },
   };
+
+  //前台计算坐标位置
+  newBayDatas: VesselBay[][] = [];
+  isFrontendCalculate: boolean = true;
+
   constructor(private http: HttpClient) {}
 
   ngOnInit(): void {
     // 加载船贝图数据
+    // this.http
+    //   .get<VesselBay[][]>('mock-data/vessel-bay.json')
+    //   .subscribe((data) => {
+    //     data.forEach((bayDataArray: VesselBay[]) => {
+    //       bayDataArray.forEach((bayData: VesselBay) => {
+    //         bayData.vescells.forEach((vescell: Vescell<any>) => {
+    //           this.allVescellMap.set(vescell.vescell, vescell);
+    //         });
+    //       });
+    //     });
+    //     this.allVescellList = Array.from(this.allVescellMap.values());
+    //     this.bayDatas = data;
+    //   });
+
     this.http
       .get<VesselBay[][]>('mock-data/vessel-bay.json')
       .subscribe((data) => {
-        data.forEach((bayDataArray: VesselBay[]) => {
-          bayDataArray.forEach((bayData: VesselBay) => {
-            bayData.vescells.forEach((vescell: Vescell<any>) => {
-              this.allVescellMap.set(vescell.vescell, vescell);
+        this.newBayDatas = JSON.parse(JSON.stringify(data));
+        this.newBayDatas.forEach((bayArray) => {
+          bayArray.forEach((bay) => {
+            bay.bayWidth = 0;
+            bay.bayHeight = 0;
+            bay.vescells.forEach((vescell) => {
+              vescell.x = 0;
+              vescell.y = 0;
             });
           });
         });
-        this.allVescellList = Array.from(this.allVescellMap.values());
-        this.bayDatas = data;
       });
   }
 
@@ -187,23 +208,7 @@ export class VesselBayDemoComponent implements OnInit, AfterViewInit {
 
     changedItems.forEach((item) => {
       const selectedVescell = item.vescell;
-      const bay = +selectedVescell.slice(0, 2);
-      const colTier = selectedVescell.slice(2, 6);
-      // 如果是普通单选且bay是偶数，需要特殊处理前后贝位
-      if (bay % 2 === 0) {
-        const frontVescell = `${(bay + 1)
-          .toString()
-          .padStart(2, '0')}${colTier}`;
-        const backVescell = `${(bay - 1)
-          .toString()
-          .padStart(2, '0')}${colTier}`;
-        visualChangedVescell.push(
-          [frontVescell, item.data['ifSelected']],
-          [backVescell, item.data['ifSelected']]
-        );
-      } else {
-        visualChangedVescell.push([selectedVescell, item.data['ifSelected']]);
-      }
+      visualChangedVescell.push([selectedVescell, item.data['ifSelected']]);
     });
     visualChangedVescell.forEach(([vescellKey, selected]) => {
       const vescell = this.allVescellMap.get(vescellKey);
@@ -213,6 +218,8 @@ export class VesselBayDemoComponent implements OnInit, AfterViewInit {
       }
     });
     if (visualChangedItems.length > 0) {
+      console.log(visualChangedItems);
+
       this.applyPatch(visualChangedItems);
     }
   }
