@@ -182,7 +182,7 @@ export class VesselBayComponent implements AfterViewInit {
       maxLength += 1;
     }
     this.vesselBayData.bayWidth = maxLength * width + 50;
-    const dHeight = ((maxDTier - minDTier) * height) / 2 + 35;
+    const dHeight = ((maxDTier - minDTier) * height) / 2 + 71;
     const hHeight = (maxHTier * height) / 2 + 30;
     this.vesselBayData.bayHeight = dHeight + hHeight + 50;
     this.vesselBayData.vescells.forEach((vescell) => {
