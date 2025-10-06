@@ -136,27 +136,26 @@ export class VesselBayDemoComponent implements OnInit, AfterViewInit {
   };
 
   //前台计算坐标位置
-  newBayDatas: VesselBay[][] = [];
   isFrontendCalculate: boolean = true;
 
   constructor(private http: HttpClient) {}
 
   ngOnInit(): void {
     // 加载船贝图数据
-    if (this.isFrontendCalculate) {
-      this.http
-        .get<VesselBay[][]>('mock-data/vessel-bay.json')
-        .subscribe((data) => {
-          data.forEach((bayDataArray: VesselBay[]) => {
-            bayDataArray.forEach((bayData: VesselBay) => {
-              bayData.vescells.forEach((vescell: Vescell<any>) => {
-                this.allVescellMap.set(vescell.vescell, vescell);
-              });
+    this.http
+      .get<VesselBay[][]>('mock-data/vessel-bay.json')
+      .subscribe((data) => {
+        data.forEach((bayDataArray: VesselBay[]) => {
+          bayDataArray.forEach((bayData: VesselBay) => {
+            bayData.vescells.forEach((vescell: Vescell<any>) => {
+              this.allVescellMap.set(vescell.vescell, vescell);
             });
           });
-          this.allVescellList = Array.from(this.allVescellMap.values());
-          this.newBayDatas = JSON.parse(JSON.stringify(data));
-          this.newBayDatas.forEach((bayArray) => {
+        });
+        this.allVescellList = Array.from(this.allVescellMap.values());
+        if (this.isFrontendCalculate) {
+          this.bayDatas = JSON.parse(JSON.stringify(data));
+          this.bayDatas.forEach((bayArray) => {
             bayArray.forEach((bay) => {
               bay.bayWidth = 0;
               bay.bayHeight = 0;
@@ -166,22 +165,10 @@ export class VesselBayDemoComponent implements OnInit, AfterViewInit {
               });
             });
           });
-        });
-    } else {
-      this.http
-        .get<VesselBay[][]>('mock-data/vessel-bay.json')
-        .subscribe((data) => {
-          data.forEach((bayDataArray: VesselBay[]) => {
-            bayDataArray.forEach((bayData: VesselBay) => {
-              bayData.vescells.forEach((vescell: Vescell<any>) => {
-                this.allVescellMap.set(vescell.vescell, vescell);
-              });
-            });
-          });
-          this.allVescellList = Array.from(this.allVescellMap.values());
+        } else {
           this.bayDatas = data;
-        });
-    }
+        }
+      });
   }
 
   ngAfterViewInit(): void {
@@ -189,21 +176,12 @@ export class VesselBayDemoComponent implements OnInit, AfterViewInit {
   }
 
   switchMode() {
-    if (this.isFrontendCalculate) {
-      const newBayDatas = this.newBayDatas.map((bayData) =>
-        bayData.map((bay) => {
-          return { ...bay };
-        })
-      );
-      this.newBayDatas = newBayDatas;
-    } else {
-      const newBayDatas = this.bayDatas.map((bayData) =>
-        bayData.map((bay) => {
-          return { ...bay };
-        })
-      );
-      this.bayDatas = newBayDatas;
-    }
+    const newBayDatas = this.bayDatas.map((bayData) =>
+      bayData.map((bay) => {
+        return { ...bay };
+      })
+    );
+    this.bayDatas = newBayDatas;
   }
 
   onColorModeChange($event: string) {

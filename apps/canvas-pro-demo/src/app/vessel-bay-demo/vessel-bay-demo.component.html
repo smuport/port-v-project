@@ -27,8 +27,8 @@
       </div>
     </div>
   </div>
-  <div *ngIf="newBayDatas" class="bay-container">
-    @for (bays of newBayDatas; track $index) {
+  <div *ngIf="bayDatas" class="bay-container">
+    @for (bays of bayDatas; track $index) {
     <div #bayGroup class="bay-group">
       @for (bay of bays; track $index) {
       <app-vessel-bay [vesselBayData]="bay" [fillContainer]="fillVesselBayContainer"
