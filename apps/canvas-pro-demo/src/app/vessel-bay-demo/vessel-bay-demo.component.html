@@ -32,9 +32,10 @@
     <div #bayGroup class="bay-group">
       @for (bay of bays; track $index) {
       <app-vessel-bay [vesselBayData]="bay" [fillContainer]="fillVesselBayContainer"
-        [isFrontendCalculate]="isFrontendCalculate" [textContainer]="textVesselBayContainer"
-        (vescellDbClick)="onVesselBayDbClick($event)" [vescellMarkerConfig]="vescellMarkerConfig"
-        [interactionConfig]="interactionConfig" (vescellFrameSelect)="selectVescells($event)"></app-vessel-bay>
+        [isFrontendCalculate]="isFrontendCalculate" [isCompleteVescells]="isCompleteVescells"
+        [textContainer]="textVesselBayContainer" (vescellDbClick)="onVesselBayDbClick($event)"
+        [vescellMarkerConfig]="vescellMarkerConfig" [interactionConfig]="interactionConfig"
+        (vescellFrameSelect)="selectVescells($event)"></app-vessel-bay>
       }
     </div>
     }

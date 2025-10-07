@@ -67,6 +67,7 @@ export class VesselBayComponent implements AfterViewInit {
   }
 
   @Input() isFrontendCalculate: boolean = false;
+  @Input() isCompleteVescells: boolean = false;
 
   @ViewChild('canvasContainer') canvasContainer!: ElementRef;
   @ViewChild('canvasPro', { static: true }) canvasPro!: CanvasProComponent;
@@ -124,9 +125,15 @@ export class VesselBayComponent implements AfterViewInit {
   };
 
   ngAfterViewInit(): void {
+    if (this.isCompleteVescells) {
+      this.vesselBayData.vescells = this.completeVescells(
+        this.vesselBayData.vescells
+      );
+    }
     if (this.isFrontendCalculate) {
       this.calculateFrontendCoordinates();
     }
+    console.log(this.vesselBayData);
     if (this.canvasContainer) {
       const divElement: HTMLElement = this.canvasContainer.nativeElement;
       divElement.style.height = `${this.vesselBayData.bayHeight}px`;
@@ -206,6 +213,86 @@ export class VesselBayComponent implements AfterViewInit {
         vescell.y = dHeight + hHeight - height * (tier - 1);
       }
     });
+  }
+
+  completeVescells(vescells: Vescell[]) {
+    const bay = vescells[0].vescell.slice(0, 2);
+    // 按dh分组处理（D和H分别处理）
+    const grouped = {
+      D: vescells.filter((item) => item.dh === 'D'),
+      H: vescells.filter((item) => item.dh === 'H'),
+    };
+
+    // 最终补全后的数组
+    let result: any[] = [];
+
+    // 处理每组（D和H）
+    Object.entries(grouped).forEach(([dh, items]) => {
+      if (items.length === 0) return; // 跳过空组
+
+      const tiers = items.map((item) => parseInt(item.tier, 10));
+      const cols = items.map((item) => parseInt(item.col, 10));
+
+      const minTier = dh === 'H' ? 2 : Math.min(...tiers); // H的tier最小值固定为02
+      const maxTier = Math.max(...tiers);
+
+      const maxCol = Math.max(...cols);
+      const hasCol00 = items.some((item) => item.col === '00');
+      const minCol = hasCol00 ? 0 : 1;
+
+      // 收集现有项的唯一标识（tier-col组合）
+      const existing = new Set();
+      items.forEach((item) => {
+        const key = `${parseInt(item.tier, 10)}-${parseInt(item.col, 10)}`;
+        existing.add(key);
+      });
+
+      // 生成补全项
+      const completions = [];
+
+      // 遍历所有col（间隔1）
+      for (let col = minCol; col <= maxCol; col++) {
+        // 遍历当前col下的所有tier（间隔2，只处理偶数）
+        for (let tier = minTier; tier <= maxTier; tier += 2) {
+          const key = `${tier}-${col}`;
+          if (!existing.has(key)) {
+            const tierStr = tier.toString().padStart(2, '0');
+            const colStr = col.toString().padStart(2, '0');
+            completions.push({
+              vescell: `${bay}${colStr}${tierStr}`, // 假设vescell由tier和col组成
+              dh: dh,
+              col: colStr,
+              tier: tierStr,
+              data: {
+                containerID: '',
+                equipType: '',
+                ifOnly: false,
+                ifX: false,
+              },
+            });
+          }
+        }
+      }
+      result.push(...items, ...completions);
+    });
+    const sortedResult = [...result].sort((a, b) => {
+      // 第一级排序：按vescell字段比较
+      if (a.vescell < b.vescell) {
+        return -1;
+      }
+      if (a.vescell > b.vescell) {
+        return 1;
+      }
+      // 第二级排序：当vescell相等时，按dh字段比较
+      if (a.dh < b.dh) {
+        return -1;
+      }
+      if (a.dh > b.dh) {
+        return 1;
+      }
+      return 0;
+    });
+    return sortedResult;
   }
 
   draw() {

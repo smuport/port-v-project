@@ -137,6 +137,7 @@ export class VesselBayDemoComponent implements OnInit, AfterViewInit {
 
   //前台计算坐标位置
   isFrontendCalculate: boolean = true;
+  isCompleteVescells: boolean = false;
 
   constructor(private http: HttpClient) {}
 
