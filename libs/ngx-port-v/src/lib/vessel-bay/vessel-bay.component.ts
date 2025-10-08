@@ -51,9 +51,9 @@ export class VesselBayComponent implements AfterViewInit {
   @Input() fillContainer: (data: Vescell<unknown>) => string = (
     data: Vescell<unknown>
   ) => 'white';
-  @Input() textContainer: (data: Vescell<unknown>) => string = (
+  @Input() textContainer: (data: Vescell<unknown>) => string[] = (
     data: Vescell<unknown>
-  ) => '';
+  ) => [];
   @Input() set vescellMarkerConfig(
     vescellMarkerConfig: Partial<VescellMarkerConfig>
   ) {
@@ -126,14 +126,12 @@ export class VesselBayComponent implements AfterViewInit {
 
   ngAfterViewInit(): void {
     if (this.isCompleteVescells) {
-      this.vesselBayData.vescells = this.completeVescells(
-        this.vesselBayData.vescells
-      );
+      this.vesselBayData = this.completeVescells(this.vesselBayData);
+      this.calculateFrontendCoordinates();
     }
     if (this.isFrontendCalculate) {
       this.calculateFrontendCoordinates();
     }
-    console.log(this.vesselBayData);
     if (this.canvasContainer) {
       const divElement: HTMLElement = this.canvasContainer.nativeElement;
       divElement.style.height = `${this.vesselBayData.bayHeight}px`;
@@ -145,6 +143,7 @@ export class VesselBayComponent implements AfterViewInit {
   }
 
   calculateFrontendCoordinates() {
+    console.log(this.vesselBayData);
     let maxLength = 0;
     let isZero = false;
     let maxDTier = 0;
@@ -190,20 +189,19 @@ export class VesselBayComponent implements AfterViewInit {
     }
     this.vesselBayData.bayWidth = maxLength * width + 50;
     const dHeight = ((maxDTier - minDTier) * height) / 2 + 71;
-    const hHeight = (maxHTier * height) / 2 + 30;
+    const hHeight = (maxHTier * height) / 2 + height * 1.25;
     this.vesselBayData.bayHeight = dHeight + hHeight + 50;
     this.vesselBayData.vescells.forEach((vescell) => {
       const col = Number(vescell.col);
-      const ifZero = col === 0;
 
-      if (col % 2 === 0 && ifZero) {
+      if (col % 2 === 0 && isZero) {
         vescell.x = ((maxLength - col - 1) * width) / 2 + 50;
-      } else if (col % 2 !== 0 && ifZero) {
+      } else if (col % 2 !== 0 && isZero) {
         vescell.x = ((maxLength + col) * width) / 2 + 50;
-      } else if (col % 2 === 0 && !ifZero) {
-        vescell.x = ((maxLength - col - 1) * width) / 2 + 50;
+      } else if (col % 2 === 0 && !isZero) {
+        vescell.x = ((maxLength - col) * width) / 2 + 50;
       } else {
-        vescell.x = ((maxLength + col) * width) / 2 + 50;
+        vescell.x = ((maxLength + col - 1) * width) / 2 + 50;
       }
       if (vescell.dh === 'D') {
         const tier = Number(vescell.tier);
@@ -215,14 +213,26 @@ export class VesselBayComponent implements AfterViewInit {
     });
   }
 
-  completeVescells(vescells: Vescell[]) {
-    const bay = vescells[0].vescell.slice(0, 2);
+  completeVescells(vesselBay: VesselBay) {
+    const vescells = vesselBay.vescells;
+    const bayType = vesselBay.bayType;
+    const originBay = vesselBay.vescells[0].vescell.slice(0, 2);
+    const bay =
+      Number(originBay) % 2 !== 0
+        ? originBay
+        : bayType === 'front'
+        ? (Number(originBay) - 1).toString().padStart(2, '0')
+        : (Number(originBay) + 1).toString().padStart(2, '0');
+    console.log(vescells[0].vescell);
     // 按dh分组处理（D和H分别处理）
     const grouped = {
       D: vescells.filter((item) => item.dh === 'D'),
       H: vescells.filter((item) => item.dh === 'H'),
     };
 
+    const hasCol00Global =
+      grouped.D.some((item) => item.col === '00') ||
+      grouped.H.some((item) => item.col === '00');
     // 最终补全后的数组
     let result: any[] = [];
 
@@ -236,9 +246,9 @@ export class VesselBayComponent implements AfterViewInit {
       const minTier = dh === 'H' ? 2 : Math.min(...tiers); // H的tier最小值固定为02
       const maxTier = Math.max(...tiers);
 
-      const maxCol = Math.max(...cols);
-      const hasCol00 = items.some((item) => item.col === '00');
-      const minCol = hasCol00 ? 0 : 1;
+      const maxCol =
+        Math.max(...cols) % 2 == 0 ? Math.max(...cols) : Math.max(...cols) + 1;
+      const minCol = hasCol00Global ? 0 : 1;
 
       // 收集现有项的唯一标识（tier-col组合）
       const existing = new Set();
@@ -276,14 +286,18 @@ export class VesselBayComponent implements AfterViewInit {
       result.push(...items, ...completions);
     });
     const sortedResult = [...result].sort((a, b) => {
-      // 第一级排序：按vescell字段比较
-      if (a.vescell < b.vescell) {
+      if (a.tier < b.tier) {
         return -1;
       }
-      if (a.vescell > b.vescell) {
+      if (a.tier > b.tier) {
         return 1;
       }
-      // 第二级排序：当vescell相等时，按dh字段比较
+      if (a.col < b.col) {
+        return -1;
+      }
+      if (a.col > b.col) {
+        return 1;
+      }
       if (a.dh < b.dh) {
         return -1;
       }
@@ -292,7 +306,8 @@ export class VesselBayComponent implements AfterViewInit {
       }
       return 0;
     });
-    return sortedResult;
+    vesselBay.vescells = sortedResult;
+    return vesselBay;
   }
 
   draw() {
@@ -379,7 +394,10 @@ export class VesselBayComponent implements AfterViewInit {
     ctx: OffscreenCanvasRenderingContext2D,
     data: VesselBay
   ) {
-    const mid = this.finmid(data.vescells, '01');
+    const mid =
+      this.finmid(data.vescells, '00') === 0
+        ? this.finmid(data.vescells, '01')
+        : this.finmid(data.vescells, '00') + this.config.width / 2;
     ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
     ctx.font = 'lighter 8px Arial';
     ctx.textAlign = 'center';
@@ -440,7 +458,7 @@ export class VesselBayComponent implements AfterViewInit {
       ctx.fillText(
         item.col,
         item.x + this.config.width / 2,
-        item.y + this.config.height * 2
+        item.y + this.config.height * 1.5
       );
     });
     const tierList = data.vescells.filter(
@@ -467,10 +485,7 @@ export class VesselBayComponent implements AfterViewInit {
   }
 
   renderVesselBay(ctx: OffscreenCanvasRenderingContext2D, data: VesselBay) {
-    const mid = this.finmid(data.vescells, '01');
     ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-    ctx.font = 'lighter 8px Arial';
-    ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.strokeStyle = 'black';
     ctx.lineWidth = 2;
@@ -487,18 +502,26 @@ export class VesselBayComponent implements AfterViewInit {
     data.vescells.forEach((item: Vescell) => {
       const containerText = this.textContainer(item);
       if (containerText) {
+        const width = this.config.width;
+        const heigth = this.config.height;
+        const maxFontSize = heigth * 0.2;
+        const fontSize = Math.max(maxFontSize, 8);
+        const textHeight = fontSize * 1.2 * containerText.length;
+        const startY = item.y + (heigth - textHeight) / 2 + fontSize / 2;
+        ctx.fillStyle = 'black';
+        ctx.textAlign = 'center';
+        ctx.font = `${fontSize}px Arial`;
         ctx.fillStyle = this.isDarkColor(
           ctx,
-          item.x + this.config.width / 2,
-          item.y + this.config.height / 4
+          item.x + width / 2,
+          item.y + heigth / 4
         )
           ? '#FFFFFF'
           : '#000000';
-        ctx.fillText(
-          containerText,
-          item.x + this.config.width / 2,
-          item.y + this.config.height / 2
-        );
+        containerText.forEach((line, i) => {
+          const yPosition = startY + i * fontSize * 1.2;
+          ctx.fillText(line, item.x + width / 2, yPosition);
+        });
       }
     });
   }

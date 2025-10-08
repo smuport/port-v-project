@@ -44,11 +44,12 @@ export class VesselBayDemoComponent implements OnInit, AfterViewInit {
 
   vescellMarkerConfig: Partial<VescellMarkerConfig> = {
     cross: (vescell: Vescell<any>, vesselBay: VesselBay<any>) => {
-      if (vescell.data.equipType[0] === '4' && vesselBay.bayType == 'back') {
-        return true;
-      } else {
-        return false;
-      }
+      return false;
+      // if (vescell.data.equipType[0] === '4' && vesselBay.bayType == 'back') {
+      //   return true;
+      // } else {
+      //   return false;
+      // }
     },
     dj: (vescell: Vescell<any>, vesselBay: VesselBay<any>) => {
       return vescell.data.ifOnly;
@@ -90,6 +91,46 @@ export class VesselBayDemoComponent implements OnInit, AfterViewInit {
     L2P: { name: '45英尺框架箱', color: 'navy' },
   };
   colorMode = 'containerType';
+
+  //vessel-bay1
+  // config = {
+  //   width: 48,
+  //   height: 24,
+  // };
+
+  // fillVesselBayContainer = (item: Vescell<any>) => {
+  //   let color = 'white';
+  //   // if (this.colorMode == 'unloadPort') {
+  //   //   const key = item.data.containerID.slice(0, 1);
+  //   //   color = this.containerIdStyles[key]?.color;
+  //   // } else if (this.colorMode == 'containerType') {
+  //   //   const key = item.data.equipType.slice(0, 3);
+  //   //   color = this.containerTypeStyles[key]?.color;
+  //   // }
+  //   // if (item.data['ifSelected']) {
+  //   //   color = '#00FFFF';
+  //   // }
+  //   return color;
+  // };
+
+  // textType: 'pod' | 'ctnType' | 'ctnWeight' | 'pzsx' = 'pod';
+
+  // textVesselBayContainer = (item: Vescell<unknown>): string[] => {
+  //   const vesData = item.data as any;
+  //   if (!vesData.data) {
+  //     return [];
+  //   }
+  //   let text = [];
+  //   text.push(vesData.data?.pod);
+  //   text.push('aaa');
+  //   return text;
+  // };
+
+  //vessel-bay
+  config = {
+    width: 24,
+    height: 12,
+  };
   fillVesselBayContainer = (item: Vescell<any>) => {
     let color = 'white';
     if (this.colorMode == 'unloadPort') {
@@ -106,11 +147,11 @@ export class VesselBayDemoComponent implements OnInit, AfterViewInit {
   };
 
   textVesselBayContainer = (item: Vescell<any>) => {
-    let text = '';
+    let text = [];
     if (this.textMode == 'type') {
-      text = item.data.equipType;
+      text.push(item.data.equipType);
     } else if (this.textMode == 'containerId') {
-      text = item.data.containerID;
+      text.push(item.data.containerID);
     }
     return text;
   };
@@ -136,7 +177,7 @@ export class VesselBayDemoComponent implements OnInit, AfterViewInit {
   };
 
   //前台计算坐标位置
-  isFrontendCalculate: boolean = true;
+  isFrontendCalculate: boolean = false;
   isCompleteVescells: boolean = false;
 
   constructor(private http: HttpClient) {}
