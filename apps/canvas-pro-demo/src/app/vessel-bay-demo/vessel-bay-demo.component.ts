@@ -44,12 +44,12 @@ export class VesselBayDemoComponent implements OnInit, AfterViewInit {
 
   vescellMarkerConfig: Partial<VescellMarkerConfig> = {
     cross: (vescell: Vescell<any>, vesselBay: VesselBay<any>) => {
-      return false;
-      // if (vescell.data.equipType[0] === '4' && vesselBay.bayType == 'back') {
-      //   return true;
-      // } else {
-      //   return false;
-      // }
+      // return false;
+      if (vescell.data.equipType[0] === '4' && vesselBay.bayType == 'back') {
+        return true;
+      } else {
+        return false;
+      }
     },
     dj: (vescell: Vescell<any>, vesselBay: VesselBay<any>) => {
       return vescell.data.ifOnly;
@@ -126,7 +126,7 @@ export class VesselBayDemoComponent implements OnInit, AfterViewInit {
   //   return text;
   // };
 
-  //vessel-bay
+  // vessel-bay
   config = {
     width: 24,
     height: 12,
@@ -177,8 +177,9 @@ export class VesselBayDemoComponent implements OnInit, AfterViewInit {
   };
 
   //前台计算坐标位置
-  isFrontendCalculate: boolean = false;
+  isFrontendCalculate: boolean = true;
   isCompleteVescells: boolean = false;
+  isSvgText: boolean = true;
 
   constructor(private http: HttpClient) {}
 

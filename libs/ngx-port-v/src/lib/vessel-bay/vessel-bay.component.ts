@@ -14,6 +14,8 @@ import {
   CpFrameSelectEvent,
   CustomRenderable,
   Layer,
+  SvgLayer,
+  SvgRenderable,
   ViewportInteractionConfig,
 } from '@smuport/ngx-canvas-pro';
 import { BehaviorSubject, of } from 'rxjs';
@@ -68,6 +70,7 @@ export class VesselBayComponent implements AfterViewInit {
 
   @Input() isFrontendCalculate: boolean = false;
   @Input() isCompleteVescells: boolean = false;
+  @Input() isSvgText: boolean = false;
 
   @ViewChild('canvasContainer') canvasContainer!: ElementRef;
   @ViewChild('canvasPro', { static: true }) canvasPro!: CanvasProComponent;
@@ -124,6 +127,8 @@ export class VesselBayComponent implements AfterViewInit {
     },
   };
 
+  svgNamespace = 'http://www.w3.org/2000/svg';
+
   ngAfterViewInit(): void {
     if (this.isCompleteVescells) {
       this.vesselBayData = this.completeVescells(this.vesselBayData);
@@ -143,7 +148,6 @@ export class VesselBayComponent implements AfterViewInit {
   }
 
   calculateFrontendCoordinates() {
-    console.log(this.vesselBayData);
     let maxLength = 0;
     let isZero = false;
     let maxDTier = 0;
@@ -223,7 +227,6 @@ export class VesselBayComponent implements AfterViewInit {
         : bayType === 'front'
         ? (Number(originBay) - 1).toString().padStart(2, '0')
         : (Number(originBay) + 1).toString().padStart(2, '0');
-    console.log(vescells[0].vescell);
     // 按dh分组处理（D和H分别处理）
     const grouped = {
       D: vescells.filter((item) => item.dh === 'D'),
@@ -318,6 +321,10 @@ export class VesselBayComponent implements AfterViewInit {
       'vesselBayBackground'
     );
     this.canvasPro.addLayer(vesselBayBackgroundLayer);
+    if (this.isSvgText) {
+      const vesselBayTextLayer = this.getVesselBayTextLayer('vesselBayText');
+      this.canvasPro.addLayer(vesselBayTextLayer);
+    }
     this.drawLayers();
   }
 
@@ -386,6 +393,19 @@ export class VesselBayComponent implements AfterViewInit {
     return insLayer;
   }
 
+  getVesselBayTextLayer(layerName: string) {
+    const insLayer = new SvgLayer(layerName);
+    const insSource = of(this.vesselBayBackgroungData);
+    insLayer.setDataSource(insSource);
+    insLayer.setTrigger(of(null));
+    insLayer.addRenderable(
+      new SvgRenderable((svgRoot: SVGElement) => {
+        this.renderVesselBayText(svgRoot);
+      })
+    );
+    return insLayer;
+  }
+
   isFrameSelectEvent(evt: CpBaseEvent): evt is CpFrameSelectEvent {
     return 'selectedItems' in evt && 'mouseEvent' in evt;
   }
@@ -399,11 +419,11 @@ export class VesselBayComponent implements AfterViewInit {
         ? this.finmid(data.vescells, '01')
         : this.finmid(data.vescells, '00') + this.config.width / 2;
     ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-    ctx.font = 'lighter 8px Arial';
+    ctx.font = `normal ${(this.config.height * 2) / 3}px Arial`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.strokeStyle = 'black';
-    ctx.lineWidth = 2;
+    ctx.lineWidth = 1;
     data.vescells.forEach((item: Vescell<any>) => {
       ctx.beginPath();
       const ifOnly = this.getMarkerValue(
@@ -412,6 +432,7 @@ export class VesselBayComponent implements AfterViewInit {
         data
       );
       if (this.getMarkerValue(this.vescellMarkerConfig.cross, item, data)) {
+        ctx.lineWidth = 0.5;
         ctx.strokeStyle = 'black';
         ctx.moveTo(item.x, item.y);
         ctx.lineTo(item.x + this.config.width, item.y + this.config.height);
@@ -421,67 +442,69 @@ export class VesselBayComponent implements AfterViewInit {
       ctx.strokeRect(item.x, item.y, this.config.width, this.config.height);
       ctx.closePath();
     });
-
+    ctx.lineWidth = 1;
     ctx.fillStyle = 'black';
 
-    const colOuterList = data.vescells
-      .filter((item: Vescell) => {
-        return item.dh == 'D';
-      })
-      .filter((item: Vescell, index, self) => {
-        const identifier = item.col + '_' + item.x;
-        return (
-          index ===
-          self.findIndex(
-            (item: Vescell) => item.col + '_' + item.x === identifier
-          )
+    if (!this.isSvgText) {
+      const colOuterList = data.vescells
+        .filter((item: Vescell) => {
+          return item.dh == 'D';
+        })
+        .filter((item: Vescell, index, self) => {
+          const identifier = item.col + '_' + item.x;
+          return (
+            index ===
+            self.findIndex(
+              (item: Vescell) => item.col + '_' + item.x === identifier
+            )
+          );
+        });
+
+      const colInterList = data.vescells
+        .filter((item: Vescell) => {
+          return item.dh == 'H';
+        })
+        .filter((item: Vescell, index, self) => {
+          const identifier = item.col + '_' + item.x;
+          return (
+            index ===
+            self.findIndex(
+              (item: Vescell) => item.col + '_' + item.x === identifier
+            )
+          );
+        });
+
+      const colList = [...colOuterList, ...colInterList];
+      colList.forEach((item: Vescell) => {
+        ctx.fillText(
+          item.col,
+          item.x + this.config.width / 2,
+          item.y + this.config.height * 1.5
         );
       });
 
-    const colInterList = data.vescells
-      .filter((item: Vescell) => {
-        return item.dh == 'H';
-      })
-      .filter((item: Vescell, index, self) => {
-        const identifier = item.col + '_' + item.x;
-        return (
-          index ===
-          self.findIndex(
-            (item: Vescell) => item.col + '_' + item.x === identifier
-          )
-        );
-      });
-
-    const colList = [...colOuterList, ...colInterList];
-
-    colList.forEach((item: Vescell) => {
-      ctx.fillText(
-        item.col,
-        item.x + this.config.width / 2,
-        item.y + this.config.height * 1.5
+      const tierList = data.vescells.filter(
+        (item: { tier: string; y: number }, index, self: any[]) => {
+          const identifier = item.tier + '_' + item.y;
+          return (
+            index ===
+            self.findIndex(
+              (item: { tier: string; y: number }) =>
+                item.tier + '_' + item.y === identifier
+            )
+          );
+        }
       );
-    });
-    const tierList = data.vescells.filter(
-      (item: { tier: string; y: number }, index, self: any[]) => {
-        const identifier = item.tier + '_' + item.y;
-        return (
-          index ===
-          self.findIndex(
-            (item: { tier: string; y: number }) =>
-              item.tier + '_' + item.y === identifier
-          )
-        );
-      }
-    );
-    const maxObj = data.vescells.reduce((max: Vescell, current: Vescell) => {
-      return current.col > max.col ? current : max;
-    }, data.vescells[0]);
+      const maxObj = data.vescells.reduce((max: Vescell, current: Vescell) => {
+        return current.col > max.col ? current : max;
+      }, data.vescells[0]);
 
-    tierList.forEach((item: Vescell) => {
-      ctx.fillText(item.tier, maxObj.x - 20, item.y + this.config.height / 2);
-    });
-    ctx.font = 'lighter 20px Arial';
-    ctx.fillText('Bay  ' + data.bayName, mid, 10);
+      tierList.forEach((item: Vescell) => {
+        ctx.fillText(item.tier, maxObj.x - 20, item.y + this.config.height / 2);
+      });
+      ctx.font = 'lighter 20px Arial';
+      ctx.fillText('Bay  ' + data.bayName, mid, 10);
+    }
   }
 
   renderVesselBay(ctx: OffscreenCanvasRenderingContext2D, data: VesselBay) {
@@ -498,8 +521,172 @@ export class VesselBayComponent implements AfterViewInit {
       }
       ctx.closePath();
     });
+    if (!this.isSvgText) {
+      data.vescells.forEach((item: Vescell) => {
+        const containerText = this.textContainer(item);
+        if (containerText) {
+          const width = this.config.width;
+          const heigth = this.config.height;
+          const maxFontSize = heigth * 0.2;
+          const fontSize = Math.max(maxFontSize, 8);
+          const textHeight = fontSize * 1.2 * containerText.length;
+          const startY = item.y + (heigth - textHeight) / 2 + fontSize / 2;
+          ctx.fillStyle = 'black';
+          ctx.textAlign = 'center';
+          ctx.font = `${fontSize}px Arial`;
+          ctx.fillStyle = this.isDarkColor(
+            ctx,
+            item.x + width / 2,
+            item.y + heigth / 4
+          )
+            ? '#FFFFFF'
+            : '#000000';
 
-    data.vescells.forEach((item: Vescell) => {
+          containerText.forEach((line, i) => {
+            const yPosition = startY + i * fontSize * 1.2;
+            ctx.fillText(line, item.x + width / 2, yPosition);
+          });
+        }
+      });
+    }
+  }
+
+  renderVesselBayText(svgRoot: SVGElement): void {
+    // 清空现有的 SVG 元素
+    while (svgRoot.firstChild) {
+      svgRoot.removeChild(svgRoot.firstChild);
+    }
+    this.drawColText(svgRoot);
+    this.drawTierText(svgRoot);
+    this.drawTitleText(svgRoot);
+    this.drawVescellsText(svgRoot);
+  }
+
+  drawColText(svgRoot: SVGElement) {
+    const colOuterList = this.vesselBayBackgroungData.vescells
+      .filter((item: Vescell) => {
+        return item.dh == 'D';
+      })
+      .filter((item: Vescell, index, self) => {
+        const identifier = item.col + '_' + item.x;
+        return (
+          index ===
+          self.findIndex(
+            (item: Vescell) => item.col + '_' + item.x === identifier
+          )
+        );
+      });
+
+    const colInterList = this.vesselBayBackgroungData.vescells
+      .filter((item: Vescell) => {
+        return item.dh == 'H';
+      })
+      .filter((item: Vescell, index, self) => {
+        const identifier = item.col + '_' + item.x;
+        return (
+          index ===
+          self.findIndex(
+            (item: Vescell) => item.col + '_' + item.x === identifier
+          )
+        );
+      });
+
+    const colList = [...colOuterList, ...colInterList];
+    colList.forEach((item: Vescell) => {
+      const svgContainer = document.createElementNS(this.svgNamespace, 'g');
+      svgContainer.setAttribute('class', 'task-group');
+      const textElement = document.createElementNS(
+        this.svgNamespace,
+        'text'
+      ) as SVGTextElement;
+      textElement.textContent = item.col;
+      textElement.setAttribute(
+        'x',
+        (item.x + this.config.width / 2).toString()
+      );
+
+      textElement.setAttribute(
+        'y',
+        (item.y + this.config.height * 1.5).toString()
+      );
+      textElement.setAttribute('text-anchor', 'middle');
+      textElement.setAttribute('dominant-baseline', 'middle');
+      textElement.setAttribute('font-size', `${this.config.height / 1.5}px`);
+      textElement.setAttribute('fill', 'black');
+      svgContainer.appendChild(textElement);
+      svgRoot.appendChild(svgContainer);
+    });
+  }
+
+  drawTierText(svgRoot: SVGElement) {
+    const tierList = this.vesselBayBackgroungData.vescells.filter(
+      (item: { tier: string; y: number }, index, self: any[]) => {
+        const identifier = item.tier + '_' + item.y;
+        return (
+          index ===
+          self.findIndex(
+            (item: { tier: string; y: number }) =>
+              item.tier + '_' + item.y === identifier
+          )
+        );
+      }
+    );
+    const maxObj = this.vesselBayBackgroungData.vescells.reduce(
+      (max: Vescell, current: Vescell) => {
+        return current.col > max.col ? current : max;
+      },
+      this.vesselBayBackgroungData.vescells[0]
+    );
+
+    tierList.forEach((item: Vescell) => {
+      const svgContainer = document.createElementNS(this.svgNamespace, 'g');
+      svgContainer.setAttribute('class', 'task-group');
+      const textElement = document.createElementNS(
+        this.svgNamespace,
+        'text'
+      ) as SVGTextElement;
+      textElement.textContent = item.tier;
+      textElement.setAttribute('x', (maxObj.x - 20).toString());
+
+      textElement.setAttribute(
+        'y',
+        (item.y + this.config.height / 2).toString()
+      );
+      textElement.setAttribute('text-anchor', 'middle');
+      textElement.setAttribute('dominant-baseline', 'middle');
+      textElement.setAttribute('font-size', `${this.config.height / 1.5}px`);
+      textElement.setAttribute('fill', 'black');
+      svgContainer.appendChild(textElement);
+      svgRoot.appendChild(svgContainer);
+    });
+  }
+
+  drawTitleText(svgRoot: SVGElement) {
+    const mid =
+      this.finmid(this.vesselBayBackgroungData.vescells, '00') === 0
+        ? this.finmid(this.vesselBayBackgroungData.vescells, '01')
+        : this.finmid(this.vesselBayBackgroungData.vescells, '00') +
+          this.config.width / 2;
+    const svgContainer = document.createElementNS(this.svgNamespace, 'g');
+    svgContainer.setAttribute('class', 'task-group');
+    const textElement = document.createElementNS(
+      this.svgNamespace,
+      'text'
+    ) as SVGTextElement;
+    textElement.textContent = 'Bay  ' + this.vesselBayBackgroungData.bayName;
+    textElement.setAttribute('x', mid.toString());
+
+    textElement.setAttribute('y', '20');
+    textElement.setAttribute('text-anchor', 'middle');
+    textElement.setAttribute('dominant-baseline', 'middle');
+    textElement.setAttribute('font-size', '25px');
+    textElement.setAttribute('fill', 'black');
+    svgContainer.appendChild(textElement);
+    svgRoot.appendChild(svgContainer);
+  }
+
+  drawVescellsText(svgRoot: SVGElement) {
+    this.vesselBayData.vescells.forEach((item: Vescell) => {
       const containerText = this.textContainer(item);
       if (containerText) {
         const width = this.config.width;
@@ -508,19 +695,24 @@ export class VesselBayComponent implements AfterViewInit {
         const fontSize = Math.max(maxFontSize, 8);
         const textHeight = fontSize * 1.2 * containerText.length;
         const startY = item.y + (heigth - textHeight) / 2 + fontSize / 2;
-        ctx.fillStyle = 'black';
-        ctx.textAlign = 'center';
-        ctx.font = `${fontSize}px Arial`;
-        ctx.fillStyle = this.isDarkColor(
-          ctx,
-          item.x + width / 2,
-          item.y + heigth / 4
-        )
-          ? '#FFFFFF'
-          : '#000000';
         containerText.forEach((line, i) => {
           const yPosition = startY + i * fontSize * 1.2;
-          ctx.fillText(line, item.x + width / 2, yPosition);
+          const svgContainer = document.createElementNS(this.svgNamespace, 'g');
+          svgContainer.setAttribute('class', 'task-group');
+          const textElement = document.createElementNS(
+            this.svgNamespace,
+            'text'
+          ) as SVGTextElement;
+          textElement.textContent = line;
+          textElement.setAttribute('x', (item.x + width / 2).toString());
+
+          textElement.setAttribute('y', yPosition.toString());
+          textElement.setAttribute('text-anchor', 'middle');
+          textElement.setAttribute('dominant-baseline', 'middle');
+          textElement.setAttribute('font-size', `${fontSize}px`);
+          textElement.setAttribute('fill', 'black');
+          svgContainer.appendChild(textElement);
+          svgRoot.appendChild(svgContainer);
         });
       }
     });
