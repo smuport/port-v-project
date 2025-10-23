@@ -18,7 +18,7 @@ import {
   SvgRenderable,
   ViewportInteractionConfig,
 } from '@smuport/ngx-canvas-pro';
-import { BehaviorSubject, of } from 'rxjs';
+import { BehaviorSubject, combineLatest, map, of } from 'rxjs';
 import { Vescell, VescellMarkerConfig, VesselBay } from '../model/vessel-bay';
 
 @Component({
@@ -70,7 +70,14 @@ export class VesselBayComponent implements AfterViewInit {
 
   @Input() isFrontendCalculate: boolean = false;
   @Input() isCompleteVescells: boolean = false;
-  @Input() isSvgText: boolean = false;
+  private _isSvgText!: boolean;
+  @Input() set isSvgText(data: boolean) {
+    this._isSvgText = data;
+    this.isSvgText$.next(data);
+  }
+  get isSvgText(): boolean {
+    return this._isSvgText;
+  }
 
   @ViewChild('canvasContainer') canvasContainer!: ElementRef;
   @ViewChild('canvasPro', { static: true }) canvasPro!: CanvasProComponent;
@@ -80,6 +87,8 @@ export class VesselBayComponent implements AfterViewInit {
   vesselBayData$ = new BehaviorSubject<VesselBay>(undefined!);
 
   vesselBayBackgroungData!: VesselBay;
+
+  isSvgText$ = new BehaviorSubject<boolean>(undefined!);
 
   containerStyles = {
     '22G': { name: '20英尺干货箱', color: 'green' },
@@ -321,10 +330,8 @@ export class VesselBayComponent implements AfterViewInit {
       'vesselBayBackground'
     );
     this.canvasPro.addLayer(vesselBayBackgroundLayer);
-    if (this.isSvgText) {
-      const vesselBayTextLayer = this.getVesselBayTextLayer('vesselBayText');
-      this.canvasPro.addLayer(vesselBayTextLayer);
-    }
+    const vesselBayTextLayer = this.getVesselBayTextLayer('vesselBayText');
+    this.canvasPro.addLayer(vesselBayTextLayer);
     this.drawLayers();
   }
 
@@ -334,14 +341,34 @@ export class VesselBayComponent implements AfterViewInit {
 
   getVesselBayBackgroundLayer(layerName: string) {
     const insLayer = new Layer(layerName);
-    const insSource = of(this.vesselBayBackgroungData);
+    const insSource = combineLatest([
+      of(this.vesselBayBackgroungData),
+      this.isSvgText$,
+    ]).pipe(
+      map(([vesselBayBackgroungData, isSvgText]) => ({
+        vesselBayBackgroungData: vesselBayBackgroungData || null,
+        isSvgText: isSvgText,
+      }))
+    );
     insLayer.setPushMode();
     insLayer.setTrigger(insSource);
-    insLayer.setRenderer((ctx, data) => {
-      insLayer.updateSize(data.bayWidth, data.bayHeight);
-      this.canvasPro.updateViewportSize(data.bayWidth, data.bayHeight);
-      this.renderVesselBayBackground(ctx, data);
-    });
+    insLayer.setRenderer(
+      (
+        ctx,
+        data: { vesselBayBackgroungData: VesselBay; isSvgText: boolean }
+      ) => {
+        const vesselBayBackgroungData = data.vesselBayBackgroungData;
+        insLayer.updateSize(
+          vesselBayBackgroungData.bayWidth,
+          vesselBayBackgroungData.bayHeight
+        );
+        this.canvasPro.updateViewportSize(
+          vesselBayBackgroungData.bayWidth,
+          vesselBayBackgroungData.bayHeight
+        );
+        this.renderVesselBayBackground(ctx, data);
+      }
+    );
     return insLayer;
   }
 
@@ -395,12 +422,14 @@ export class VesselBayComponent implements AfterViewInit {
 
   getVesselBayTextLayer(layerName: string) {
     const insLayer = new SvgLayer(layerName);
-    const insSource = of(this.vesselBayBackgroungData);
-    insLayer.setDataSource(insSource);
-    insLayer.setTrigger(of(null));
+    const insSource = this.vesselBayData$;
+    insLayer.setPushMode();
+    insLayer.setTrigger(insSource);
     insLayer.addRenderable(
       new SvgRenderable((svgRoot: SVGElement) => {
-        this.renderVesselBayText(svgRoot);
+        if (this.isSvgText) {
+          this.renderVesselBayText(svgRoot);
+        }
       })
     );
     return insLayer;
@@ -412,26 +441,34 @@ export class VesselBayComponent implements AfterViewInit {
 
   renderVesselBayBackground(
     ctx: OffscreenCanvasRenderingContext2D,
-    data: VesselBay
+    data: { vesselBayBackgroungData: VesselBay; isSvgText: boolean }
   ) {
+    const vesselBayBackgroungData = data.vesselBayBackgroungData;
     const mid =
-      this.finmid(data.vescells, '00') === 0
-        ? this.finmid(data.vescells, '01')
-        : this.finmid(data.vescells, '00') + this.config.width / 2;
+      this.finmid(vesselBayBackgroungData.vescells, '00') === 0
+        ? this.finmid(vesselBayBackgroungData.vescells, '01')
+        : this.finmid(vesselBayBackgroungData.vescells, '00') +
+          this.config.width / 2;
     ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
     ctx.font = `normal ${(this.config.height * 2) / 3}px Arial`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.strokeStyle = 'black';
     ctx.lineWidth = 1;
-    data.vescells.forEach((item: Vescell<any>) => {
+    vesselBayBackgroungData.vescells.forEach((item: Vescell<any>) => {
       ctx.beginPath();
       const ifOnly = this.getMarkerValue(
         this.vescellMarkerConfig.dj,
         item,
-        data
+        vesselBayBackgroungData
       );
-      if (this.getMarkerValue(this.vescellMarkerConfig.cross, item, data)) {
+      if (
+        this.getMarkerValue(
+          this.vescellMarkerConfig.cross,
+          item,
+          vesselBayBackgroungData
+        )
+      ) {
         ctx.lineWidth = 0.5;
         ctx.strokeStyle = 'black';
         ctx.moveTo(item.x, item.y);
@@ -446,7 +483,7 @@ export class VesselBayComponent implements AfterViewInit {
     ctx.fillStyle = 'black';
 
     if (!this.isSvgText) {
-      const colOuterList = data.vescells
+      const colOuterList = vesselBayBackgroungData.vescells
         .filter((item: Vescell) => {
           return item.dh == 'D';
         })
@@ -460,7 +497,7 @@ export class VesselBayComponent implements AfterViewInit {
           );
         });
 
-      const colInterList = data.vescells
+      const colInterList = vesselBayBackgroungData.vescells
         .filter((item: Vescell) => {
           return item.dh == 'H';
         })
@@ -483,7 +520,7 @@ export class VesselBayComponent implements AfterViewInit {
         );
       });
 
-      const tierList = data.vescells.filter(
+      const tierList = vesselBayBackgroungData.vescells.filter(
         (item: { tier: string; y: number }, index, self: any[]) => {
           const identifier = item.tier + '_' + item.y;
           return (
@@ -495,15 +532,18 @@ export class VesselBayComponent implements AfterViewInit {
           );
         }
       );
-      const maxObj = data.vescells.reduce((max: Vescell, current: Vescell) => {
-        return current.col > max.col ? current : max;
-      }, data.vescells[0]);
+      const maxObj = vesselBayBackgroungData.vescells.reduce(
+        (max: Vescell, current: Vescell) => {
+          return current.col > max.col ? current : max;
+        },
+        vesselBayBackgroungData.vescells[0]
+      );
 
       tierList.forEach((item: Vescell) => {
         ctx.fillText(item.tier, maxObj.x - 20, item.y + this.config.height / 2);
       });
       ctx.font = 'lighter 20px Arial';
-      ctx.fillText('Bay  ' + data.bayName, mid, 10);
+      ctx.fillText('Bay  ' + vesselBayBackgroungData.bayName, mid, 10);
     }
   }
 
@@ -541,7 +581,6 @@ export class VesselBayComponent implements AfterViewInit {
           )
             ? '#FFFFFF'
             : '#000000';
-
           containerText.forEach((line, i) => {
             const yPosition = startY + i * fontSize * 1.2;
             ctx.fillText(line, item.x + width / 2, yPosition);
@@ -563,7 +602,7 @@ export class VesselBayComponent implements AfterViewInit {
   }
 
   drawColText(svgRoot: SVGElement) {
-    const colOuterList = this.vesselBayBackgroungData.vescells
+    const colOuterList = this.vesselBayData.vescells
       .filter((item: Vescell) => {
         return item.dh == 'D';
       })
@@ -577,7 +616,7 @@ export class VesselBayComponent implements AfterViewInit {
         );
       });
 
-    const colInterList = this.vesselBayBackgroungData.vescells
+    const colInterList = this.vesselBayData.vescells
       .filter((item: Vescell) => {
         return item.dh == 'H';
       })
@@ -619,7 +658,7 @@ export class VesselBayComponent implements AfterViewInit {
   }
 
   drawTierText(svgRoot: SVGElement) {
-    const tierList = this.vesselBayBackgroungData.vescells.filter(
+    const tierList = this.vesselBayData.vescells.filter(
       (item: { tier: string; y: number }, index, self: any[]) => {
         const identifier = item.tier + '_' + item.y;
         return (
@@ -631,11 +670,11 @@ export class VesselBayComponent implements AfterViewInit {
         );
       }
     );
-    const maxObj = this.vesselBayBackgroungData.vescells.reduce(
+    const maxObj = this.vesselBayData.vescells.reduce(
       (max: Vescell, current: Vescell) => {
         return current.col > max.col ? current : max;
       },
-      this.vesselBayBackgroungData.vescells[0]
+      this.vesselBayData.vescells[0]
     );
 
     tierList.forEach((item: Vescell) => {
@@ -663,9 +702,9 @@ export class VesselBayComponent implements AfterViewInit {
 
   drawTitleText(svgRoot: SVGElement) {
     const mid =
-      this.finmid(this.vesselBayBackgroungData.vescells, '00') === 0
-        ? this.finmid(this.vesselBayBackgroungData.vescells, '01')
-        : this.finmid(this.vesselBayBackgroungData.vescells, '00') +
+      this.finmid(this.vesselBayData.vescells, '00') === 0
+        ? this.finmid(this.vesselBayData.vescells, '01')
+        : this.finmid(this.vesselBayData.vescells, '00') +
           this.config.width / 2;
     const svgContainer = document.createElementNS(this.svgNamespace, 'g');
     svgContainer.setAttribute('class', 'task-group');
@@ -673,7 +712,7 @@ export class VesselBayComponent implements AfterViewInit {
       this.svgNamespace,
       'text'
     ) as SVGTextElement;
-    textElement.textContent = 'Bay  ' + this.vesselBayBackgroungData.bayName;
+    textElement.textContent = 'Bay  ' + this.vesselBayData.bayName;
     textElement.setAttribute('x', mid.toString());
 
     textElement.setAttribute('y', '20');

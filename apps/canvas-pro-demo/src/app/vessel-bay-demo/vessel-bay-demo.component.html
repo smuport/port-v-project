@@ -10,6 +10,11 @@
       <option value="type">箱类型</option>
       <option value="containerId">箱ID</option>
     </select>
+    <div class="custom-switch" (click)="switchTextMode()">
+      <div class="switch-button" [class.checked]="isSvgText"></div>
+      <span class="switch-text on-text" *ngIf="isSvgText">Svg</span>
+      <span class="switch-text off-text" *ngIf="!isSvgText">Canvas</span>
+    </div>
   </div>
   <div class="floating-list-container">
     <div class="search-box-container">

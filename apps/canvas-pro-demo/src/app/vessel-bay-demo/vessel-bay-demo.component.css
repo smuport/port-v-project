@@ -130,3 +130,69 @@
 .search-icon {
   font-size: 16px;
 }
+
+.custom-switch {
+  position: relative;
+  display: inline-block;
+  width: 100px; /* 开关总宽度 */
+  height: 30px; /* 开关高度 */
+  margin-left: 20px;
+  cursor: pointer;
+  user-select: none;
+}
+
+/* 开关按钮样式 */
+.switch-button {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 15px; /* 圆角 */
+  background-color: #ccc; /* 关闭状态背景色 */
+  transition: background-color 0.3s;
+}
+
+/* 开关按钮内部圆点 */
+.switch-button::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background-color: white;
+  transition: transform 0.3s;
+}
+
+/* 开启状态样式 */
+.switch-button.checked {
+  background-color: #4398d8; /* 开启状态背景色 */
+}
+
+.switch-button.checked::after {
+  transform: translateX(70px); /* 圆点右移 */
+}
+
+/* 开关文字样式 */
+.switch-text {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 14px; /* 文字大小 */
+  font-family: Arial, sans-serif; /* 字体 */
+  z-index: 1; /* 文字在按钮上方 */
+}
+
+/* 开启状态文字 */
+.on-text {
+  left: 10px;
+  color: white; /* 开启时文字颜色 */
+}
+
+/* 关闭状态文字 */
+.off-text {
+  right: 10px;
+  color: #666; /* 关闭时文字颜色 */
+}

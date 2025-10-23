@@ -128,8 +128,8 @@ export class VesselBayDemoComponent implements OnInit, AfterViewInit {
 
   // vessel-bay
   config = {
-    width: 24,
-    height: 12,
+    width: 48,
+    height: 24,
   };
   fillVesselBayContainer = (item: Vescell<any>) => {
     let color = 'white';
@@ -179,7 +179,7 @@ export class VesselBayDemoComponent implements OnInit, AfterViewInit {
   //前台计算坐标位置
   isFrontendCalculate: boolean = true;
   isCompleteVescells: boolean = false;
-  isSvgText: boolean = true;
+  isSvgText: boolean = false;
 
   constructor(private http: HttpClient) {}
 
@@ -225,6 +225,11 @@ export class VesselBayDemoComponent implements OnInit, AfterViewInit {
       })
     );
     this.bayDatas = newBayDatas;
+  }
+
+  switchTextMode() {
+    this.isSvgText = !this.isSvgText;
+    this.switchMode();
   }
 
   onColorModeChange($event: string) {
