@@ -120,6 +120,8 @@ export class VesselBayComponent implements AfterViewInit {
   //绘制矩形
   @Output() vescellFrameSelect = new EventEmitter<CpFrameSelectEvent>();
 
+  @Output() completedVesselData = new EventEmitter<VesselBay>();
+
   // 添加交互配置
   @Input() interactionConfig: ViewportInteractionConfig = {
     drag: {
@@ -146,6 +148,7 @@ export class VesselBayComponent implements AfterViewInit {
     if (this.isFrontendCalculate) {
       this.calculateFrontendCoordinates();
     }
+    this.completedVesselData.emit(this.vesselBayData);
     if (this.canvasContainer) {
       const divElement: HTMLElement = this.canvasContainer.nativeElement;
       divElement.style.height = `${this.vesselBayData.bayHeight}px`;

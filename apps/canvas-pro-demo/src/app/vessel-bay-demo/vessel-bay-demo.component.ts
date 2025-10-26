@@ -188,14 +188,6 @@ export class VesselBayDemoComponent implements OnInit, AfterViewInit {
     this.http
       .get<VesselBay[][]>('mock-data/vessel-bay.json')
       .subscribe((data) => {
-        data.forEach((bayDataArray: VesselBay[]) => {
-          bayDataArray.forEach((bayData: VesselBay) => {
-            bayData.vescells.forEach((vescell: Vescell<any>) => {
-              this.allVescellMap.set(vescell.vescell, vescell);
-            });
-          });
-        });
-        this.allVescellList = Array.from(this.allVescellMap.values());
         if (this.isFrontendCalculate) {
           this.bayDatas = JSON.parse(JSON.stringify(data));
           this.bayDatas.forEach((bayArray) => {
@@ -216,6 +208,13 @@ export class VesselBayDemoComponent implements OnInit, AfterViewInit {
 
   ngAfterViewInit(): void {
     this.multiSelect.customSelectionLogic = this.customSelectionLogic;
+  }
+
+  updateVesselData(vesselBayData: VesselBay) {
+    vesselBayData.vescells.forEach((vescell: Vescell<any>) => {
+      this.allVescellMap.set(vescell.vescell, vescell);
+    });
+    this.allVescellList = Array.from(this.allVescellMap.values());
   }
 
   switchMode() {
@@ -263,8 +262,6 @@ export class VesselBayDemoComponent implements OnInit, AfterViewInit {
       }
     });
     if (visualChangedItems.length > 0) {
-      console.log(visualChangedItems);
-
       this.applyPatch(visualChangedItems);
     }
   }
@@ -306,7 +303,6 @@ export class VesselBayDemoComponent implements OnInit, AfterViewInit {
   }
 
   applyPatch(patchVescells: Vescell<any>[]) {
-    console.log(this.vesselBays);
     if (patchVescells.length > 0) {
       const uniquePatches = [
         ...new Map(patchVescells.map((v) => [v.vescell, v])).values(),

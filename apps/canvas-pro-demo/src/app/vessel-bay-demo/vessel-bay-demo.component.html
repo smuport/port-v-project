@@ -40,7 +40,7 @@
         [isFrontendCalculate]="isFrontendCalculate" [isCompleteVescells]="isCompleteVescells" [config]="config"
         [textContainer]="textVesselBayContainer" (vescellDbClick)="onVesselBayDbClick($event)"
         [vescellMarkerConfig]="vescellMarkerConfig" [interactionConfig]="interactionConfig" [isSvgText]="isSvgText"
-        (vescellFrameSelect)="selectVescells($event)"></app-vessel-bay>
+        (vescellFrameSelect)="selectVescells($event)" (completedVesselData)="updateVesselData($event)"></app-vessel-bay>
       }
     </div>
     }
