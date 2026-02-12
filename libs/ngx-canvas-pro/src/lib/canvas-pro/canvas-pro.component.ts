@@ -322,9 +322,16 @@ export class CanvasProComponent implements OnDestroy, AfterViewInit {
 
   handleDragZoom(event: MouseEvent) {
     this.viewportCtx.canvas.style.cursor = 'zoom-in';
+    const mousePos = this.getMousePos(event);
+    const viewportSize = this.viewportService.getViewportSize();
+    const centerX = viewportSize.width / 2;
+    const centerY = viewportSize.height / 2;
+
     this.transformService.handleDragZoom(
       this.interactionHandler.dragState.deltaY,
-      this.getMousePos(event)
+      mousePos,
+      centerX,
+      centerY
     );
     this.drawVierport();
   }
@@ -341,7 +348,12 @@ export class CanvasProComponent implements OnDestroy, AfterViewInit {
   // }
 
   handleWheelZoom(event: WheelEvent) {
-    this.transformService.handleWheelZoom(event, this.getMousePos(event));
+    const mousePos = this.getMousePos(event);
+    const viewportSize = this.viewportService.getViewportSize();
+    const centerX = viewportSize.width / 2;
+    const centerY = viewportSize.height / 2;
+
+    this.transformService.handleWheelZoom(event, mousePos, centerX, centerY);
     this.drawVierport();
   }
 
