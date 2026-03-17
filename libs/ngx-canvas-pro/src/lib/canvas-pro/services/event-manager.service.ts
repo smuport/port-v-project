@@ -19,6 +19,16 @@ export class EventManagerService {
     this.eventListeners.push(unsubscribe);
   }
 
+  setupViewportWarpperEvents(wrapper: HTMLDivElement,
+    handlers: {
+      onScroll: (event: Event) => void;
+    }
+  ) {
+    this.addManagedEventListener(wrapper, 'scroll', (event) =>
+      handlers.onScroll(event)
+    );
+  }
+
   setupCanvasEvents(
     canvasElement: HTMLElement,
     handlers: {

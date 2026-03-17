@@ -52,6 +52,10 @@ export class CanvasProComponent implements OnDestroy, AfterViewInit {
   layers: BaseLayer[] = [];
   @ViewChild('canvasViewport', { static: true })
   viewport!: ElementRef<HTMLCanvasElement>;
+  @ViewChild('viewportWrapper', { static: true })
+  viewportWrapper!: ElementRef<HTMLDivElement>;
+  @ViewChild('spacer', { static: true })
+  spacer!: ElementRef<HTMLDivElement>;
   viewportCtx!: CanvasRenderingContext2D;
 
   @Input() controlDataflow!: (
@@ -72,6 +76,9 @@ export class CanvasProComponent implements OnDestroy, AfterViewInit {
       alt: 'none',
     },
   };
+
+  totalWidth = 0;
+  totalHeight = 0;
 
   constructor(
     private interactionHandler: InteractionHandler,
@@ -127,10 +134,20 @@ export class CanvasProComponent implements OnDestroy, AfterViewInit {
       onWheel: (event) => this.onWheel(event),
     });
 
+    this.eventManagerService.setupViewportWarpperEvents(this.viewportWrapper.nativeElement, {
+      onScroll: (event) => {
+        const target = event.target as HTMLElement;
+        this.transformService.updateTranslate(-target.scrollLeft, -target.scrollTop);
+        this.drawVierport();
+      }
+    })
+
     // 设置全局事件
     this.eventManagerService.setupGlobalEvents({
       onGlobalMouseUp: (event) => this.onGlobalMouseUp(event),
     });
+
+    
   }
 
   // updateViewportSize(w: number, h: number) {
@@ -146,6 +163,7 @@ export class CanvasProComponent implements OnDestroy, AfterViewInit {
   addLayer(layer: BaseLayer) {
     if (!layer.isValid()) {
       console.error(`${layer.name} is not valid`);
+      
       return;
     }
 
@@ -153,9 +171,16 @@ export class CanvasProComponent implements OnDestroy, AfterViewInit {
     // if (layer.type === 'svg') {
     //   this.svgContainerService.addSvgLayer(layer as SvgLayer);
     // }
-
+    layer.onSizeUpdated = (w, h) => this.onLayerSizeUpdate(w, h);
     this.layers.push(layer);
     this.dataflowHandler.addLayer(layer);
+    
+  }
+
+  onLayerSizeUpdate(w: number, h: number) {
+    this.totalWidth = w;
+    this.totalHeight = h;
+    console.log('layer size updated')
   }
 
   // drawVierport(): void {

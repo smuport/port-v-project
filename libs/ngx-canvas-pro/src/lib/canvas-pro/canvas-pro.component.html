@@ -1,5 +1,11 @@
-<div class="canvas-pro-viewport" style="position: relative; width: 100%; height: 100%;">
-  <canvas #canvasViewport></canvas>
+<div #viewportWrapper class="canvas-pro-viewport" 
+style="position: relative; width: 100%; height: 100%; overflow: auto;"
+
+>
+  <canvas #canvasViewport style="position: sticky; top: 0; left: 0; pointer-events: none;"></canvas>
+  <div #spacer class="spacer" style="position: absolute; top: 0; left: 0;" 
+  [style.width.px]="totalWidth"
+[style.height.px]="totalHeight"></div>
   <!-- <svg #svgContainer></svg> -->
   <!-- SVG 容器会在组件初始化时动态添加 -->
 </div>

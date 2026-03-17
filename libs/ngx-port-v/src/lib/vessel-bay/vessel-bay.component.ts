@@ -149,11 +149,11 @@ export class VesselBayComponent implements AfterViewInit {
       this.calculateFrontendCoordinates();
     }
     this.completedVesselData.emit(this.vesselBayData);
-    if (this.canvasContainer) {
-      const divElement: HTMLElement = this.canvasContainer.nativeElement;
-      divElement.style.height = `${this.vesselBayData.bayHeight}px`;
-      divElement.style.width = `${this.vesselBayData.bayWidth}px`;
-    }
+    // if (this.canvasContainer) {
+    //   const divElement: HTMLElement = this.canvasContainer.nativeElement;
+    //   divElement.style.height = `${this.vesselBayData.bayHeight}px`;
+    //   divElement.style.width = `${this.vesselBayData.bayWidth}px`;
+    // }
 
     this.vesselBayBackgroungData = this.vesselBayData;
     this.draw();

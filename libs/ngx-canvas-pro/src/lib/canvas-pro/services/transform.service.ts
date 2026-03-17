@@ -9,6 +9,11 @@ export class TransformService {
   public scale = 1;
   public rotation = 0;
 
+  updateTranslate(x: number, y:number) {
+    this.translatePos.x = x;
+    this.translatePos.y = y;
+  }
+
   // 其他方法需要修改，使用ViewportService获取视口信息
   handlePan(
     event: MouseEvent,

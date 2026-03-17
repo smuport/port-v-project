@@ -94,6 +94,12 @@ export class ViewportService {
     // 绘制所有Canvas图层
     const canvasLayers = this.layers.filter(layer => layer instanceof Layer) as Layer[];
     for (const layer of canvasLayers) {
+      // if (typeof layer.drawTo === 'function') {
+      //   layer.drawTo(this.canvasContext);
+      // } else {
+      //   this.canvasContext.drawImage(layer.canvas, 0, 0);
+      // }
+
       this.canvasContext.drawImage(layer.canvas, 0, 0);
     }
     

@@ -20,6 +20,7 @@ export interface BaseLayer<
   event$: Subject<E>;
   eventMap: Map<string, (evt: E, data: T) => void>;
   get dataMode(): 'push' | 'pull';
+  onSizeUpdated: (w:number, h:number) => void;
 
   setPushMode(): this;
   setPullMode(): this;

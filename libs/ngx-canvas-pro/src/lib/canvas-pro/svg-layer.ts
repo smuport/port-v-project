@@ -24,6 +24,9 @@ export class SvgLayer<T = any, U = any> implements BaseLayer<T, U> {
     [callback: (evt: CpBaseEvent, data: T) => void, evt: CpBaseEvent, data: T]
   >;
   eventMap = new Map<string, (evt: CpBaseEvent, data: T) => void>();
+  onSizeUpdated = (w: number, h: number) => {console.log(`${this.name} Layer size update to w=${w} h=${h} `)};
+
+
   private renderables: Renderable[] = [];
   private svgNamespace = 'http://www.w3.org/2000/svg';
   
@@ -168,5 +171,6 @@ export class SvgLayer<T = any, U = any> implements BaseLayer<T, U> {
   updateSize(w: number, h: number): void {
     
     this.updateSvgSize(w, h);
+    this.onSizeUpdated(w, h);
   }
 }
