@@ -14,6 +14,7 @@ import { RouterModule } from '@angular/router';
         <a routerLink="/qcwp" routerLinkActive="active">岸桥分路计划</a>
         <a routerLink="/vessel-bay" routerLinkActive="active">船贝图</a>
         <a routerLink="/yard-bay" routerLinkActive="active">箱区贝图</a>
+        <a routerLink="/map-demo" routerLinkActive="active">地图演示</a>
       </nav>
       <div class="content">
         <router-outlet></router-outlet>

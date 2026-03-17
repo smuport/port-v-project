@@ -117,7 +117,7 @@ import { ParticleLayer } from './particle-layer';
   standalone: true,
   imports: [CanvasProComponent],
 })
-export class ParticleDemoComponent implements OnInit, OnDestroy {
+export class ParticleDemoComponent{
   @ViewChild('canvasPro', { static: true })
   canvasPro!: CanvasProComponent;
   private backgroundLayer!: ParticleLayer;
@@ -173,9 +173,9 @@ export class ParticleDemoComponent implements OnInit, OnDestroy {
     }, 0);
   }
 
-  ngOnDestroy(): void {
-    // 清理资源
-  }
+  // ngOnDestroy(): void {
+  //   // 清理资源
+  // }
 
   // 添加创建爆炸特效的方法
   private createExplosion(x: number, y: number): void {

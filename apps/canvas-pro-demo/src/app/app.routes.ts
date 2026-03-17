@@ -5,6 +5,7 @@ import { GanttDemoComponent } from './gantt-demo/gantt-demo.component';
 import { QcwpDemoComponent } from './qcwp-demo/qcwp-demo.component';
 import { VesselBayDemoComponent } from './vessel-bay-demo/vessel-bay-demo.component';
 import { YardBayDemoComponent } from './yard-bay-demo/yard-bay-demo.component';
+import { MapDemoComponent } from './map-demo/map-demo.component';
 
 export const appRoutes: Route[] = [
   {
@@ -35,5 +36,9 @@ export const appRoutes: Route[] = [
   {
     path: 'yard-bay',
     component: YardBayDemoComponent,
+  },
+  {
+    path: 'map-demo',
+    component: MapDemoComponent,
   },
 ];
