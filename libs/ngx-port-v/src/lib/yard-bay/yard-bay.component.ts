@@ -314,10 +314,10 @@ export class YardBayComponent implements AfterViewInit {
         ctx: OffscreenCanvasRenderingContext2D,
         data: VisualYardBay<unknown>[]
       ) => {
-        yardBaysLayer.updateSize(
-          this.containerWidth,
-          this.containerHeight
-        );
+        // yardBaysLayer.updateSize(
+        //   this.containerWidth,
+        //   this.containerHeight
+        // );
         this.renderYardBay(ctx, data);
       }
     );
