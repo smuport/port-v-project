@@ -6,12 +6,13 @@ import { QcwpDemoComponent } from './qcwp-demo/qcwp-demo.component';
 import { VesselBayDemoComponent } from './vessel-bay-demo/vessel-bay-demo.component';
 import { YardBayDemoComponent } from './yard-bay-demo/yard-bay-demo.component';
 import { MapDemoComponent } from './map-demo/map-demo.component';
+import { LargeCanvasDemoComponent } from './large-canvas-demo/large-canvas-demo.component';
+import { NxWelcomeComponent } from './nx-welcome.component';
 
 export const appRoutes: Route[] = [
   {
     path: '',
-    redirectTo: 'particle',
-    pathMatch: 'full',
+    component: NxWelcomeComponent,
   },
   {
     path: 'particle',
@@ -40,5 +41,9 @@ export const appRoutes: Route[] = [
   {
     path: 'map-demo',
     component: MapDemoComponent,
+  },
+  {
+    path: 'large-canvas',
+    component: LargeCanvasDemoComponent,
   },
 ];

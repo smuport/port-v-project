@@ -37,6 +37,7 @@ export class EventManagerService {
       onMouseUp: (event: MouseEvent) => void;
       onBlur: (event: FocusEvent) => void;
       onWheel: (event: WheelEvent) => void;
+      onScroll?: (event: Event) => void;
     }
   ): void {
     this.addManagedEventListener(canvasElement, 'mousedown', (event) =>
@@ -57,6 +58,9 @@ export class EventManagerService {
 
     this.addManagedEventListener(canvasElement, 'wheel', (event) =>
       handlers.onWheel(event)
+    );
+    this.addManagedEventListener(canvasElement, 'scroll', (event) =>
+      handlers.onScroll?.(event)
     );
   }
 

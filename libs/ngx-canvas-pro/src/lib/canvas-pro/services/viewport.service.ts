@@ -10,7 +10,7 @@ export class ViewportService {
   private canvasContext: CanvasRenderingContext2D | null = null;
   private svgContainer: HTMLElement | null = null;
   private layers: BaseLayer[] = [];
-
+  private resizeObserver: ResizeObserver | null = null;
   constructor(private transformService: TransformService) {}
 
   initialize(
@@ -21,6 +21,29 @@ export class ViewportService {
     this.canvasViewport = canvasViewport;
     this.canvasContext = canvasContext;
     this.svgContainer = svgContainer;
+    this.initResizeObserver();
+  }
+
+  private initResizeObserver() {
+    this.destroyResizeObserver();
+    const parent = this.canvasViewport?.nativeElement.parentElement;
+    if (!parent) return;
+    this.resizeObserver = new ResizeObserver(() => {
+      // console.log('Parent container resized, updating viewport size');
+      this.fitToParent();
+    });
+    this.resizeObserver.observe(parent);
+  }
+
+  destroy() {
+    this.destroyResizeObserver();
+  }
+
+  private destroyResizeObserver() {
+    if (this.resizeObserver) {
+      this.resizeObserver.disconnect();
+      this.resizeObserver = null;
+    }
   }
 
   setLayers(layers: BaseLayer[]) {
@@ -52,7 +75,7 @@ export class ViewportService {
   updateViewportSize(w: number, h: number) {
     if (!this.canvasViewport || !this.svgContainer) return;
     
-    // 更新Canvas视口大小
+    // 更新Canvas视口大小（像素尺寸）
     this.canvasViewport.nativeElement.width = w;
     this.canvasViewport.nativeElement.height = h;
     
@@ -76,31 +99,16 @@ export class ViewportService {
     // 保存当前上下文状态
     this.canvasContext.save();
     
-    // 获取画布中心点
-    const canvasWidth = this.canvasViewport.nativeElement.width;
-    const canvasHeight = this.canvasViewport.nativeElement.height;
-    const centerX = canvasWidth / 2;
-    const centerY = canvasHeight / 2;
-    
-    // 从TransformService获取变换状态
-    const { translatePos, scale, rotation } = this.transformService;
-    
-    // 应用变换：先将原点移到画布中心，然后旋转，再缩放，最后平移
-    this.canvasContext.translate(centerX, centerY);
-    this.canvasContext.rotate(rotation);
-    this.canvasContext.scale(scale, scale);
-    this.canvasContext.translate(-centerX + translatePos.x, -centerY + translatePos.y);
-    
+    this.transformService.applyTransform(this.canvasContext);
     // 绘制所有Canvas图层
     const canvasLayers = this.layers.filter(layer => layer instanceof Layer) as Layer[];
     for (const layer of canvasLayers) {
-      // if (typeof layer.drawTo === 'function') {
-      //   layer.drawTo(this.canvasContext);
-      // } else {
-      //   this.canvasContext.drawImage(layer.canvas, 0, 0);
-      // }
-
-      this.canvasContext.drawImage(layer.canvas, 0, 0);
+      // 检查是否使用 tiles 模式
+      if (layer.isUsingTiles && layer.isUsingTiles()) {
+        this.drawLayerTiles(layer);
+      } else {
+        this.canvasContext.drawImage(layer.canvas, 0, 0);
+      }
     }
     
     // 恢复上下文状态
@@ -119,6 +127,20 @@ export class ViewportService {
       // this.canvasContext.drawImage(layer.canvas, 0, 0);
     }
     // this.updateSvgTransform();
+  }
+
+  /**
+   * 绘制使用 tiles 模式的图层
+   */
+  private drawLayerTiles(layer: Layer) {
+    const tiles = layer.getTiles();
+    
+    if (!this.canvasContext) return;
+    
+    for (const tile of tiles) {
+      // 绘制 tile 到对应位置
+      this.canvasContext.drawImage(tile.canvas, tile.x, tile.y);
+    }
   }
 
     // 更新SVG容器的变换
@@ -142,10 +164,12 @@ export class ViewportService {
       const transform = `translate(${centerX}px, ${centerY}px) ` +
                         `rotate(${rotationDeg}deg) ` +
                         `scale(${scale}) ` +
-                        `translate(${-centerX + translatePos.x}px, ${-centerY + translatePos.y}px)`;
+                        // `translate(${-centerX + translatePos.x}px, ${-centerY + translatePos.y}px)`;
+                        `translate(${-centerX}px, ${-centerY}px)`;
       
       svgGroup.style.transform = transform;
-      svgGroup.style.transformOrigin = '0 0';
+      // 必须与 Canvas 的变换原点一致：画布中心
+      svgGroup.style.transformOrigin = `${centerX}px ${centerY}px`;
     }
 
   // 更新SVG容器的变换

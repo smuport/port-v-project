@@ -435,7 +435,7 @@ import { CommonModule } from '@angular/common';
             Welcome canvas-pro-demo 👋
           </h1>
         </div>
-        <!--  HERO  -->
+        <!--  Demo Navigation  -->
         <div id="hero" class="rounded">
           <div class="text-container">
             <h2>
@@ -449,12 +449,22 @@ import { CommonModule } from '@angular/common';
                   stroke-linecap="round"
                   stroke-linejoin="round"
                   stroke-width="2"
-                  d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"
+                  d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"
                 />
               </svg>
-              <span>You&apos;re up and running</span>
+              <span>Canvas Pro Demos</span>
             </h2>
-            <a href="#commands"> What&apos;s next? </a>
+            <div style="margin-top: 1rem; display: flex; flex-direction: column; gap: 0.5rem;">
+              <a href="#/particle" style="background-color: rgba(255,255,255,0.1); padding: 0.5rem 1rem; border-radius: 0.5rem;">🎆 Particle Demo</a>
+              <a href="#/ship-side" style="background-color: rgba(255,255,255,0.1); padding: 0.5rem 1rem; border-radius: 0.5rem;">🚢 Ship Side Demo</a>
+              <a href="#/gantt" style="background-color: rgba(255,255,255,0.1); padding: 0.5rem 1rem; border-radius: 0.5rem;">📊 Gantt Demo</a>
+              <a href="#/vessel-bay" style="background-color: rgba(255,255,255,0.1); padding: 0.5rem 1rem; border-radius: 0.5rem;">⚓ Vessel Bay Demo</a>
+              <a href="#/yard-bay" style="background-color: rgba(255,255,255,0.1); padding: 0.5rem 1rem; border-radius: 0.5rem;">🏭 Yard Bay Demo</a>
+              <a href="#/qcwp" style="background-color: rgba(255,255,255,0.1); padding: 0.5rem 1rem; border-radius: 0.5rem;">📅 QCWP Demo</a>
+              <a href="#/large-canvas" style="background-color: rgba(24, 144, 255, 0.3); padding: 0.5rem 1rem; border-radius: 0.5rem; border: 1px solid #1890ff;">
+                🔥 Large Canvas Demo (50,000 x 3,000 pixels)
+              </a>
+            </div>
           </div>
           <div class="logo-container">
             <svg

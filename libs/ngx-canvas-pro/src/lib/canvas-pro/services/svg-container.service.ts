@@ -87,43 +87,43 @@ export class SvgContainerService {
 
 
 
-  updateTransform(
-    translateX: number,
-    translateY: number,
-    scale: number,
-    rotation: number
-  ): void {
-    if (!this.svgContainer) {
-      return;
-    }
+  // updateTransform(
+  //   translateX: number,
+  //   translateY: number,
+  //   scale: number,
+  //   rotation: number
+  // ): void {
+  //   if (!this.svgContainer) {
+  //     return;
+  //   }
     
-    // 获取Canvas的宽度和高度
-    const canvas = this.svgContainer.parentElement?.querySelector('canvas');
-    if (!canvas) {
-      return;
-    }
+  //   // 获取Canvas的宽度和高度
+  //   const canvas = this.svgContainer.parentElement?.querySelector('canvas');
+  //   if (!canvas) {
+  //     return;
+  //   }
     
-    const width = canvas.width;
-    const height = canvas.height;
+  //   const width = canvas.width;
+  //   const height = canvas.height;
     
-    // 计算中心点
-    const centerX = width / 2;
-    const centerY = height / 2;
+  //   // 计算中心点
+  //   const centerX = width / 2;
+  //   const centerY = height / 2;
     
-    // 计算旋转角度（从弧度转为度）
-    const rotationDeg = (rotation * 180) / Math.PI;
+  //   // 计算旋转角度（从弧度转为度）
+  //   const rotationDeg = (rotation * 180) / Math.PI;
     
-    // 构建CSS变换矩阵
-    // 注意：CSS变换的顺序是从右到左应用的，与Canvas相反
-    const transform = 
-      `translate(${centerX}px, ${centerY}px) ` +
-      `rotate(${rotationDeg}deg) ` +
-      `scale(${scale}) ` +
-      `translate(${-centerX + translateX}px, ${-centerY + translateY}px)`;
+  //   // 构建CSS变换矩阵
+  //   // 注意：CSS变换的顺序是从右到左应用的，与Canvas相反
+  //   const transform = 
+  //     `translate(${centerX}px, ${centerY}px) ` +
+  //     `rotate(${rotationDeg}deg) ` +
+  //     `scale(${scale}) ` +
+  //     `translate(${-centerX + translateX}px, ${-centerY + translateY}px)`;
     
-    // 应用变换
-    this.renderer.setStyle(this.svgContainer, 'transform', transform);
-  }
+  //   // 应用变换
+  //   this.renderer.setStyle(this.svgContainer, 'transform', transform);
+  // }
 
   destroy(): void {
     // 清理事件监听器
@@ -149,6 +149,8 @@ export class SvgContainerService {
       this.renderer.setStyle(this.svgContainer, 'position', 'absolute');
       this.renderer.setStyle(this.svgContainer, 'top', '0');
       this.renderer.setStyle(this.svgContainer, 'left', '0');
+      this.renderer.setStyle(this.svgContainer, 'bottom', '0');
+      this.renderer.setStyle(this.svgContainer, 'right', '0');
       this.renderer.setStyle(this.svgContainer, 'width', '100%');
       this.renderer.setStyle(this.svgContainer, 'height', '100%');
       this.renderer.setStyle(this.svgContainer, 'pointer-events', 'auto');

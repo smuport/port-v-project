@@ -221,7 +221,7 @@ export class InteractionHandler {
 
   // 处理滚轮事件
   handleWheel(event: WheelEvent, interactionConfig: ViewportInteractionConfig) {
-    event.preventDefault();
+    // event.preventDefault();
 
     // 确定当前使用的交互模式
     let interactionMode = interactionConfig.wheel?.default || 'zoom';

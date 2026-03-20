@@ -1,12 +1,16 @@
-import { Injectable } from '@angular/core';
+import { Inject, Injectable } from '@angular/core';
 import { BaseLayer } from '../base-layer';
 import { CpFrameSelectEvent } from '../event';
+import { TransformService } from './transform.service';
 
 @Injectable()
 export class FrameSelectService {
   public frameSelectRect = { x: 0, y: 0, width: 0, height: 0 };
   public isFrameSelecting = false;
   private selectedItems: any[] = [];
+  
+  constructor(private transformService: TransformService) {}
+
 
   startFrameSelect(mousePos: { x: number; y: number }): void {
     this.isFrameSelecting = true;
@@ -29,6 +33,8 @@ export class FrameSelectService {
     if (!this.isFrameSelecting) return;
 
     ctx.save();
+        // 获取画布中心点
+    this.transformService.applyTransform(ctx);
     ctx.strokeStyle = 'rgba(0, 123, 255, 0.8)';
     ctx.lineWidth = 1;
     ctx.setLineDash([5, 3]);

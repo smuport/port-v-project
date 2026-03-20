@@ -96,6 +96,7 @@ export class DataflowHandler {
   private setupAnimationStream(layer: BaseLayer): Observable<any> {
     return layer.animation.onAnimated.asObservable().pipe(
       tap((data) => {
+        console.log(`[Animation] ${layer.name} onAnimated triggered`);
         layer.render(data);
         this.component.drawVierport();
       })

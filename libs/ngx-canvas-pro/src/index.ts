@@ -9,3 +9,5 @@ export * from './lib/canvas-pro/svg-layer';
 export * from './lib/canvas-pro/render-configurator';
 export * from './lib/canvas-pro/animation-object';
 export * from './lib/canvas-pro/interaction';
+export * from './lib/canvas-pro/virtual-context';
+export * from './lib/canvas-pro/services/transform.service';

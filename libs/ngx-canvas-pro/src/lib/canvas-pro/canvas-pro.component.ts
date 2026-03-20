@@ -31,6 +31,7 @@ import { EventManagerService } from './services/event-manager.service';
 import { FrameSelectService } from './services/frame-select.service';
 import { TransformService } from './services/transform.service';
 import { ViewportService } from './services/viewport.service';
+import { c } from '@angular/core/event_dispatcher.d-pVP0-wST';
 
 @Component({
   selector: 'canvas-pro',
@@ -132,9 +133,15 @@ export class CanvasProComponent implements OnDestroy, AfterViewInit {
       onMouseUp: (event) => this.onMouseUp(event),
       onBlur: (event) => this.onBlur(event),
       onWheel: (event) => this.onWheel(event),
+          
     });
 
     this.eventManagerService.setupViewportWarpperEvents(this.viewportWrapper.nativeElement, {
+      //       onMouseDown: (event) => this.onMouseDown(event),
+      // onMouseMove: (event) => this.onMouseMove(event),
+      // onMouseUp: (event) => this.onMouseUp(event),
+      // onBlur: (event) => this.onBlur(event),
+      // onWheel: (event) => this.onWheel(event),
       onScroll: (event) => {
         const target = event.target as HTMLElement;
         this.transformService.updateTranslate(-target.scrollLeft, -target.scrollTop);
@@ -172,6 +179,7 @@ export class CanvasProComponent implements OnDestroy, AfterViewInit {
     //   this.svgContainerService.addSvgLayer(layer as SvgLayer);
     // }
     layer.onSizeUpdated = (w, h) => this.onLayerSizeUpdate(w, h);
+    
     this.layers.push(layer);
     this.dataflowHandler.addLayer(layer);
     
@@ -180,7 +188,10 @@ export class CanvasProComponent implements OnDestroy, AfterViewInit {
   onLayerSizeUpdate(w: number, h: number) {
     this.totalWidth = w;
     this.totalHeight = h;
-    console.log('layer size updated')
+    console.log(`layer size updated, ${w}x${h}`);
+    // 注意：不要在这里调用 updateViewportSize
+    // updateViewportSize 会改变可见 canvas 的尺寸
+    // 而可见 canvas 应该保持为视口大小，不是 Layer 大小
   }
 
   // drawVierport(): void {
@@ -244,6 +255,7 @@ export class CanvasProComponent implements OnDestroy, AfterViewInit {
     this.eventManagerService.destroy();
     this.svgContainerService.destroy();
     this.dataflowHandler.destroy();
+    this.viewportService.destroy();
   }
 
   // 事件处理方法
@@ -384,6 +396,7 @@ export class CanvasProComponent implements OnDestroy, AfterViewInit {
 
   // 使用视口服务绘制视口
   drawVierport(): void {
+    
     // 绘制视口
     this.viewportService.drawViewport();
 
@@ -448,14 +461,15 @@ export class CanvasProComponent implements OnDestroy, AfterViewInit {
   handleFrameSelect(event: MouseEvent) {
     this.viewportCtx.canvas.style.cursor = 'crosshair';
 
+    // 获取 Layer 坐标系中的位置（考虑滚动、缩放、旋转）
+    const axis = this.getAxis(event);
+
     if (!this.frameSelectService.isFrameSelecting) {
       // 开始框选
-      const mousePos = this.getMousePos(event);
-      this.frameSelectService.startFrameSelect(mousePos);
+      this.frameSelectService.startFrameSelect(axis);
     } else {
       // 更新框选区域
-      const mousePos = this.getMousePos(event);
-      this.frameSelectService.updateFrameSelect(mousePos);
+      this.frameSelectService.updateFrameSelect(axis);
     }
 
     // 重绘视图

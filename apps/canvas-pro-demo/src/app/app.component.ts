@@ -8,6 +8,7 @@ import { RouterModule } from '@angular/router';
   template: `
     <div class="app-container">
       <nav class="nav-menu">
+        <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}">首页</a>
         <a routerLink="/particle" routerLinkActive="active">粒子系统</a>
         <a routerLink="/ship-side" routerLinkActive="active">船舶侧视图</a>
         <a routerLink="/gantt" routerLinkActive="active">甘特图</a>
@@ -15,6 +16,7 @@ import { RouterModule } from '@angular/router';
         <a routerLink="/vessel-bay" routerLinkActive="active">船贝图</a>
         <a routerLink="/yard-bay" routerLinkActive="active">箱区贝图</a>
         <a routerLink="/map-demo" routerLinkActive="active">地图演示</a>
+        <a routerLink="/large-canvas" routerLinkActive="active" style="color: #ff6b6b; font-weight: bold;">超大画布 Demo</a>
       </nav>
       <div class="content">
         <router-outlet></router-outlet>

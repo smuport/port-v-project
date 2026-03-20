@@ -9,6 +9,7 @@ export class TransformService {
   public scale = 1;
   public rotation = 0;
 
+
   updateTranslate(x: number, y:number) {
     this.translatePos.x = x;
     this.translatePos.y = y;
@@ -133,8 +134,8 @@ export class TransformService {
     centerX: number,
     centerY: number
   ): void {
-    const delta = event.deltaY > 0 ? 0.85 : 1.15;
-    const newScale = this.scale * delta;
+    const delta = event.deltaY > 0 ? -0.02 : 0.02;
+    const newScale = Math.max(0.0, this.scale * (1 + delta));
     const rotation = this.rotation;
 
     const cosTheta = Math.cos(-rotation);
@@ -158,5 +159,15 @@ export class TransformService {
     this.translatePos = { x: 0, y: 0 };
     this.scale = 1;
     this.rotation = 0;
+  }
+
+  applyTransform(ctx: CanvasRenderingContext2D) {
+    const centerX = ctx.canvas.width / 2;
+    const centerY = ctx.canvas.height / 2;
+
+    ctx.translate(centerX, centerY);
+    ctx.rotate(this.rotation);
+    ctx.scale(this.scale, this.scale);
+    ctx.translate(-centerX + this.translatePos.x, -centerY + this.translatePos.y);
   }
 }
