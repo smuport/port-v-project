@@ -30,6 +30,7 @@ export class SvgContainerService {
     // svg 宽高应该和offscreencanvas 一样大小
     //viewBox 应该和viewport大小一样
     // 该函数是调整视口大小
+    // console.log(`Updating SVG viewport size to w=${w} h=${h}`);
     this.renderer.setAttribute(this.svgContainer?.firstChild, 'viewBox', `0 0 ${w} ${h}`);
 
   }

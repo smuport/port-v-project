@@ -3,6 +3,7 @@ import { Layer } from '../layer';
 import { SvgLayer } from '../svg-layer';
 import { BaseLayer } from '../base-layer';
 import { TransformService } from './transform.service';
+import { d } from '@angular/core/weak_ref.d-Bp6cSy-X';
 
 @Injectable()
 export class ViewportService {
@@ -29,10 +30,10 @@ export class ViewportService {
     const parent = this.canvasViewport?.nativeElement.parentElement;
     if (!parent) return;
     this.resizeObserver = new ResizeObserver(() => {
-      // console.log('Parent container resized, updating viewport size');
+      console.log('Parent container resized, updating viewport size');
       this.fitToParent();
     });
-    this.resizeObserver.observe(parent);
+    this.resizeObserver.observe(document.body);
   }
 
   destroy() {
@@ -119,7 +120,6 @@ export class ViewportService {
     const svgLayers = this.layers.filter(layer => layer instanceof SvgLayer) as SvgLayer[];
 
     for (const layer of svgLayers) {
-      
       this.applySvgTransform(layer.svgElement)
       this.svgContainer?.appendChild(layer.svgElement);
 
@@ -174,7 +174,7 @@ export class ViewportService {
 
   // 更新SVG容器的变换
   private updateSvgTransform() {
-    console.log('updateSvgTransform', this.svgContainer);
+    // console.log('updateSvgTransform', this.svgContainer);
     if (!this.svgContainer || !this.canvasViewport) return;
     
     const canvasWidth = this.canvasViewport.nativeElement.width;
